@@ -29,8 +29,8 @@
 - 微调（§3.3，图 3）：HotpotQA 上 prompting 时 ReAct 在四种方法中最差（PaLM-8/62B 难以同时学会推理与行动），但用 3000 例微调后 ReAct 最好；PaLM-8B 微调 ReAct 超过所有 PaLM-62B prompting 方法，PaLM-62B 微调 ReAct 超过所有 540B prompting 方法。
 - 局限（§6）：大动作空间任务需更多演示，易超出 in-context 输入长度限制；作者建议更多人工标注数据微调与结合 RL。
 
-## 证据等级
-- 等级: direct
+## 候选相关性（总体）
+- 总体相关性: high
 - 理由: 原始实验论文，直接给出 ReAct 机制定义与四基准（HotpotQA、Fever、ALFWorld、WebShop）上对比 CoT/Act/IL/RL 的量化实验结果，是调研问题"LLM agent 基础（thought-action-observation 循环）"的一手证据。
 
 ## 引用

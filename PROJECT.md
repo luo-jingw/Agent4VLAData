@@ -66,9 +66,12 @@ Do not record token values or other secrets here.
   - 决策历史仅在明确要求时写入指定日志（`logs/decision_log.md`）。
   - 自查：写完后逐句检查——这句话是在描述项目本身，还是在解释如何完成
     写作要求？后者删除。
-- **场景假设（2026-09-06）**：当前任务场景全部静态（料箱/传送带
-  均静止）。机械臂速度沿路径任意变化不影响成功；成功判据 = 路径几何一致
-  （含搬运段工件刚性附着末端）∧ 吸盘状态切换驻留时间一致。含义：
+- **场景假设（2026-09-06，working assumption，待实验验证）**：当前任务
+  场景全部静态（料箱/传送带均静止）。在部署调度包络内（相对录制时长
+  0.78–1.08×，现有包 §6 标定值）速度变化不影响成功；成功判据 = 路径几何
+  一致（含搬运段工件刚性附着末端）∧ 吸盘状态切换驻留时间一致。
+  超出该包络（如捷径替换生成更快段）需补关节速度/加速度/力矩限幅检查
+  （kinodynamic gate，未纳入当前 real2sim 设计）。含义：
   (1) real2sim 只需静态碰撞检测，无需动力学仿真；
   (2) 事件窗（吸盘触发+真空建立）是唯一的时序约束，捷径/稀疏化不得穿越；
   (3) 部署侧非等时标签的 dt 调度在静态场景下无动态风险。
@@ -82,7 +85,8 @@ Do not record token values or other secrets here.
 - 调研产物遵循 research_skill 的目录约定：`papers/`（文献）、`notes/extractions/`
   （抽取）、`synthesis/`（证据矩阵与综述）、`logs/`、`scripts/`。
   `docs/` 按用途分层：`docs/survey/`（调研定义与综述定稿）、
-  `docs/reports/`（报告）、`docs/design/`（设计框架与草稿）。
+  `docs/reports/`（报告）、`docs/design/`（设计框架）。未验证的设计草稿
+  在 `design/`（不属 world model）。
 - 文献检查脚本只做观测型输出，不写 pass/fail。
 - 版本控制：GitHub remote 见 Credentials。`g2-orion05-resample-training.zip`
   与 `papers/raw/*.pdf` 不入库——zip 是协作分发物（解压参照在 `reference/`）；
@@ -103,7 +107,7 @@ Do not record token values or other secrets here.
    `docs/survey/survey_findings.md`（综述）、
    `docs/survey/agent_basics_tutorial.md`（agent 教学）、
    `docs/survey/glossary.md`（术语）。
-5. 设计阶段材料：`docs/design/design_framework.md`、`docs/design/design_draft.md`。
+5. 设计阶段材料：`docs/design/design_framework.md`（框架）、`design/design_draft.md`（草稿，未验证）。
 6. 看 `synthesis/evidence_matrix.md` 与 `synthesis/gap_list.md`（证据与未决）。
 7. 现有方法：`reference/g2-orion05-resample-training/README.md`。
 8. 下一步工作候选：`opportunities.md` OPT-001/002、`issues.md` ISSUE-001/002。

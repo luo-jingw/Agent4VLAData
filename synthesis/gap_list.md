@@ -93,7 +93,8 @@
 
 - 状态：open（2026-09-06 定向检索确认）
 - 证据现状：严格口径（有工具循环、自主规划、管理清洗/过滤/标注/重采样的
-  LLM/VLM agent）**不存在**。放宽口径的现有形态：(a) VLM/LLM 作为管线固定
+  LLM/VLM agent）在已声明检索范围内未发现（检索词与范围见
+  `logs/search_log.md`）。放宽口径的现有形态：(a) VLM/LLM 作为管线固定
   组件（[paper_010](https://arxiv.org/abs/2509.17321)/[paper_021](https://arxiv.org/abs/2509.20070)/[paper_020](https://arxiv.org/abs/2309.14320)/[paper_001](https://arxiv.org/abs/2403.12945)/[paper_030](https://arxiv.org/abs/2412.13877)）；
   (b) 非机器人数据的 agentic 管线（[paper_009](https://arxiv.org/abs/2407.03502)/[paper_022](https://arxiv.org/abs/2310.03714)/[paper_023](https://arxiv.org/abs/2406.07496)）；
   (c) agent 做数据采集非处理（[paper_019](https://arxiv.org/abs/2401.12963)）；

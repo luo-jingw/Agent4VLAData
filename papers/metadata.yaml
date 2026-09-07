@@ -15,7 +15,7 @@ papers:
     Manipulation Dataset}, author={Khazatsky, Alexander and others}, year={2024},
     eprint={2403.12945}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_002
   title: 'Open X-Embodiment: Robotic Learning Datasets and RT-X Models'
   authors:
@@ -27,7 +27,7 @@ papers:
   bibtex: '@article{openx2023, title={Open X-Embodiment: Robotic Learning Datasets
     and RT-X Models}, author={Open X-Embodiment Collaboration}, year={2023}, eprint={2310.08864}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_003
   title: Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ALOHA/ACT)
   authors:
@@ -43,7 +43,7 @@ papers:
     with Low-Cost Hardware}, author={Zhao, Tony Z. and Kumar, Vikash and Levine, Sergey
     and Finn, Chelsea}, year={2023}, eprint={2304.13705}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_004
   title: 'LeRobot: An Open-Source Library for End-to-End Robot Learning'
   authors:
@@ -59,7 +59,7 @@ papers:
   bibtex: '@article{cadene2026lerobot, title={LeRobot: An Open-Source Library for
     End-to-End Robot Learning}, author={Cadene, Remi and others}, year={2026}, eprint={2602.22818}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_005
   title: What Demonstration Curation Metrics Do to Your Policy
   authors:
@@ -71,7 +71,7 @@ papers:
   bibtex: '@article{bedi2026curation, title={What Demonstration Curation Metrics Do
     to Your Policy}, author={Bedi, Aarav}, year={2026}, eprint={2606.10229}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_006
   title: 'The Rise and Potential of Large Language Model Based Agents: A Survey'
   authors:
@@ -87,7 +87,7 @@ papers:
   bibtex: '@article{xi2023rise, title={The Rise and Potential of Large Language Model
     Based Agents: A Survey}, author={Xi, Zhiheng and others}, year={2023}, eprint={2309.07864}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_007
   title: 'ReAct: Synergizing Reasoning and Acting in Language Models'
   authors:
@@ -103,7 +103,7 @@ papers:
   bibtex: '@inproceedings{yao2022react, title={ReAct: Synergizing Reasoning and Acting
     in Language Models}, author={Yao, Shunyu and others}, year={2022}, eprint={2210.03629}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_008
   title: Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
   authors:
@@ -119,7 +119,7 @@ papers:
   bibtex: '@article{zheng2023judging, title={Judging LLM-as-a-Judge with MT-Bench
     and Chatbot Arena}, author={Zheng, Lianmin and others}, year={2023}, eprint={2306.05685}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_009
   title: 'AgentInstruct: Toward Generative Teaching with Agentic Flows'
   authors:
@@ -136,7 +136,7 @@ papers:
     Teaching with Agentic Flows}, author={Mitra, Arindam and others}, year={2024},
     eprint={2407.03502}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_010
   title: OpenGVL -- Benchmarking Visual Temporal Progress for Data Curation
   authors:
@@ -153,7 +153,7 @@ papers:
     Temporal Progress for Data Curation}, author={Budzianowski, Paweł and others},
     year={2025}, eprint={2509.17321}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_011
   title: Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining
   authors:
@@ -169,7 +169,7 @@ papers:
   bibtex: '@article{chen2026keyframe, title={Non-Markovian Long-Horizon Robot Manipulation
     via Keyframe Chaining}, author={Chen, Yipeng and others}, year={2026}, eprint={2603.01465}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_012
   title: 'A Review of Robot Learning for Manipulation: Challenges, Representations,
     and Algorithms'
@@ -185,7 +185,7 @@ papers:
     Challenges, Representations, and Algorithms}, author={Kroemer, Oliver and Niekum,
     Scott and Konidaris, George}, year={2019}, eprint={1907.03146}}'
   status: downloaded
-  evidence_level: indirect
+  screening_relevance: medium
 - id: paper_013
   title: Curating Demonstrations using Online Experience
   authors:
@@ -200,7 +200,7 @@ papers:
   bibtex: '@article{chen2025curating, title={Curating Demonstrations using Online
     Experience}, author={Chen, Annie S. and others}, year={2025}, eprint={2503.03707}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_014
   title: 'Phase-Localized Curation Does Not Help: A Negative Result on Per-Phase Metric
     Selection for Demonstration Filtering'
@@ -214,7 +214,7 @@ papers:
     A Negative Result on Per-Phase Metric Selection for Demonstration Filtering},
     author={Bedi, Aarav}, year={2026}, eprint={2606.15064}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_015
   title: 'AgiBot World Colosseo: A Large-scale Manipulation Platform for Scalable
     and Intelligent Embodied Systems'
@@ -232,7 +232,7 @@ papers:
     Manipulation Platform for Scalable and Intelligent Embodied Systems}, author={{AgiBot-World-Contributors}},
     year={2025}, eprint={2503.06669}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_016
   title: 'Robo-DM: Data Management For Large Robot Datasets'
   authors:
@@ -248,7 +248,7 @@ papers:
   bibtex: '@article{chen2025robodm, title={Robo-DM: Data Management For Large Robot
     Datasets}, author={Chen, Kaiyuan and others}, year={2025}, eprint={2505.15558}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_017
   title: A Survey on Large Language Model based Autonomous Agents
   authors:
@@ -264,7 +264,7 @@ papers:
   bibtex: '@article{wang2023survey, title={A Survey on Large Language Model based
     Autonomous Agents}, author={Wang, Lei and others}, year={2023}, eprint={2308.11432}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_018
   title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
   authors:
@@ -281,7 +281,7 @@ papers:
     Can Teach Themselves to Use Tools}, author={Schick, Timo and others}, year={2023},
     eprint={2302.04761}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_019
   title: 'AutoRT: Embodied Foundation Models for Large Scale Orchestration of Robotic
     Agents'
@@ -299,7 +299,7 @@ papers:
     for Large Scale Orchestration of Robotic Agents}, author={Ahn, Michael and others},
     year={2024}, eprint={2401.12963}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_020
   title: 'MUTEX: Learning Unified Policies from Multimodal Task Specifications'
   authors:
@@ -314,7 +314,7 @@ papers:
     Multimodal Task Specifications}, author={Shah, Rutav and others}, year={2023},
     eprint={2309.14320}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_021
   title: 'LLM Trainer: Automated Robotic Data Generation via Demonstration Augmentation
     using LLMs'
@@ -329,7 +329,7 @@ papers:
     Generation via Demonstration Augmentation using LLMs}, author={George, Abraham
     and Farimani, Amir Barati}, year={2025}, eprint={2509.20070}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_022
   title: 'DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines'
   authors:
@@ -346,7 +346,7 @@ papers:
     Model Calls into Self-Improving Pipelines}, author={Khattab, Omar and others},
     year={2023}, eprint={2310.03714}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_023
   title: 'TextGrad: Automatic "Differentiation" via Text'
   authors:
@@ -362,7 +362,7 @@ papers:
   bibtex: '@article{yuksekgonul2024textgrad, title={TextGrad: Automatic Differentiation
     via Text}, author={Yuksekgonul, Mert and others}, year={2024}, eprint={2406.07496}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_024
   title: 'MimicGen: A Data Generation System for Scalable Robot Learning using Human
     Demonstrations'
@@ -379,7 +379,7 @@ papers:
     System for Scalable Robot Learning using Human Demonstrations}, author={Mandlekar,
     Ajay and others}, year={2023}, eprint={2310.17596}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_025
   title: 'DABI: Evaluation of Data Augmentation Methods Using Downsampling in Bilateral
     Control-Based Imitation Learning with Images'
@@ -395,7 +395,7 @@ papers:
     Methods Using Downsampling in Bilateral Control-Based Imitation Learning with
     Images}, author={Kobayashi, Masato and others}, year={2024}, eprint={2410.04370}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_026
   title: Variable-Speed Teaching-Playback as Real-World Data Augmentation for Imitation
     Learning
@@ -412,7 +412,7 @@ papers:
     as Real-World Data Augmentation for Imitation Learning}, author={Masuya, Nozomu
     and others}, year={2024}, eprint={2412.03252}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_027
   title: 'RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning
     from Demonstrations'
@@ -429,7 +429,7 @@ papers:
     Augmentation for Data-Efficient Robot Learning from Demonstrations}, author={Ameperosa,
     Ezra and others}, year={2024}, eprint={2411.16959}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_028
   title: 'RoboEngine: Plug-and-Play Robot Data Augmentation with Semantic Robot Segmentation
     and Background Generation'
@@ -446,7 +446,7 @@ papers:
     Data Augmentation with Semantic Robot Segmentation and Background Generation},
     author={Yuan, Chengbo and others}, year={2025}, eprint={2503.18738}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_029
   title: Resolving State Ambiguity in Robot Manipulation via Adaptive Working Memory
     Recoding
@@ -463,7 +463,7 @@ papers:
     via Adaptive Working Memory Recoding}, author={Hu, Qingda and others}, year={2025},
     eprint={2512.24638}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_030
   title: 'RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for
     Robot Manipulation'
@@ -480,7 +480,7 @@ papers:
     Intelligence Normative Data for Robot Manipulation}, author={Wu, Kun and others},
     year={2024}, eprint={2412.13877}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_031
   title: 'ATOM-Bench: A Real-World Benchmark for Atomic Skills and Compositional Generalization
     in Manipulation Policies'
@@ -497,7 +497,7 @@ papers:
     Atomic Skills and Compositional Generalization in Manipulation Policies}, author={Wu,
     Zenan and others}, year={2026}, eprint={2606.16826}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_032
   title: 'Online Self-Calibration for Visual-Inertial Navigation Systems: Models,
     Analysis and Degeneracy'
@@ -514,7 +514,7 @@ papers:
     Navigation Systems: Models, Analysis and Degeneracy}, author={Yang, Yulin and
     others}, year={2022}, eprint={2201.09170}}'
   status: downloaded
-  evidence_level: weak
+  screening_relevance: low
 - id: paper_033
   title: 'SCIZOR: A Self-Supervised Approach to Data Curation for Large-Scale Imitation
     Learning'
@@ -531,7 +531,7 @@ papers:
     Data Curation for Large-Scale Imitation Learning}, author={Zhang, Yu and others},
     year={2025}, eprint={2505.22626}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_034
   title: 'ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot
     Data Curation'
@@ -548,7 +548,7 @@ papers:
     Influence Functions for Robot Data Curation}, author={Xu, Tao and others}, year={2026},
     eprint={2606.16208}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high
 - id: paper_035
   title: Language-Conditioned Change-point Detection to Identify Sub-Tasks in Robotics
     Domains
@@ -564,4 +564,4 @@ papers:
     to Identify Sub-Tasks in Robotics Domains}, author={Raj, Divyanshu and others},
     year={2023}, eprint={2309.00743}}'
   status: downloaded
-  evidence_level: direct
+  screening_relevance: high

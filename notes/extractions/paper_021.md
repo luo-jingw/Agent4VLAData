@@ -21,8 +21,8 @@
 - 集成策略在低数据 regime 显著提升 IL 性能（如 Stack 50 demos：IL 4.8±4.1 → Ens 29.6±7.8；Pick&Place 25 demos：30.4±6.0 → 48.8±5.6），高数据 regime 偶有下降（不可恢复失败时来不及切换）。
 - 前馈 LLM 策略脆弱：walking stack 任务仅 14% 成功率。
 - 硬件（Franka Panda mug cleanup，物体位置/朝向随机化）：生成 100 成功示范 + 32 失败，总成功率 75.8%；最佳标注平均 82%；无优化仅 45%；IL 60%、前馈 80%、集成 85%（各 20 trials）。
-## 证据等级
-- 等级: direct
+## 候选相关性（总体）
+- 总体相关性: high
 - 理由: 直接研究 LLM 驱动的示范数据增强；在标准基准（RoboMimic/MimicGen、OneACTPlay）上与人工标注基线逐任务对比生成成功率与下游 IL 性能，并有真实硬件端到端验证。
 ## 引用
 - §III-A 假设、§III-B 关键位姿识别与修改（LLM 两阶段）、§III-C 轨迹扭曲、§III-D 多臂老虎机优化、§III-E 集成、§III-F 硬件位姿估计；§IV Results（Table II 生成成功率、Table III/IV 下游 IL 与集成、walking stack 14%）；§IV-A Hardware Experiments（75.8%/82%/45%/60%/80%/85%）；§V 局限（依赖 rollout 验证、优化目标不计 LLM 成本）。

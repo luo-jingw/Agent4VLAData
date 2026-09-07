@@ -106,7 +106,7 @@
 [paper_019](https://arxiv.org/abs/2401.12963), [paper_009](https://arxiv.org/abs/2407.03502)；④成本是一等公民（当前文献普遍不报 LLM 成本，
 GAP-04）[paper_019](https://arxiv.org/abs/2401.12963), [paper_021](https://arxiv.org/abs/2509.20070)；⑤人机监督带宽设计 [paper_019](https://arxiv.org/abs/2401.12963)。
 
-**严格口径的"VLA 数据处理 agent"不存在（GAP-11）**：组件级先例齐全，
+**严格口径的"VLA 数据处理 agent"在已声明检索范围内未发现（GAP-11）**：组件级先例齐全，
 系统组合为空白。
 
 ## 4 管线模块级证据（RQ3）

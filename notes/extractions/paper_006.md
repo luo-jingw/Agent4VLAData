@@ -25,8 +25,8 @@
 - 评价体系（§6.2）四维度：utility（任务完成成功率为主）、sociability（语言沟通、合作谈判、角色扮演）、values（诚实、无害、情境适应）、ability to evolve continually（持续学习、autotelic learning、新环境适应；文中称评价标准尚难建立）。
 - 风险与开放问题（§6.3–6.5）：对抗鲁棒性、可信性、滥用；agent 数量扩展（pre-determined 与 dynamic scaling）；是否通向 AGI 的争论等。
 
-## 证据等级
-- 等级: direct
+## 候选相关性（总体）
+- 总体相关性: high
 - 理由: 该论文本身即对"LLM agent 基础"（框架、分类、应用、评价）的系统论述，直接覆盖调研问题；但其论断来自对他人文献的归纳，非本文原创实验。
 
 ## 引用

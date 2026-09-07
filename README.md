@@ -40,7 +40,7 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 **设计阶段**
 
 - [设计框架](docs/design/design_framework.md)——L0–L4 分层与旋钮体系
-- [设计草稿](docs/design/design_draft.md)——十模块接口、指标工具、agent 工具（draft）
+- [设计草稿](design/design_draft.md)——十模块接口、指标工具、agent 工具（draft，未验证）
 
 **项目状态**
 

@@ -13,7 +13,22 @@
 ## 禁止
 - 不新增论文
 - 不写最终综述
+- 不自行搜索（发现缺口只声明状态，不执行检索）
 - 不一次加载全部 extraction（按问题分批，单批 ≤15 篇）
+
+## 回边
+发现关键证据缺失时，在 gap_list 中输出：
+
+```yaml
+research_status: search_required
+gap_id:
+rq_id:
+missing_evidence_type:
+suggested_query:
+```
+
+coordinator 唯一允许的后续动作是回到 literature-scout 执行新检索；
+`research_status: sufficient` 才进入 Phase 7。
 
 ## Token 约束
 - 输入：每批 ≤15 篇 extraction + 1 个研究问题

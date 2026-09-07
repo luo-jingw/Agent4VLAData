@@ -27,3 +27,6 @@
 - 只输出问题清单，不修改原文
 - 每个问题标注严重程度（严重/中等/轻微）
 - 每个问题标注涉及的文件和行（或段落）
+- 发现关键证据缺失时输出 `research_status: search_required`
+  （附 gap_id / rq_id / missing_evidence_type / suggested_query），
+  由 coordinator 决定是否回到 literature-scout；不自行搜索

@@ -93,6 +93,15 @@ project/
 
 ---
 
+## 缺口驱动的再检索（回边）
+
+调研不是单向 DAG。evidence-mapper 或 critic-reviewer 发现关键证据缺失时，
+只输出显式状态 `research_status: {sufficient, search_required}`；
+`search_required` 必须附 gap_id / rq_id / missing_evidence_type /
+suggested_query。唯一允许的后续动作是由 coordinator 决定回到
+literature-scout（新一轮搜索），再走 download → extract → map。
+职能隔离保持不变：mapper/critic 只声明缺口，不亲自搜索。
+
 ## 8 个 subagent
 
 ### 1. problem-framer
@@ -126,8 +135,11 @@ project/
 - **职责：** 把 extraction 映射到研究问题
 - **输入：** `notes/extractions/*.md`
 - **输出：** `evidence_matrix.md`、`gap_list.md`
-- **禁止：** 不新增论文、不写最终综述
+- **禁止：** 不新增论文、不写最终综述、不自行搜索
 - **原则：** 每条 evidence 可追踪到 paper，标注证据等级
+- **回边：** 发现关键证据缺失时输出 `research_status: search_required`
+  （附 gap_id / rq_id / missing_evidence_type / suggested_query），由
+  coordinator 决定回到 literature-scout；sufficient 才进入 Phase 7
 
 ### 6. synthesis-writer
 - **职责：** 基于 evidence_matrix 写综述
@@ -162,7 +174,7 @@ project/
 | 6 | 构建 evidence matrix | evidence-mapper | evidence_matrix.md, gap_list.md | 按问题分批，每批≤15篇 |
 | 7 | 生成综述初稿 | synthesis-writer | review_draft.md | 按章生成，每章≤150行 |
 | 8 | 反方审查 | critic-reviewer | critical_review.md | 单次，≤draft 50% |
-| 9 | 修订综述 | revision-agent | revised_review.md | 单次，改动≤30% |
+| 9 | 修订综述 | revision-agent | revised_review.md | 单次，改动目标≤30%；预计超过则 STOP，将草稿标记为结构性无效，返回 synthesis/plan 重写 |
 
 ---
 
@@ -215,8 +227,9 @@ papers:
 
 ## 关键发现
 
-## 证据等级
-- 等级: direct/indirect/weak/irrelevant
+## 候选相关性（总体）
+- 总体相关性: high/medium/low（筛选记录，非证据等级）
+- 关联 RQ: RQ1.1 / RQ3.2（按需列出）
 - 理由:
 
 ## 引用
@@ -282,7 +295,7 @@ papers:
 | evidence-mapper | 每轮 ≤15 篇 | matrix 每问题 ≤20 行 |
 | synthesis-writer | matrix + gap_list | 每章 ≤150 行 |
 | critic-reviewer | draft + matrix | review ≤ draft 行数 50% |
-| revision-agent | draft + review | 改动 ≤原 draft 30% |
+| revision-agent | draft + review | 改动目标 ≤30%；>30% 时视为需要重写而非修订，STOP 回 synthesis |
 
 ---
 

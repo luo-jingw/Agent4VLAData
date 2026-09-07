@@ -22,8 +22,8 @@
 - 隐藏任务：zero-shot VOC 基本处于或低于随机水平；two-shot 普遍改善，但多数仍弱（约 0.1–0.3），少数中等（≥0.4），极少数强（≥0.7）——这些长时程/精细操作任务仍具挑战性（Fig. 3）。
 - 策展演示（均定性，无下游策略数字）：excavator_toy_v3 指令"Dig grass and dump in dump truck"任务定义不清，VOC 无法持续上升，可由 VOC 检出；1500_chess_moves 的 VOC 低 + 摄像头被灯光遮蔽；pickplace_joint 指令歧义（"take out a vial and put it into another pocket"）导致 VOC 很低，此类数据可能损害 VLA 预训练；so101_60_new 中 episode 93（150 条中唯一显著异常）进度曲线涨落异常，可识别执行失败/传感器故障/错误任务解读。
 
-## 证据等级
-- 等级: direct
+## 候选相关性（总体）
+- 总体相关性: high
 - 理由: 直接测量 VLM 预测时间任务进度的能力（VOC 定量、多模型对比），并用该能力做数据标注/过滤演示——与"用进度预测做数据策展"的调研问题直接对应；但策展部分证据为定性案例，无下游训练收益的定量验证。
 
 ## 引用

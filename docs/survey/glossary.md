@@ -37,6 +37,9 @@
 
 ## 证据等级
 
+等级是（论文, 研究问题）的二元关系，唯一归属 `synthesis/evidence_matrix.md`。
+metadata 的 `screening_relevance` 是筛选用总体相关性，不是证据等级。
+
 | 等级 | 定义 |
 |---|---|
 | direct | 直接回答调研问题 |

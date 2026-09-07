@@ -1,5 +1,9 @@
 # Problem
 
+> 状态：本计划 13 个 phase 全部完成（调研阶段）。设计阶段工作当前在
+> `docs/design/`、`design/`、`issues.md`、`opportunities.md`；实验阶段的新 plan
+> 待批准后另起。
+
 ## Current
 
 - 现有数据处理管线 = 纯几何动作重采样（`g2-orion05-resample-training.zip`）：
@@ -55,7 +59,8 @@
 
 - 候选文献状态唯一归属 `papers/candidates.yaml`。
 - 下载状态唯一归属 `papers/metadata.yaml` + `logs/download_log.md`。
-- 证据等级唯一归属 `notes/extractions/*.md` 与 `synthesis/evidence_matrix.md`。
+- （论文, 研究问题）级证据关系唯一归属 `synthesis/evidence_matrix.md`；
+  metadata 的 `screening_relevance` 与抽取的候选相关性只作筛选记录，不承担证据等级。
 - 结论只出现在 `synthesis/` 与 `docs/` 定稿；`docs/` 只收修订后的定稿与
   已验证的调研定义（研究问题、术语、标准），不收草稿与未决假设。
 
