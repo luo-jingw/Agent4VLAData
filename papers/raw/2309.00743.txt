@@ -1,0 +1,771 @@
+
+===== PAGE 1 =====
+Language-Conditioned Change-point Detection to
+Identify Sub-Tasks in Robotics Domains
+Divyanshu Raj, Chitta Baral, Nakul Gopalan
+School of Computing and Augmented Intelligence, Arizona State University
+{draj5, cbaral, ng}@asu.edu
+Abstract—In this work, we present an approach to identify
+sub-tasks within a demonstrated robot trajectory using language
+instructions. We identify these sub-tasks using language provided
+during demonstrations as a guidance to identify sub-segments of
+a longer robot trajectory. Given a sequence of natural language
+instructions and a long trajectory consisting of image frames
+and discrete actions, we want to map an instruction to a smaller
+fragment of the trajectory. Unlike previous instruction following
+works which directly learn the mapping from language to a
+policy, we propose a language-conditioned change-point detection
+method to identify sub-tasks in a problem. Our approach learns
+the relationship between constituent segments of a long language
+command and corresponding constituent segments of a trajectory.
+These constituent trajectory segments can be used to learn sub-
+tasks or sub-goals for planning or options as demonstrated by
+previous related work [9]. Our insight in this work is that the
+language-conditioned robot change-point detection problem is
+similar to the existing video moment retrieval works [13, 14] used
+to identify sub-segments within online videos. Through extensive
+experimentation, we demonstrate a 1.78±0.82% improvement
+over a baseline approach in accurately identifying sub-tasks
+within a trajectory using our proposed method. Moreover, we
+present a comprehensive study aimed at investigating sample
+complexity requirements on learning this mapping, between
+language and trajectory sub-segments, to understand if the video
+retrieval based methods are realistic in real robot scenarios.
+I. INTRODUCTION
+Language-to-policy grounding approaches generally map
+language directly to policies without explicitly learning which
+parts of the language commands map to which constituent
+sub-tasks of a demonstrated trajectory. Such an approach can
+cause difficulty in reusing sub-tasks to solve novel tasks even
+if these sub-tasks exist within previously demonstrated tasks.
+We present our approach for identifying sub-tasks within a
+demonstrated trajectory using paired language instructions.
+Our approach breaks down instructions into sub-segments and
+trajectories into corresponding sub-tasks. Natural language
+instructions such as “Turn around and go to the desk” are seg-
+ments of a longer instructions. Their corresponding trajectory
+consisting of image frames and actions can be considered as
+demonstrations for their sub-tasks as shown in Figure 2. Such
+an approach can allow the robot to comprehend and identify
+sub-tasks, improving their capacity to generalize and solve
+novel longer horizon tasks.
+Instruction-following problems solved using techniques
+such as Semantic parsing required pre-specifying goal and
+subgoal conditions [17, 1]. However, recent approaches such
+as learning mappings from language to reward functions
+through inverse reinforcement learning and leveraging large-
+scale language model pre-training have enabled robots to
+learn tasks and follow instructions more effectively. These
+approaches addressed the limitations of traditional methods
+and improved exploration in reinforcement learning. Another
+line of work related to our approach is moment retrieval, where
+a moment of a video is retrieved given a natural language
+command [15]. We approach the robot sub-task identification
+problem as a video moment retrieval problem [14], that is,
+to identify the part of a robot trajectory representing a sub-
+task that is specified by a segment of the complete language
+command. Moreover, we have transformed the ALFRED [21]
+dataset to a changepoint detection dataset, where we combine
+sequential low-level language instructions as the long language
+instruction and find the constituent trajectory segment for each
+constituent segment of language instructions.
+Our work makes three significant contributions. Firstly, we
+successfully adapted the moment retrieval technique, com-
+monly used in video analysis with natural language queries,
+to the robotics domain. This adaptation enabled us to de-
+tect changepoints within robot trajectories based on natural
+language instructions, resulting in improved changepoint de-
+tection compared to previous approaches that learned sub-
+tasks separately. Additionally, we conducted an ablation study
+that explored different trajectory definitions and assessed the
+impact of training data size on the models’ ability to accurately
+localize and segment trajectories. The findings from this study
+provide valuable insights for future research in this field.
+II. RELATED WORK
+Semantic parsing has been used to solve instruction-
+following problems [17, 1]. This requires goal conditions
+and subgoal conditions to be pre-specified. MacGlashan et
+al. [16] learned mapping from language to a reward function
+learned via Inverse Reinforcement learning with objects and
+rooms pre-specified in their domains, and not learned from
+scratch. Other end-to-end learning methods require millions
+of episodes to learn simple behaviors using reinforcement
+learning [11], [4]. Gopalan et al. [9] address the challenge
+of enabling robots to learn tasks and follow instructions by
+learning sub-tasks using change point detection and then
+mapping language to these sub-tasks demonstrating general-
+izable planning. In this work we only attempt to solve the
+language-based changepoint detection problem at a large scale
+and do not attempt to use these segments for planning. The
+arXiv:2309.00743v1  [cs.RO]  1 Sep 2023
+
+===== PAGE 2 =====
+paper [5] introduces ELLM (Exploring with LLMs), a method
+that utilizes large-scale language model pretraining to shape
+exploration in reinforcement learning.
+Previous work in video moment retrieval has demonstrated
+the use of language to retrieve a segment of a video that
+matches the language query. [7, 10, 14, 13]. More recent
+approaches use multi-modal language-based end-to-end trans-
+former models to identify spoken sentences [23] or moments
+within videos [2, 24, 20, 18] specified using a language query.
+The paper by Lei et al. [14] introduces the Query-based Video
+Highlights (QVHIGHLIGHTS) dataset, consisting of over
+10,000 YouTube videos annotated with human-written natural
+language queries, relevant moments, and saliency scores.
+III. DATASET CREATION FROM ALFRED
+We have used ALFRED [21] (Action Learning From Re-
+alistic Environments and Directives), a dataset for learning
+a mapping from natural language instructions to robotics
+trajectory for household tasks. ALFRED consists of expert
+demonstrations for 25k natural language directives. These
+directives contain high-level goals like “Examine the vase
+by lamplight.” and low-level language instructions like “Turn
+around and go to the desk”. We have used low-level language
+instructions, discrete actions, and image frames to make a
+new dataset for our experiment. Visual example for the above
+trajectory demonstration is shown in Figure[2, 3, 4, 5].
+A. Conversion Process
+The ALFRED dataset has 2435 tasks and each task has
+three trials. For each trial, there are three sets of high-level
+and low-level language instructions. First, the image frames
+are converted to videos with a frame rate of five frames per
+second. The low-level language instructions in ALFRED that
+were mapped to image frames are now mapped to video
+seconds as relevant windows. The video is further broken
+down into two-second clips with 0 index and relevant indexes
+are stored as relevant clip ids. For example, if the low-level
+language instruction ”Walk to the coffee maker on the right”
+is mapped to image frame numbers from 10 through 50, the
+relevant windows with have the window [2, 10] (in seconds)
+and the relevant clip ids will have [1, 2, 3, 4]. For each entry
+in relevant clip ids, we have assigned a highlight score of four
+which is the highest because all the moments are important
+in the selected window. The trajectory also includes discrete
+actions. We map the actions to a number of frames, as one
+action can lead to multiple image frames. A discrete action
+MoveForward can refer to multiple image frames. As moving
+forward may require the robot to move forward multiple
+times which will change image frames multiple times whereas
+another action PickObject may only refer to one movement
+resulting in the change of just one image frame. These discrete
+actions need to be mapped with the image frames for data
+creation. Then the actions are mapped to the video seconds in
+a similar way and then reducing it by five times after mapping.
+At the end of this pre-processing one or multiple discrete
+actions have been mapped to every second of the video.
+The final dataset has trajectories with corresponding videos
+of n seconds, and a n size discrete action list. For all the
+low-level language instruction, which is on average six per
+trajectory, we have a relevant windows, relevant clip ids, and
+saliency scores. The process of preparation of a trajectory is
+shown in Figure[1] -
+Fig. 1.
+Trajectory Preparation
+B. Processed Dataset Format
+The processed dataset contains 6.8K trajectories in total.
+There are 146.1K low-level language instructions across all
+the trajectories. For training the model, we need features per
+trajectory and features for every query. This dataset can be
+further used for various other tasks such as next sub-task
+prediction, and trajectory retrieval.
+We have extracted trajectory features as shown in Figure[1].
+For each trajectory t we have a video v comprised of a
+sequence of Lv clips, and discrete action a comprised of a
+sequence of La actions where Lv = La. The video v’s feature
+denoted by Ev is extracted using HERO [15] feature extractor,
+which extracts CLIP [19] features Ev(CLIP ) ∈R(Lv/2)×512
+and SlowFast [6] features Ev(SF ) ∈R(Lv/2)×2304 for every
+two second clip. The discrete action a whose feature is denoted
+by Ea is extracted using CLIP features Ea ∈R(La/2)×512.
+Finally, the trajectory t feature denoted by Et is the concate-
+nation of video features Ev and action features Ea, Et ∈
+R(Lv/2)×3328. For the low-level language instruction q of Lq
+tokens, the feature denoted by Eq is extracted using CLIP
+features, where Eq ∈RLq×512. Table III in the Appendix
+contains the analysis of the new dataset.
+IV. METHODS
+We want to detect the sub-tasks in the trajectories from
+the given low-level natural language instructions. Given a
+low-level natural language instruction q of Lq tokens, and
+a trajectory t of a sequence of Lt seconds comprising of
+video v of Lv clips and discreet actions a of La length,
+
+===== PAGE 3 =====
+Features
+Changepoint Detection
+Highlight Detection
+CLIP
+Actions
+SlowFast
+Loss
+R1
+mAP
+>= Very Good
+Video
+Actions
+Video
+L1
+gIoU
+Saliency
+CLS
+Contrastive
+@0.5
+@0.7
+@0.5
+@0.75
+avg
+mAP
+HIT@1
+✓
+✓
+✓
+✓
+✓
+✓
+83.6±0.47
+64.2±0.77
+89.4±0.29
+68.8±0.72
+65.5±0.21
+82.6±0.58
+73.7±1.00
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+84.8±0.39
+65.6±0.59
+90.6±0.34
+70.3±0.46
+66.7±0.19
+85.3±0.33
+77.6±0.73
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+85.1±0.48
+65.8±0.74
+90.9±0.31
+70.4±0.48
+66.7±0.22
+85.5±0.63
+78.2±1.30
+TABLE I
+ABLATION STUDY WITH DIFFERENT DEFINITION OF TRAJECTORIES
+Dataset
+Changepoint Detection
+Highlight Detection
+Training Set
+Valid Seen
+R1
+mAP
+= Very Good
+percentage
+total
+total
+@0.5
+@0.7
+@0.5
+@0.75
+avg
+mAP
+HIT@1
+100
+6561
+250
+85.1±0.48
+65.8±0.74
+90.9±0.31
+70.4±0.48
+66.7±0.22
+85.5±0.63
+78.2±1.30
+50
+3280
+250
+81.8±0.92
+62.9±0.95
+88.6±0.63
+68.3±0.77
+64.6±0.53
+82.2±0.44
+72.3±0.97
+25
+1640
+250
+76.6±1.20
+58.5±1.32
+84.6±0.90
+64.5±1.09
+61.2±0.79
+77.9±0.89
+65.1±1.71
+20
+1312
+250
+73.9±1.59
+55.3±1.87
+82.4±1.26
+61.7±1.72
+59.0±1.15
+75.6±1.01
+62.1±1.32
+15
+984
+250
+71.4±2.02
+53.8±2.24
+80.6±1.52
+60.8±1.76
+57.5±1.43
+73.0±1.61
+58.9±1.94
+10
+656
+250
+66.7±1.38
+50.0±1.10
+76.6±1.33
+57.4±1.06
+54.1±1.09
+70.5±0.70
+55.4±1.03
+5
+328
+250
+57.7±1.25
+42.1±1.07
+68.6±1.43
+49.6±1.43
+47.0±1.18
+65.5±1.10
+50.7±1.26
+3
+197
+250
+47.8±1.23
+33.5±1.24
+59.1±1.25
+40.1±1.70
+38.2±1.28
+61.4±1.05
+45.9±1.49
+2
+131
+250
+40.7±2.50
+26.1±2.35
+51.8±2.62
+30.7±2.91
+30.6±2.30
+58.5±1.10
+42.8±1.59
+TABLE II
+ABLATION STUDY WITH VARYING TRAINING DATA SIZE
+where Lt = Lv = La, we want to find a changepoint in a
+trajectory which will be signified by consecutive frames from
+the trajectory, that are a series of images denoted as fi. We
+have taken the transformers-based video localization model
+used in the QvHighlights [14] for our dataset (converted from
+ALFRED[21]), and in this experiment, we present a strong
+baseline and ablation study for our dataset. The Moment-
+DETR model views localization as a direct set prediction,
+which is similar to our approach for changepoint detection
+in a trajectory.
+A. Architecture
+The input for the transformer encoder, same as in [22],
+[3], [14] is the features of the entire trajectory denoted by
+Et ∈R(Lv/2)×3328, and the features of low-level language in-
+struction denoted by Eq ∈RLq×512 as described in the dataset
+creation process. After that, we use separate 2-layer percep-
+trons with layernorm [12] and dropout [12] to project the
+trajectory and low-level natural language instruction features
+into a shared embedding space of size d. The projected features
+are concatenated and serve as the input to the transformers
+encoder model, denoted as Einput ∈RL×d, L = Lt + Lq.
+The trajectory and low-level language instructions as the
+input sequence are encoded in a stack of the transformer’s
+encoder layers. Each encoder layer has the same architecture
+with a multi-head self-attention layer and a Feed Forward
+network. Positional encoding is also added to the input of each
+attention layer. The output of the encoder is Eencoder ∈RL×d.
+This is passed through a stack of Transformers decoder
+layers, where each layer consists of a multi-head attention
+layer, a cross-attention layer that allows self-attention between
+encoder outputs and decoder inputs, and finally a Feed For-
+ward Network. The decoder input is a set of N trainable
+positional embeddings of size d. The output of the decoder
+is Edecode ∈RN×d.
+The salience scores S ∈RLv are predicted from encoder
+output Eencoder for the given trajectory. The decoder output
+Edecoder is passed through a 3-layer Feed Forward Network
+with ReLU [8] to predict the normalized changepoint center
+coordinate and width for the trajectory. We use a linear layer
+with softmax to predict class labels. In this dataset, since class
+labels are not available, we assign it as foreground if it
+matches ground truth or background otherwise as done in
+[14].
+We used the same loss function as used by Lei et al. [14]
+for moment localization, where predictions are matched with
+ground truth moments using the Hungarian algorithm. The
+matching cost, quantifies the dissimilarity between a prediction
+and a ground truth moment, considering the class label (fore-
+ground or background) and the changepoint center coordinates
+and width. The optimal assignment between predictions and
+ground truth moments is found by minimizing the sum of
+matching costs. The changepoint detection loss measures the
+discrepancy between the predicted and ground truth moments
+using an L1 loss and a generalized IoU loss. The saliency
+loss is computed as a hinge loss between pairs of positive and
+negative clips within and outside the ground truth moments.
+The saliency/highlightness is assigned on a two-second clip
+level on a scale of 0-4, 0 meaning ”Very Bad” and 4 meaning
+”Very Good”. For our experiment, all the two-second clips
+have ”Very Good” assignments. The overall loss is a linear
+combination of the saliency loss, the classification loss, and
+the moment localization loss, with hyperparameters to balance
+their contributions. λL1, λiou, λcls, λs = 4 are hyperparame-
+ters for balancing the loss, IoU, fore/background, and saliency
+loss respectively. We have also used contrastive loss in addition
+to the above loss functions for experimentation.
+
+===== PAGE 4 =====
+B. Feature Selection
+We have defined the trajectory as the combination of image
+frames and discrete actions. Further, we have transformed the
+trajectory to a combination of video (from image frames) and
+discrete actions. We have the trajectory t that comprises only
+the videos v with the trajectory features being the same as
+the video features, i.e., Et = Ev. Our method accepts a the
+trajectory t that comprises videos v and discrete actions a.
+The original dataset is such that the length of video clips
+is not equal to the number of discrete actions Lv̸ = La.
+The reason for this difference is because a discrete action
+such as MoveForward can refer to multiple image frames
+whereas another action such as PickObject may be completed
+with a single image frame. We mapped the length of discrete
+actions La to the image frames and then pruned it as shown
+in Figure[1], resulting in a trajectory t that has videos v and
+discrete actions a such that Lv = La. Finally, we use these
+two trajectory definitions for experimentation.
+V. RESULTS
+A. Experiment Setup
+We have used the transformed version of the ALFRED
+dataset, and we use the training data which is split into 90%
+train and 10% val and valid seen as test set data. To evaluate
+the changepoint detection, we use mean average precision
+(mAP) with IoU thresholds of 0.5 and 0.75, as well as the
+average mAP over multiple IoU thresholds [0.5 : 0.05 :
+0.95]. We have used the standard metric Recall@1 (R@1)
+used in single changepoint detection, where the prediction
+is positive for two sets of IoU, 0.5 and 0.7. For highlight
+detection, we used mAP and HIT@1 to compute the hit ratio
+for the highest-scored clip. The saliency score is assigned
+as ”very good” for all as all the moments in the sub-task
+in the trajectory are considered important in this dataset.
+2
+3
+5
+10
+15
+20
+25
+50 100
+0
+20
+40
+60
+80
+100
+Percentage(%) of Training data used
+R1@0.5 (µ)
+mAP@0.5 (µ)
+B. Results and Analysis
+We have done two ablation studies to understand how to
+best detect the changepoint. The first study is shown in Table
+I in which we have shown the impact of defining our trajectory
+in different ways. We defined trajectory in two ways, where
+first the trajectory t1 is just represented by videos v and the
+trajectory feature is the same as video feature Et1 = Ev ∈
+R(Lv/2)×2816, and the second trajectory t2 is defined as the
+combination of videos v and discrete actions a, where Lv =
+La, trajectory feature Et2 ∈R(lv/2)×3328. We have used the
+first trajectory definition t1 as our baseline result here. We
+observe that there has been 2.1% improvement in the mean
+value for R1@0.7 and 2.1% improvement for mAP@0.75 for
+changepoint detection. We also show significant improvement
+for highlight detection with 3.2% improvement for mAP and
+5.2% improvement for HIT@1. This shows the significance
+of discrete actions discussed in natural language in detecting
+sub-segments of a trajectory. For the second trajectory t2, we
+further use contrastive loss and observe a slight improvement
+for all the metrics.
+In the second ablation study shown in Table II we show the
+effect on metrics by decreasing the number of trajectories in
+training data. In a real-world robotics scenarios, having a large
+number of sample trajectories can be impossible, so this study
+is to evaluate how many trajectories would be required on an
+actual robot. With 2% of training data, we need 131 trajectory
+demonstrations, with R1@0.5 for changepoint detection of
+40.7±2.5 and mAP@0.75 of 30.7±2.9. With 50% of the data,
+i.e., 3280 trajectories we get our performance of over 80% in
+R1@0.5. This is more reasonable in terms of performance but
+still requires a large number of samples indicating an unsolved
+research problem.
+VI. CONCLUSION
+This work presents an approach to identify sub-tasks within
+a demonstrated robot trajectory using language instructions.
+Unlike previous methods that directly map language to poli-
+cies, the proposed approach employs a language-conditioned
+change-point detection method. Through extensive experi-
+mentation on the transformed ALFRED dataset, the results
+demonstrate improved sub-task identification accuracy com-
+pared to baseline approaches. The adaptation of moment
+retrieval techniques from videos to the robotics domain proves
+effective in localizing and segmenting trajectories based on
+natural language commands. A comprehensive ablation study
+examines the impact of trajectory definition and training data
+size on the model’s performance. We demonstrate that even
+2% of the data helps get an average mAP value of 30.6±2.3.
+Overall, this work contributes to enhancing the robot’s capac-
+ity to comprehend and generalize tasks, improving human-
+robot interactions, and expanding the possibilities of robotics
+in various domains.
+In future work, we will deploy a more efficient version of
+the proposed approach on an actual robot, leveraging smaller
+demonstrations based on the findings from the training data
+size ablation studies. This would involve learning a sub-task
+mapping from limited data, behavior cloning from language
+to sub-task trajectories, and exploring the combination of
+instructions to enhance the robot’s learning capabilities and
+overall robustness.
+
+===== PAGE 5 =====
+REFERENCES
+[1] Yoav Artzi and Luke Zettlemoyer. Weakly supervised
+learning of semantic parsers for mapping instructions to
+actions. TACL, 1, 2013. doi: 10.1162/tacl a 00209. URL
+https://aclanthology.org/Q13-1005.
+[2] Meng Cao, Long Chen, Mike Zheng Shou, Can Zhang,
+and Yuexian Zou. On pursuit of designing multi-modal
+transformer for video grounding. EMNLP, 2021.
+[3] Nicolas Carion, Francisco Massa, Gabriel Synnaeve,
+Nicolas
+Usunier,
+Alexander
+Kirillov,
+and
+Sergey
+Zagoruyko. End-to-end object detection with transform-
+ers. ECCV, 2020.
+[4] Devendra Singh Chaplot, Kanthashree Mysore Sathyen-
+dra, Rama Kumar Pasumarthi, Dheeraj Rajagopal, and
+Ruslan Salakhutdinov. Gated-attention architectures for
+task-oriented language grounding. AAAI, 2018.
+[5] Yuqing Du, Olivia Watkins, Zihan Wang, C´edric Colas,
+Trevor Darrell, Pieter Abbeel, Abhishek Gupta, and
+Jacob Andreas.
+Guiding pretraining in reinforcement
+learning with large language models. ICML, 2023.
+[6] Christoph Feichtenhofer, Haoqi Fan, Jitendra Malik, and
+Kaiming He. Slowfast networks for video recognition.
+ICCV, 2019.
+[7] Jiyang Gao, Chen Sun, Zhenheng Yang, and Ram Neva-
+tia.
+Tall: Temporal activity localization via language
+query. ICCV, 2017.
+[8] Xavier Glorot, Antoine Bordes, and Yoshua Bengio.
+Deep sparse rectifier neural networks.
+2011.
+URL
+https://proceedings.mlr.press/v15/glorot11a.html.
+[9] Nakul Gopalan, Eric Rosen, George Konidaris, and
+Stefanie Tellex.
+Simultaneously learning transferable
+symbols and language groundings from perceptual data
+for instruction following. RSS, 2020. URL https://www.
+roboticsproceedings.org/rss16/p102.pdf.
+[10] Lisa Anne Hendricks, Oliver Wang, Eli Shechtman, Josef
+Sivic, Trevor Darrell, and Bryan Russell.
+Localizing
+moments in video with natural language, 2017.
+[11] Karl Moritz Hermann, Felix Hill, Simon Green, Fumin
+Wang, Ryan Faulkner, Hubert Soyer, David Szepes-
+vari, Wojciech Marian Czarnecki, Max Jaderberg, Denis
+Teplyashin, Marcus Wainwright, Chris Apps, Demis Has-
+sabis, and Phil Blunsom. Grounded language learning in
+a simulated 3d world. arXiv preprint arXiv:1706.06551,
+2017.
+[12] Geoffrey E. Hinton, Nitish Srivastava, Alex Krizhevsky,
+Ilya Sutskever, and Ruslan R. Salakhutdinov. Improving
+neural networks by preventing co-adaptation of feature
+detectors. arXiv preprint arXiv:1207.0580, 2012.
+[13] Jie Lei, Licheng Yu, Tamara L. Berg, and Mohit Bansal.
+Tvr: A large-scale dataset for video-subtitle moment
+retrieval. ECCV, 2020.
+[14] Jie Lei, Tamara L. Berg, and Mohit Bansal. Qvhighlights:
+Detecting moments and highlights in videos via natural
+language queries. NeurIPS, 2021.
+[15] Linjie
+Li,
+Yen-Chun
+Chen,
+Yu
+Cheng,
+Zhe
+Gan,
+Licheng Yu, and Jingjing Liu.
+Hero: Hierarchical
+encoder for video+language omni-representation pre-
+training. EMNLP, 2020. URL https://doi.org/10.48550/
+arXiv.2005.0020.
+[16] James MacGlashan, Monica Babes-Vroman, Marie des-
+Jardins, Michael L. Littman, Smaranda Muresan, Shawn
+Squire, Stefanie Tellex, Dilip Arumugam, and Lei Yang.
+Grounding english commands to reward functions. RSS,
+2015.
+URL https://www.roboticsproceedings.org/rss11/
+p18.pdf.
+[17] Matt MacMahon, Brian Stankiewicz, and Benjamin
+Kuipers. Walk the talk: Connecting language, knowledge,
+and action in route instructions. 01 2006.
+[18] Jinwoo Nam, Daechul Ahn, Dongyeop Kang, Seong Jong
+Ha, and Jonghyun Choi.
+Zero-shot natural language
+video localization. ICCV, 2021.
+[19] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya
+Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry,
+Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen
+Krueger, and Ilya Sutskever. Learning transferable visual
+models from natural language supervision. PMLR, 2021.
+[20] Cristian Rodriguez-Opazo, Edison Marrese-Taylor, Fate-
+meh Sadat Saleh, Hongdong Li, and Stephen Gould.
+Proposal-free temporal moment localization of a natural-
+language query in video using guided attention. WACV,
+2020.
+[21] Mohit
+Shridhar,
+Jesse
+Thomason,
+Daniel
+Gordon,
+Yonatan Bisk, Winson Han, Roozbeh Mottaghi, Luke
+Zettlemoyer, and Dieter Fox.
+ALFRED: A Bench-
+mark for Interpreting Grounded Instructions for Everyday
+Tasks.
+CVPR, 2020.
+URL https://arxiv.org/abs/1912.
+01734.
+[22] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser,
+and Illia Polosukhin. Attention is all you need. NeurIPS,
+2017.
+[23] Yitian Yuan, Tao Mei, and Wenwu Zhu. To find where
+you talk: Temporal sentence localization in video with
+attention based location regression. AAAI, 2019.
+[24] Songyang Zhang, Jinsong Su, and Jiebo Luo. Exploiting
+temporal relationships in video moment localization with
+natural language. ACM, 2019.
+
+===== PAGE 6 =====
+APPENDIX
+A. Implementation Details
+The model is implemented in PyTorch. We set the hidden size d = 256, the number of layers in the encoder and decoder
+layer, T = 2, and the number of possible changepoint is N = 10. We use a dropout of 0.1 for transformer layers and 0.5
+for input projection layers. We set the loss fusion hyper parameters as λL1 = 10, λiou = 1, λcls = 4, λs = 1, ∆= 0.2. The
+model weights are initialized with Xavier init. We use AdamW with an initial learning rate of 1e −4, and weight decay of
+1e −4 to optimize model parameters. The model is trained for 200 epochs with a batch size of 256. All training is conducted
+on a single NVIDIA GeForce RTX 3090 GPU, with a training time of 4 hours for a single iteration.
+B. Example
+For a trajectory, whose overall goal is Examine the vase by lamplight, Figure[2, 3, 4, 5] show the sub-segments of low-level
+language commands along with sub-tasks from trajectories consisting of images and discrete actions. Figure[6, 10, 11, 12, 13]
+shows the prediction for changepoint detection for the sub-task in trajectory given the low-level natural language instruction
+”Turn around and go to the desk” by varying the training data points.
+Dataset Split
+#Queries / #Trajectory
+Avg
+Query Len
+Avg
+Discrete Actions
+Avg
+Instructions / Trajectory
+Avg Len (sec)
+Moment / Trajectory
+Avg
+Frames / Trajectory
+Train
+140.6K / 6.5K
+11
+49.5
+6.6
+8.7 / 65.4
+285.6
+Valid Seen
+5.5K / 250
+11
+49.6
+6.6
+8.8 / 67.7
+285.2
+TABLE III
+THE DATASET ANALYSIS AFTER TRANSFORMING THE ALFRED DATA TO CHANGEPOINT DETECTION DATA
+Fig. 2.
+[Sub Task 1]
+Overall Goal: Examine the vase by lamplight.
+Language Instruction: Turn around and go to the desk.
+Discrete Actions to Image number mapping: LookDown[1, 2], RotateLeft[3, 4, 5, 6, 7], MoveAhead[8, 9, 10], RotateLeft[11], LookDown[12]
+Fig. 3.
+[Sub Task 2]
+Overall Goal: Examine the vase by lamplight.
+Language Instruction: Pick up the yellow vase.
+Discrete Actions to Image number mapping: PickupObject[1, 2, 3, 4, 5, 6]
+
+===== PAGE 7 =====
+Fig. 4.
+[Sub Task 3]
+Overall Goal: Examine the vase by lamplight.
+Language Instruction: Turn to the left, take a step, turn right to face to lamp.
+Discrete Actions to Image number mapping: LookUp[1, 2], RotateLeft[3, 4, 5], MoveAhead[6, 7], RotateRight[7, 8, 9], MoveAhead[10, 11], LookDown[12]
+Fig. 5.
+[Sub Task 4]
+Overall Goal: Examine the vase by lamplight.
+Language Instruction: Turn on the lamp on the desk.
+Discrete Actions to Image number mapping: ToggleObjectOn[1, 2, 3, 4, 5, 6]
+Fig. 6.
+Changepoint prediction for Language Instruction (Sub Task 1 from above example): ”Turn around and go to the desk” with a model trained on
+100% Training data
+Fig. 7.
+Changepoint prediction for Language Instruction (Sub Task 2 from above example): ”Pick up the yellow vase.” with a model trained on 100%
+Training data
+
+===== PAGE 8 =====
+Fig. 8.
+Changepoint prediction for Language Instruction (Sub Task 3 from above example): ”Turn to the left, take a step, turn right to face to lamp.” with
+a model trained on 100% Training data
+Fig. 9.
+Changepoint prediction for Language Instruction (Sub Task 4 from above example): ”Turn on the lamp on the desk” with a model trained on 100%
+Training data
+Fig. 10.
+Changepoint prediction for Language Instruction (Sub Task 1 from above example): ”Turn around and go to the desk” with a model trained on
+50% Training data
+
+===== PAGE 9 =====
+Fig. 11.
+Changepoint prediction for Language Instruction (Sub Task 1 from above example): ”Turn around and go to the desk” with a model trained on
+25% Training data
+Fig. 12.
+Changepoint prediction for Language Instruction (Sub Task 1 from above example): ”Turn around and go to the desk” with a model trained on
+10% Training data
+Fig. 13.
+Changepoint prediction for Language Instruction (Sub Task 1 from above example): ”Turn around and go to the desk” with a model trained on
+2% Training data

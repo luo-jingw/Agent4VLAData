@@ -1,0 +1,907 @@
+
+===== PAGE 1 =====
+RoCoDA: Counterfactual Data Augmentation for
+Data-Efficient Robot Learning from Demonstrations
+Ezra Ameperosa∗1, Jeremy A. Collins∗1, Mrinal Jain1, Animesh Garg1,2
+Abstract— Imitation learning in robotics faces significant
+challenges in generalization due to the complexity of robotic
+environments and the high cost of data collection. We introduce
+RoCoDA, a novel method that unifies the concepts of invariance,
+equivariance, and causality within a single framework to
+enhance data augmentation for imitation learning. RoCoDA
+leverages causal invariance by modifying task-irrelevant subsets
+of the environment state without affecting the policy’s output.
+Simultaneously, we exploit SE(3) equivariance by applying
+rigid body transformations to object poses and adjusting
+corresponding actions to generate synthetic demonstrations. We
+validate RoCoDA through extensive experiments on five robotic
+manipulation tasks, demonstrating improvements in policy
+performance, generalization, and sample efficiency compared
+to state-of-the-art data augmentation methods. Our policies ex-
+hibit robust generalization to unseen object poses, textures, and
+the presence of distractors. Furthermore, we observe emergent
+behavior such as re-grasping, indicating policies trained with
+RoCoDA possess a deeper understanding of task dynamics.
+By leveraging invariance, equivariance, and causality, RoCoDA
+provides a principled approach to data augmentation in imita-
+tion learning, bridging the gap between geometric symmetries
+and causal reasoning. Project Page: https://rocoda.github.io
+I. INTRODUCTION
+Recent advances in imitation learning [1–5] have demon-
+strated the ability to teach robots complex behaviors by
+behavior cloning. These methods have shown remarkable
+success in controlled environments where the training data
+closely matches the test scenarios. Despite this, current
+approaches exhibit limited generalization capabilities when
+deployed in novel environments or on new tasks.
+In contrast, fields like natural language processing, com-
+puter vision, and audio processing have experienced gains
+in performance and generalization due to the availability of
+vast quantities of diverse data scraped from the internet.
+Robotics, however, lacks a comparable large-scale, diverse
+dataset to drive similar breakthroughs. Several attempts have
+been made to collect large-scale robotics datasets [6–9], but
+these efforts remain relatively small in comparison to other
+subfields of AI. An additional challenge is that robotics data
+does not simply contain static observations, but captures
+a complex dynamic system where states and actions are
+causally connected. However, this additional structure also
+presents an opportunity. The inherent symmetries and causal
+relationships between robot actions and environment states
+offer a rich source of information that can be exploited.
+Recognizing this allows us to focus the model’s attention on
+task-relevant subsets of the state space and generalize across
+∗equal contribution
+1Georgia Institute of Technology, 2Apptronik, Inc.
+Correspondence to: eameperosa3@gatech.edu
+BC
+Algorithm
+Causal 
+Invariance
+Hue 
+Invariance
+Obs. Noise 
+Invariance
+Trans. + Scale 
+Invariance
+  
+SE(3) 
+Equivariance
++
++
++
++
+Augmented 
+Dataset
+Sampled Datapoint
+Source 
+Dataset
+RoCoDA
+Fig. 1: RoCoDA is a data augmentation framework that leverages
+causality and several symmetry groups to expand BC datasets.
+Our pipeline consists of 5 augmentations applied in tandem –
+causally invariant counterfactual data augmentation, SE(3) equiv-
+ariant object state and trajectory augmentation, translation and
+scale invariance (resize and crop), hue invariance (color jitter), and
+observation noise invariance (proprioception noise).
+irrelevant factors.
+Our key insight is that the causal relationships inherent
+in robotics tasks can be harnessed to create more robust,
+scalable policies. By understanding which components of
+the task are causally dependent, invariant, or equivariant to
+the robot’s actions, we develop a framework for augmenting
+training data to enable policy generalization and robustness.
+We present Counterfactual Data Augmentation for Robot
+Learning (RoCoDA). Our contributions are as follows:
+1) Unified Framework for Data Augmentation: We for-
+malize the relationship between invariance, equivariance,
+and causality using group theory and probabilistic graph-
+ical models. This framework allows RoCoDA to exploit
+geometric symmetries and causal structures to produce
+robust and generalizable policies for complex robotic
+tasks.
+2) RoCoDA: We introduce a novel data augmentation
+method that leverages causal invariance, SE(3) equiv-
+ariance, and visual invariance to improve the robustness,
+generalization, and performance of behavior cloning poli-
+cies.
+II. RELATED WORK
+Behavior Cloning – Behavior Cloning (BC) is a fundamental
+approach in imitation learning where a policy is trained
+to mimic expert demonstrations by directly mapping states
+to actions. Several recent BC methods have enabled robots
+to execute complex tasks by mimicking teleoperation data.
+[1, 10] classify 3D subgoals for an end-effector to achieve,
+and [2, 11] predict latent actions using a CVAE, while [3–5]
+use diffusion, VQ-VAE, and causal convolution, respectively.
+These methods have proven extremely effective at fitting
+fine-grained, multi-modal action distributions in their training
+data.
+arXiv:2411.16959v2  [cs.RO]  20 May 2025
+
+===== PAGE 2 =====
+Despite their effectiveness on data similar to that in their
+datasets, BC methods are typically sensitive to distributional
+shifts, resulting in decreased performance when encountering
+unseen states or variations in the environment. Our approach
+addresses this limitation by incorporating causal, invariant,
+and equivariant augmentations, improving the policy’s ro-
+bustness and generalization capabilities.
+Data Augmentation for Robot Policy Learning – Data
+augmentation improves how well robot policies perform, es-
+pecially when there is limited data or challenges like moving
+from simulation to the real world. Past work shows that tech-
+niques like random crops on images or changing simulation
+settings help improve policy performance. Random cropping
+in image observations has shown improvements for both RL
+and BC methods [3, 12–16]. Domain randomization has been
+employed to bridge the sim-to-real gap by varying simulation
+parameters (e.g., texture, friction, lighting) for reinforcement
+learning algorithms [17]. State-based augmentations, such
+as adding Gaussian noise [18] improve policy resilience to
+environmental changes by smoothing the learned state-action
+space. [14] applied 3D transformations to target object poses
+and corresponding actions, thereby ensuring that the policy
+is equivariant to these transformations. Recently, generative
+models have been used for synthetic data generation as
+well [19–21].
+Causal Data Augmentation – Causal data augmentation has
+been well explored in the context of reinforcement learning
+[22–24]. CoDA [22] introduces counterfactual data augmen-
+tation for reinforcement learning by resampling subsets of the
+state space while preserving causal dependencies. MoCoDA
+[23] extends CoDA by incorporating a learned dynamics
+model, allowing for the handling of overlapping parent sets
+and enhancing the generation of causally consistent data for
+RL in more complex environments. Both of these methods
+focused on sample efficiency in low-dimensional tasks for
+offline RL. In contrast, our work enables robustness and
+generalization for vision-based behavior cloning algorithms
+on a set of complex, multi-step tasks.
+Our method, RoCoDA, builds upon these techniques by
+combining geometric equivariance with causal invariance to
+generate more diverse and causally consistent training data,
+thereby improving efficiency and generalization.
+III. A UNIFIED PERSPECTIVE ON DATA GENERATION
+In this section, we present a unified framework that con-
+nects the concepts of invariance, equivariance, and causality,
+which are central to our method, RoCoDA.
+The notions of invariance and equivariance are fundamen-
+tal in understanding the relationship between observation and
+action in robotics. These concepts are rooted in group theory,
+which provides a mathematical framework for modeling
+symmetries and transformations.
+Groups and Symmetries – A group G is a set equipped
+with an operation that satisfies four properties: closure,
+associativity, identity, and invertibility. Groups are essential
+for modeling symmetries and transformations in various
+domains, including robotics.
+(a) Visual 
+Augmentation
+(b) Counterfactual 
+Augmentation
+(c) Equivariant 
+Augmentation
+(d) Ours
+Geometric 
+Transformation
+Sampled from 
+Data Distribution
+Visual 
+Transformation
+Fig. 2: Causal structures for various augmentation methods. (a)
+Visual augmentation performs transformations to images that do
+not affect state-action dynamics in the environment. (b) Counter-
+factual augmentation factors the state space into causally invariant
+subspaces (si and sj), and resamples these subspaces from the
+training data distribution to generate synthetic data. (c) Equivariant
+augmentation performs a transformation on the pose of a target
+object associated with a subtask, and uses that same transform
+to augment the associated actions. (d) RoCoDA unifies these
+augmentation schemas.
+Invariance and Equivariance – The function f : X →Y
+is G-equivariant if ∀x ∈X and g ∈G, f(g · x) =
+g · f(x), where · denotes the group action of G on the
+respective spaces. Equivariance ensures that applying a group
+transformation before or after f yields consistent results
+under the group action on Y .
+f is G-invariant if, ∀x ∈X and g ∈G, f(g · x) = f(x).
+Invariance is a special case of equivariance where the group
+action on Y is trivial, i.e. g · y = y ∀y ∈Y and g ∈G.
+Policies as Group Actions – A policy π : S →A represents
+a group action when the following conditions hold:
+1) There exists a group G that acts on the state space S via
+a group action ϕS : G × S →S. This means that for any
+group element g ∈G and state s ∈S, the transformation
+g · s is a valid operation in S.
+2) There is a corresponding action of G on the action
+space A, denoted ϕA : G × A →A. This ensures that
+applying a group transformation to the state will induce
+a transformation on the action.
+3) The policy π is equivariant with respect to the group
+action, meaning that applying a transformation g ∈G to
+the state induces the same transformation in the action:
+π(g · s) = g · π(s),
+∀g ∈G, ∀s ∈S
+This relationship implies that the policy respects the group
+structure and that actions taken in transformed states are
+consistent with the transformations applied to the original
+states. We leverage geometric equivariance by applying
+random SE(3) (rigid body) transformations to object poses
+and transforming the corresponding actions, thus generating
+diverse yet consistent training examples that respect the
+task’s spatial symmetries.
+A. Causality: Data Generation with Counterfactuals
+The state input s to a robot policy π(s) can often be
+decomposed into partitions s = (sC, sI), where sC con-
+tains causally relevant variables, and sI contains causally
+irrelevant variables with respect to the action a. We can
+
+===== PAGE 3 =====
+Visual 
+Augmentation
+Causally Invariant
+ Augmentation
+SE(3) Equivariant 
+Augmentation
+BC
+Algorithm
+Demonstration
+Data
+Fig. 3: RoCoDA consists of three stages: SE(3) equivariant state-action augmentation, causal augmentation, and visual augmentation.
+We first apply rigid body transformations to object poses and identically transform the corresponding actions. Then, we resample subsets
+of the environment state that are causally invariant to the action. Lastly, we apply several standard augmentations, including random
+resize/crop, color jitter, and state noise, all of which leverage invariance aspects of the observation with respect to actions (see Section
+IV-C).
+then consider the policy as a function of sC alone: π(s) =
+π (sC, sI) = π (sC), implying that the action is invariant
+to changes in sI. Notably, this independence of sC, sI
+allows us to manipulate sI without affecting the action π(s).
+Subsequently, we can generate counterfactual data points, by
+choosing different sI, without affecting π(s), as long as sC
+remains unchanged.
+We can say that the policy π(s) is causally invariant to sC.
+In this context, the policy represents a function with some
+group action G consisting of transformations that only affect
+causally irrelevant components of the state, while leaving
+causally relevant components unchanged:
+π (g · (sC, sI)) = π (sC, g · sI) = π (sC) ,
+∀g ∈G
+Factored MDPs – We model the environment as a Markov
+Decision Process (MDP) defined by the tuple ⟨S, A, P⟩,
+where S is the state space, A is the action space, and P
+is the transition function. In complex environments with
+multiple objects, the number of states can be exponential
+in the number of objects, making learning challenging [23].
+To manage this complexity, we consider Factored MDPs
+(FMDPs), where the state and action spaces are described
+by sets of variables
+
+Xi	
+, such that S × A = X 1 × X 2 ×
+· · · × X n. Each state variable Xi depends on a subset of
+variables Pa
+ Xi
+at the previous time step, known as its
+parents.
+Local Causal Models – In practice, the global factor-
+ization assumed by FMDPs is rare. We instead lever-
+age Local Causal Models (LCMs), where the state-action
+space decomposes into disjoint local neighborhoods {Lk}.
+Each neighborhood Lk is associated with its own transi-
+tion function P Lk and causal graph GLk. In this frame-
+work, if (st, at)
+∈
+Lk, each state variable Xi
+t+1 de-
+pends on its parents PaLk  Xi
+t+1
+
+at the previous time
+step: Xi
+t+1 ∼P Lk
+i
+ PaLk  Xi
+t+1
+
+. We refer to the tuple
+D
+Xi, PaLk  Xi
+, P Lk
+i
+E
+as a causal mechanism.
+This local factorization captures the idea that objects may
+interact over time but do so in a locally sparse manner. For
+example, during a dual-arm handover task, one arm’s actions
+directly affect an object and the other arm only during the
+handover causal phase.
+A causal graph is a directed acyclic graphical model
+where nodes represent variables (state components), and
+edges represent causal dependencies. The adjacency matrix
+A of the graph encodes these dependencies, where Aij = 1
+indicates that Xj is causally dependent on Xi. By construct-
+ing causal graphs for each causal phase (subtask), we can
+determine the local causal structures governing the dynam-
+ics, thereby enabling us to partition the state into causally
+independent subsets, enabling efficient data augmentation
+through independent sampling from these partitions.
+IV. ROCODA: GENERALIZED DATA AUGMENTATION
+RoCoDA aims to improve the generalization and robust-
+ness of imitation learning policies by leveraging both the
+causal structure inherent to robotic tasks and the equivariance
+of robotic actions to task-relevant objects. A graphical model
+of our method vs other data augmentation methods is shown
+in Figure 2. Notably, previous works only perform a single
+type of augmentation, while we can perform fundamentals-
+guided simultaneous augmentations across multiple indepen-
+dently varying quantities.
+We achieve this by augmenting a small dataset in the
+following manner:
+1) Counterfactual Data Augmentation: We create a causal
+graph for each subtask within the demonstrations. This
+allows us to resample and mix subsets of the state space
+from different trajectories, ensuring causal consistency.
+2) Equivariant Data Augmentation via SE(3) Transfor-
+mations: We expand the dataset by exploiting the special
+Euclidean group (SE(3)) equivariance of actions with
+respect to object poses. This involves applying random
+transformations (translation + rotation) to object poses
+and adjusting the corresponding actions accordingly.
+3) Standard Augmentation: We also apply standard data
+augmentations, which we refer to as Camera Translation
+Invariance (random crop), Hue Invariance (color jitter),
+and Observation Perturbation Invariance (state noise), to
+enhance the diversity of the dataset.
+A. Counterfactual Data Augmentation
+We leverage the causal relationships between different
+entities in the environment to augment our dataset. This
+involves generating causal graphs for each causal phase
+(subtask) and resampling subsets of the state space while
+maintaining causal consistency.
+For a particular demonstration, let the state of the i-th
+entity be denoted as Xi. The state for the entire system
+
+===== PAGE 4 =====
+can be represented as X = (X1, X2, . . . , Xn) where n is
+the number of entities in the environment. If the entities
+are causally independent, we can assume that the joint
+distribution of their states can be factored into independent
+marginal distributions:
+P(X) = P(X1, . . . , Xn) =
+n
+Y
+i=1
+P(Xi)
+Similarly, if causal dependencies exist between X1 and X2
+and are independent of all other entities, the joint distribution
+can be factorized as independent subsets of states:
+P(X) = P(X1, X2)
+n
+Y
+i=3
+P(Xi)
+Notably, the state can be factored into independent subsets,
+the data can be augmented by sampling in the product
+space of individual subsets [22]. In the context of robotic
+manipulation, sampling from the product space of factorized
+state partitions involves selecting object states from different
+demonstrations while ensuring consistency with the joint
+distribution of dependent states.
+Moreover, we define causal phases in a task trajectory
+with a heuristic based on invariant transitions. For manipu-
+lator arms, changes in the gripper state (i.e., when the gripper
+opens or closes) result in non-interacting causal phases in the
+task. This segmentation allows us to construct causal graphs
+for each subtask. We can define causal graphs for each causal
+phase, by identifying causally independent entities during
+each phase. For tasks where multiple agents are present,
+it is often not practical to define a causal graph for all
+combinations of causal phases for all agents. Hence, we
+generate individual causal graphs for each agent, for each
+causal phase.
+For each causal phase, we construct an adjacency matrix
+using the dependencies of state variables across time. We
+construct a joint causal graph over all state variables as a
+joint block-diagonal adjacency matrix. Let A1 and A2 be
+the adjacency matrices for two agents. We compute this joint
+adjacency matrix as:
+A = (A1 ∨A2) ∨(A1 ∨A2)T ,
+The aforementioned process partitions the state space into
+subsets given the causal graph(s) associated with a causal
+phase. Entities that are causally dependent are placed in
+the same partition of the state space. For each partition, we
+sample states from a different trajectory in the dataset in the
+same causal phase, ensuring that causally dependent entities
+remain consistent. Independently sampling states from each
+group creates new states that respect the causal structure of
+the causal phase. By maintaining causal dependencies, these
+new states result in valid trajectories that the policy can learn
+from. In practice, we also use a simulator to sample object
+states from partitions of the state space, and then render the
+resulting augmented state before inputting it into an image-
+conditioned behavior cloning algorithm.
+Counterfactual data augmentation creates synthetic dat-
+apoints which are out-of-distribution but follow the same
+causal structure as data generating distribution.
+B. SE(3)-Equivariant Data Augmentation
+We exploit the SE(3) equivariance of robotic actions to
+object poses. This means that applying a transformation to
+the object poses can be compensated by a corresponding
+transformation to the actions, preserving the structure of the
+task. Formally, let Tobj(st) be the homogeneous transforma-
+tion between the pose of a target object in the source dataset
+and the current pose of the target object, and let Tact(at)
+be the corresponding transformation applied to the current
+action. Then we have s′ = Tobj(st), and a′ = Tact(at).
+Let D be a limited dataset of task demonstrations D =
+{τi}N
+i=1, where each trajectory τi = (st, at)Ti
+t=1 consists of
+states st and actions at. These trajectories are split into
+subtasks to generate sub-trajectories, with each subtask being
+associated with a target object. Sub-trajectories are aug-
+mented by randomly generating an unseen pose for the target
+object, sampling a sub-trajectory from the original dataset,
+and transforming this sub-trajectory using the homogeneous
+transformation between the target object and the same ob-
+ject’s pose in the original dataset. This preserves the gripper
+pose from the original dataset with respect to the target
+object at every time step. Following [14], we add a linear
+interpolation segment at the start of the augmented sub-
+trajectory to move the robot into a path that overlaps with the
+corresponding gripper pose in the sampled original segment.
+We additionally save states and actions from augmented
+sub-trajectories that successfully completed the subtask, and
+discard those that did not succeed.
+We assume that we can determine whether an augmented
+trajectory successfully completes a subtask, in line with
+prior work [14]. Trajectories that do not result in successful
+completion are discarded, ensuring that the policy learns
+from valid demonstrations.
+C. Standard Data Augmentation
+Following prior work, we apply traditional data augmen-
+tation techniques to the observations to enhance robustness:
+Camera Translation Invariance – Random cropping has
+found success in training image-based methods [3, 12–
+16]. We use random resizing and cropping to encourage
+translation and scale invariance.
+Lighting and Hue Invariance – We use color jitter to make
+the model robust to lighting conditions and object colors.
+Note that this cannot be used when colors are relevant to the
+task, such as in the Stack Three task.
+Observation Noise Invariance – Inspired by [18], we find that
+adding Gaussian noise to observation enhances performance
+and improves model robustness.
+V. RESULTS
+Through our experiments, we aim to answer the following
+questions:
+RQ1: How does encoding causal dependencies between
+states and actions enhance policy performance compared to
+models that assume i.i.d. data?
+RQ2: What is the impact of counterfactual data augmenta-
+tion on the generalization capabilities of behavior cloning
+
+===== PAGE 5 =====
+Three Block Stack
+Three Piece Assembly
+Coffee
+No Augmentation (Vanilla-ACT)
+0.33 ± 0.47
+0.33 ± 0.47
+0.0 ± 0.0
+MimicGen [14] (ACT)
+57.0 ± 3.30
+9.3 ± 0.94
+44.3 ± 1.70
+RoCoDA w/o {Visual, Causal}
+58.7 ± 3.09
+11.3 ± 0.47
+45.0 ± 1.63
+RoCoDA w/o {Visual}
+69.3 ± 1.25
+13.7 ± 1.89
+47.0 ± 2.16
+RoCoDA (Full)
+71.3 ± 1.25
+15.7 ± 2.05
+49.3 ± 1.25
+TABLE I: Success rate (%) We com-
+pare the maximum success rate over
+policy rollouts and average over 3 seeds
+of RoCoDA to standard data augmenta-
+tion techniques, counterfactual data aug-
+mentation and equivariant state-action
+augmentation on separate rollouts.
+algorithms?
+RQ3: Does counterfactual data augmentation improve sam-
+ple efficiency in policy learning compared to existing ap-
+proaches?
+A. Experimental Setup
+We evaluate our method, RoCoDA, on a variety of
+multi-step robotic tasks using Action Chunking Transformer
+(ACT) [2] as our base imitation learning algorithm. ACT is
+an encoder-decoder transformer model that learns to autore-
+gressively output latent actions generated by a conditional
+variational autoencoder (CVAE).
+Remark. Although prior work has shown that multi-task
+imitation learning can be achieved by scaling data and
+selecting appropriate algorithms [6, 7, 25, 26], we focus on
+the single-task setting for each model in this work. This
+enables us to isolate the effects of our data augmentation
+algorithm on individual tasks without confounding factors
+introduced by multi-task learning.
+1. Tasks – We evaluate our method on the following tasks:
+Three Block Stack: The robot must stack three distinct
+colored blocks in a predefined sequence based on their color.
+Three-Piece Assembly: The robot assembles three pieces
+by stacking them in a specific orientation.
+Coffee Task: The task involves placing a coffee pod into a
+coffee machine and closing the lid.
+Transport: This task involves two robotic arms. The left
+arm removes a lid and picks up a hammer, while the right
+arm moves a cube from a back bin to a front bin, takes the
+hammer from the left arm, and places it in another bin.
+Libero-Object: We use a task from the Libero-Object dataset
+where the robot must pick up a specific object (e.g., tomato
+sauce) and place it in a basket.
+2. Baselines – We use ACT, a popular BC baseline [2].
+We denote ACT vanilla as trained on unaugmented datasets.
+Further, we use a state-of-the-art augmentation schema
+MimicGen [14], that uses SE(3) transformations for data
+augmentation. We further augment the data with random
+cropping, as was done in the original work.
+B. Experiments
+1. Policy Performance –To address RQ1, we compare the
+performance of RoCoDA to baselines on the Three Block
+Stack, Three-Piece Assembly, and Coffee Preparation tasks.
+Additionally, we perform ablations by removing components
+of RoCoDA to assess their individual contributions.
+RoCoDA
+consistently
+outperforms
+baseline
+methods
+across all three tasks. The performance gap is largest for
+Three-Piece Assembly, where RoCoDA nearly doubles the
+performance of MimicGen. In the Three Block Stack task,
+RoCoDA benefits from equivariant, causal, and visual aug-
+Augmentation Type
+Single View
+Multi-view
+No Augmentation
+39
+79
+Channel Permutation
+56
+92
+Color Jitter
+45
+83
+Priprioception Noise
+31
+84
+Random Resize & Crop
+71
+90
+Counterfactual Augmentation
+71
+94
+TABLE II: ACT policy performance averaged over three seeds (%)
+on Transport when trained with various augmentations. While
+vision-based augmentation aids in generalization they are not con-
+siderate of causal relationships. Augmentation can be detrimental to
+performance if causality is not taken into consideration (e.g. color
+augmentation on Three Block Stack).
+mentation in a compositional manner. Note that we omit
+color jitter from RoCoDA for this experiment since the task
+is causally dependent on the color of the blocks.
+This suggests that counterfactual augmentation benefits
+most from complex tasks consisting of multiple substeps.
+This is consistent with the fact that in the Coffee task, per-
+formance is roughly even amongst all baselines and method
+variants utilizing equivariant data augmentation. RoCoDA
+does not seem to benefit from visual augmentation for these
+tasks, however. This may be because this task demands
+precision, and there is a trade-off between robustness and
+accuracy, as demonstrated in [27]. In essence, because visual
+augmentation demands that the BC policy be robust to a
+span of translations in the camera plane, image scales, and
+color variations, the model has less capacity to fit the action
+distribution, and thus the policy loses fidelity.
+We further investigate the performance of individual aug-
+mentations on the transport environment (Table II). We show
+that counterfactual data augmentation and random resize and
+crop achieve 71% for single camera view and and 94%
+accuracy for multi-view cameras, outperforming other aug-
+mentations. Notably, in simpler tasks, visual augmentations
+like resize and crop may yield high success rates because
+they provide sufficient variability for training robust policies.
+We find, however, that counterfactual data augmentation
+performs best in complex, long-horizon tasks due to its
+ability to maintain causal relationships between states and
+actions, and marginalize over subsets of the state space that
+are causally invariant to actions.
+2. Generalization – To address RQ2, we evaluate the gen-
+eralization ability of RoCoDA on a Libero-Object task [28].
+In particular, we test the policy’s ability to generalize to:
+• Unseen Distractors: Training with a subset (2/5) of
+distractor objects and testing with the whole set to assess
+robustness to irrelevant objects in the environment.
+• Unseen Textures: Applying unseen textures to objects and
+backgrounds at test time. Random colors are applied over
+objects while preserving details such as opacity, text, etc.
+
+===== PAGE 6 =====
+Without Causal
+Augmentation
+With Causal
+Augmentation
+Approach
+Miss
+Close Gripper
+Gripper Stays Closed
+Failed Task
+Approach
+Miss
+Open Gripper
+Successful Grasp
+Completed Task
+Fig. 4: RoCoDA learns to re-grasp cubes in the Three Block Stack task, despite this behavior not being present in the dataset. This
+suggests that policies trained with RoCoDA possess a deeper understanding of the causal structure underlying the task, enabling the robot
+to adapt to out-of-distribution inputs.
+In Distribution
+OOD: Texture
+OOD: Distractors
+ACT (vanilla)
+76.3 ± 3.51
+64.0 ± 8.89
+22.3 ± 1.15
+Resize/Crop
+46.7 ± 4.51
+53.0 ± 5.20
+81.7 ± 4.73
+Channel Permutation
+3.0 ± 1.00
+7.7 ± 2.31
+2.3 ± 1.15
+Gaussian Blur
+4.7 ± 2.08
+4.3 ± 1.53
+11.3 ± 2.52
+Proprioceptive Noise
+2.7,± 0.58
+3.3 ± 1.53
+18.3 ± 3.21
+Color Jitter
+96.0 ± 1.73
+83.7 ± 4.16
+81.3 ± 2.08
+CoDA [22]
+10.7 ± 3.06
+6.3 ± 4.04
+7.3 ± 3.79
+MimicGen [14]
+99.0 ± 0.00
+99.0 ± 0.00
+99.0 ± 0.00
+RoCoDA (Ours) (no Visual)
+100.0 ± 0.00
+100.0 ± 0.00
+99.3 ± 0.58
+RoCoDA (Ours)
+100.0 ± 0.00
+100.0 ± 0.00
+99.3 ± 0.58
+TABLE III: Generalization experiment on Libero Object. RoCoDA
+matches or exceeds the performance of other forms of data augmen-
+tation at generalizing to unseen distributions. In Distribution refers
+to evaluation on the training distribution.
+We test several models in these evaluation settings (Table
+III). We select one task from the Libero Object dataset
+(”pick up the tomato sauce and place it in the basket”). All
+models are trained on a source dataset of just 10 demon-
+strations. These demonstrations are expanded using SE(3)
+equivariance [14] to 200 demonstrations. We apply causal
+augmentation and image augmentations (Resize/Crop and
+Color Jitter) to the expanded dataset. We evaluate the policy
+under the conditions outlined above to test generalization.
+Notably, RoCoDA matches or exceeds the performance of
+MimicGen [14], and consistently outperforms other popular
+forms of data augmentation, suggesting that RoCoDA en-
+ables robustness to changes in the environment.
+3. Scaling Synthetic Data –To address RQ3, we evaluate the
+performance of RoCoDA when trained on varying amounts
+of demonstrations. We scale the number of demonstrations
+using SE(3) equivariance and quantify the effect of diversity
+and complexity in the dataset (Table IV).
+We compare the performance of models trained with
+and without causal-based data augmentation across the
+Coffee and Three Block Stack tasks with varying number
+of demonstrations (10, 50, 100, 200, and 1000). For the
+Three Block Stack task, counterfactual data augmentation on
+200 demonstrations improves performance to 30% success
+compared to a lesser number of demonstrations, suggesting
+augmentation performance scales and continues to improve
+at 1000 demonstrations, but at a lesser rate.
+In contrast, the Coffee task, while also requiring precise
+actions, may have a simpler causal complexity. The number
+of possible combinations of independent state partitions
+Coffee
+Three Block Stack
+w/ Causal
+w/o Causal
+w/ Causal
+w/o Causal
+10 demos
+0
+0
+0
+0
+50 demos
+4
+9
+0
+0
+100 demos
+12
+9
+0
+1
+200 demos
+23
+21
+30
+10
+1000 demos
+50
+47
+70
+63
+TABLE IV: Data scaling and the impact of a diverse dataset (%).
+Counterfactual data augmentation excels in complex environments
+with multiple sub-tasks.
+and causal phases is smaller in comparison to the Three
+Block Stack task. This suggests that in simpler tasks, causal
+augmentation is less advantageous but still offers benefits by
+introducing diversity.
+C. Emergent capabilities
+We identify emergent behaviors that the policy was not ex-
+plicitly trained to exhibit. One such behavior is re-grasping,
+where the policy recovers from a failed grasp attempt by
+reopening the gripper and attempting to grasp again (Figure
+4). We observed in rollouts that once the gripper is fully
+closed, the robot fails to continue the task as this action is not
+in the training distribution (grippers are only closed partially
+when picking up objects). During sequences where the robot
+is in a transition phase and not interacting with other entities,
+local factorization of the gripper position and augmenting the
+states of the gripper positions can be performed. This learned
+behavior indicates a level of adaptability and error recovery
+not present in the training data.
+VI. CONCLUSION
+RoCoDA provides a principled and effective framework
+for data augmentation in imitation learning that leverages
+causal invariance, geometric equivariance, and visual sym-
+metries. This unified perspective advances the theoretical un-
+derstanding of policy learning and offers practical benefits for
+developing robust and generalizable robotic systems. Policies
+trained with RoCoDA generally exhibited higher task success
+rates, robust generalization to unseen object poses, textures,
+and distractors, and improved sample efficiency, requiring
+fewer demonstrations to achieve comparable or superior
+performance.
+
+===== PAGE 7 =====
+REFERENCES
+[1] A. Goyal, J. Xu, Y. Guo, V. Blukis, Y.-W. Chao, and D. Fox,
+“Rvt: Robotic view transformer for 3d object manipulation,”
+in Conference on Robot Learning.
+PMLR, 2023.
+[2] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning
+fine-grained bimanual manipulation with low-cost hardware,”
+arXiv preprint arXiv:2304.13705, 2023.
+[3] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel,
+and S. Song, “Diffusion policy: Visuomotor policy learning
+via action diffusion,” arXiv preprint arXiv:2303.04137, 2023.
+[4] S. Lee, Y. Wang, H. Etukuru, H. J. Kim, N. M. M. Shafiullah,
+and L. Pinto, “Behavior generation with latent actions,” arXiv
+preprint arXiv:2403.03181, 2024.
+[5] A. Mete, H. Xue, A. Wilcox, Y. Chen, and A. Garg, “Quest:
+Self-supervised skill abstractions for learning continuous con-
+trol,” arXiv preprint arXiv:2407.15840, 2024.
+[6] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis,
+C. Finn, K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu,
+et al., “Rt-1: Robotics transformer for real-world control at
+scale,” arXiv preprint arXiv:2212.06817, 2022.
+[7] Q. Vuong, S. Levine, H. R. Walke, K. Pertsch, A. Singh,
+R. Doshi, C. Xu, J. Luo, L. Tan, D. Shah, et al., “Open x-
+embodiment: Robotic learning datasets and rt-x models,” in
+Towards Generalist Robots: Learning Paradigms for Scalable
+Skill Acquisition@ CoRL2023, 2023.
+[8] A. Khazatsky, K. Pertsch, S. Nair, A. Balakrishna, S. Dasari,
+S. Karamcheti, S. Nasiriany, M. K. Srirama, L. Y. Chen, K. El-
+lis, et al., “Droid: A large-scale in-the-wild robot manipulation
+dataset,” arXiv preprint arXiv:2403.12945, 2024.
+[9] H. R. Walke, K. Black, T. Z. Zhao, Q. Vuong, C. Zheng,
+P. Hansen-Estruch, A. W. He, V. Myers, M. J. Kim, M. Du,
+et al., “Bridgedata v2: A dataset for robot learning at scale,”
+in Conference on Robot Learning.
+PMLR, 2023.
+[10] M. Shridhar, L. Manuelli, and D. Fox, “Perceiver-actor: A
+multi-task transformer for robotic manipulation,” in Confer-
+ence on Robot Learning.
+PMLR, 2023.
+[11] L. Wang, N. Dvornik, R. Dubeau, M. Mittal, and A. Garg,
+“Self-supervised learning of action affordances as interaction
+modes,” in 2023 IEEE International Conference on Robotics
+and Automation (ICRA), 2023, pp. 7279–7286.
+[12] M. Laskin, K. Lee, A. Stooke, L. Pinto, P. Abbeel, and
+A. Srinivas, “Reinforcement learning with augmented data,”
+CoRR, vol. abs/2004.14990, 2020.
+[13] S. Young, D. Gandhi, S. Tulsiani, A. Gupta, P. Abbeel,
+and L. Pinto, “Visual imitation made easy,” CoRR, vol.
+abs/2008.04899, 2020.
+[14] A. Mandlekar, S. Nasiriany, B. Wen, I. Akinola, Y. Narang,
+L. Fan, Y. Zhu, and D. Fox, “Mimicgen: A data generation
+system for scalable robot learning using human demonstra-
+tions,” arXiv preprint arXiv:2310.17596, 2023.
+[15] I. Kostrikov, D. Yarats, and R. Fergus, “Image augmentation is
+all you need: Regularizing deep reinforcement learning from
+pixels,” CoRR, vol. abs/2004.13649, 2020.
+[16] A. Mandlekar, D. Xu, J. Wong, S. Nasiriany, C. Wang,
+R. Kulkarni, L. Fei-Fei, S. Savarese, Y. Zhu, and R. Mart´ın-
+Mart´ın, “What matters in learning from offline human
+demonstrations
+for
+robot
+manipulation,”
+arXiv
+preprint
+arXiv:2108.03298, 2021.
+[17] I. Akkaya, M. Andrychowicz, M. Chociej, M. Litwin, B. Mc-
+Grew, A. Petron, A. Paino, M. Plappert, G. Powell, R. Ribas,
+et al., “Solving rubik’s cube with a robot hand,” arXiv preprint
+arXiv:1910.07113, 2019.
+[18] S. Sinha, A. Mandlekar, and A. Garg, “S4rl: Surprisingly
+simple self-supervision for offline reinforcement learning in
+robotics,” in Conference on Robot Learning.
+PMLR, 2022.
+[19] Z. Chen, S. Kiami, A. Gupta, and V. Kumar, “Genaug:
+Retargeting behaviors to unseen situations via generative
+augmentation,” arXiv preprint arXiv:2302.06671, 2023.
+[20] T. Yu, T. Xiao, A. Stone, J. Tompson, A. Brohan, S. Wang,
+J. Singh, C. Tan, J. Peralta, B. Ichter, et al., “Scaling
+robot learning with semantically imagined experience,” arXiv
+preprint arXiv:2302.11550, 2023.
+[21] C. Lu, P. Ball, Y. W. Teh, and J. Parker-Holder, “Synthetic ex-
+perience replay,” Advances in Neural Information Processing
+Systems, vol. 36, 2024.
+[22] S. Pitis, E. Creager, and A. Garg, “Counterfactual data
+augmentation using locally factored dynamics,” Advances in
+Neural Information Processing Systems, 2020.
+[23] S. Pitis, E. Creager, A. Mandlekar, and A. Garg, “Mocoda:
+Model-based counterfactual data augmentation,” Advances in
+Neural Information Processing Systems, 2022.
+[24] C. Lu, B. Huang, K. Wang, J. M. Hern´andez-Lobato,
+K. Zhang, and B. Sch¨olkopf, “Sample-efficient reinforcement
+learning via counterfactual-based data augmentation,” arXiv
+preprint arXiv:2012.09092, 2020.
+[25] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen,
+K. Choromanski, T. Ding, D. Driess, A. Dubey, C. Finn, et al.,
+“Rt-2: Vision-language-action models transfer web knowledge
+to robotic control,” arXiv preprint arXiv:2307.15818, 2023.
+[26] H. Bharadhwaj, J. Vakil, M. Sharma, A. Gupta, S. Tulsiani,
+and V. Kumar, “Roboagent: Generalization and efficiency
+in robot manipulation via semantic augmentations and ac-
+tion chunking,” in 2024 IEEE International Conference on
+Robotics and Automation (ICRA).
+IEEE, 2024.
+[27] M. Lechner, A. Amini, D. Rus, and T. A. Henzinger, “Re-
+visiting the adversarial robustness-accuracy tradeoff in robot
+learning,” IEEE Robotics and Automation Letters, vol. 8, no. 3,
+pp. 1595–1602, 2023.
+[28] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone,
+“Libero: Benchmarking knowledge transfer for lifelong robot
+learning,” Advances in Neural Information Processing Sys-
+tems, vol. 36, 2024.

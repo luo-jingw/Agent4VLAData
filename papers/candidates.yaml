@@ -1,0 +1,647 @@
+papers:
+- id: paper_001
+  title: 'DROID: A Large-Scale In-The-Wild Robot Manipulation Dataset'
+  authors:
+  - Alexander Khazatsky
+  - Karl Pertsch
+  - Suraj Nair
+  - Ashwin Balakrishna
+  - Sudeep Dasari
+  year: 2024
+  source: arxiv
+  source_id: '2403.12945'
+  url: http://arxiv.org/abs/2403.12945
+  abstract: Creation of large, diverse, high-quality robot manipulation datasets;
+    76k trajectories, 564 scenes, data collection and processing pipeline details.
+  keywords:
+  - dataset
+  - pipeline
+  - teleoperation
+  - filtering
+  relevance: high
+  notes: RQ1.1 数据管线标准做法的直接证据。
+- id: paper_002
+  title: 'Open X-Embodiment: Robotic Learning Datasets and RT-X Models'
+  authors:
+  - Open X-Embodiment Collaboration
+  year: 2023
+  source: arxiv
+  source_id: '2310.08864'
+  url: http://arxiv.org/abs/2310.08864
+  abstract: 60 datasets consolidated under a unified embodiment-independent format;
+    RT-X models; cross-dataset standardization.
+  keywords:
+  - dataset
+  - standardization
+  - curation
+  - RT-X
+  relevance: high
+  notes: RQ1.1 跨数据集标准化/范式化是否存在的直接证据。
+- id: paper_003
+  title: Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ALOHA/ACT)
+  authors:
+  - Tony Z. Zhao
+  - Vikash Kumar
+  - Sergey Levine
+  - Chelsea Finn
+  year: 2023
+  source: arxiv
+  source_id: '2304.13705'
+  url: http://arxiv.org/abs/2304.13705
+  abstract: ALOHA low-cost teleoperation; ACT action chunking; temporal ensembling.
+  keywords:
+  - teleoperation
+  - action chunking
+  - temporal ensembling
+  relevance: high
+  notes: RQ1.1 遥操管线与 action chunk 起源；与现有方法的对照。
+- id: paper_004
+  title: 'LeRobot: An Open-Source Library for End-to-End Robot Learning'
+  authors:
+  - Remi Cadene
+  - Simon Aliberts
+  - Francesco Capuano
+  - Michel Aractingi
+  year: 2026
+  source: arxiv
+  source_id: '2602.22818'
+  url: http://arxiv.org/abs/2602.22818
+  abstract: Open-source library covering data collection, recording format, dataset
+    ops, training; the de-facto community data format (v2).
+  keywords:
+  - library
+  - pipeline
+  - data format
+  - dataset ops
+  relevance: high
+  notes: RQ1.1 社区标准工具链的直接证据。
+- id: paper_005
+  title: What Demonstration Curation Metrics Do to Your Policy
+  authors:
+  - Aarav Bedi
+  year: 2026
+  source: arxiv
+  source_id: '2606.10229'
+  url: http://arxiv.org/abs/2606.10229
+  abstract: Whether curation metrics that detect defective episodes improve downstream
+    BC policy; found defect-detection and policy gain are decoupled.
+  keywords:
+  - curation
+  - filtering
+  - quality metric
+  - behavior cloning
+  relevance: high
+  notes: RQ1.3 核心证据：过滤指标与策略收益可能脱钩（含负面结论）。
+- id: paper_006
+  title: 'The Rise and Potential of Large Language Model Based Agents: A Survey'
+  authors:
+  - Zhiheng Xi
+  - Wenxiang Chen
+  - Xin Guo
+  - Wei He
+  - Yiwen Ding
+  year: 2023
+  source: arxiv
+  source_id: '2309.07864'
+  url: http://arxiv.org/abs/2309.07864
+  abstract: 'Survey of LLM-based agents: brain, perception, action; agent applications
+    and evaluation.'
+  keywords:
+  - agent
+  - survey
+  - LLM
+  relevance: high
+  notes: RQ2.1 教学部分的权威综述之一。
+- id: paper_007
+  title: 'ReAct: Synergizing Reasoning and Acting in Language Models'
+  authors:
+  - Shunyu Yao
+  - Jeffrey Zhao
+  - Dian Yu
+  - Nan Du
+  - Izhak Shafran
+  year: 2022
+  source: arxiv
+  source_id: '2210.03629'
+  url: http://arxiv.org/abs/2210.03629
+  abstract: Interleaved reasoning traces and task-specific actions; grounding reasoning
+    in environment feedback.
+  keywords:
+  - ReAct
+  - reasoning
+  - acting
+  - agent
+  relevance: high
+  notes: RQ2.1 agent 运行方式的起源工作。
+- id: paper_008
+  title: Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
+  authors:
+  - Lianmin Zheng
+  - Wei-Lin Chiang
+  - Ying Sheng
+  - Siyuan Zhuang
+  year: 2023
+  source: arxiv
+  source_id: '2306.05685'
+  url: http://arxiv.org/abs/2306.05685
+  abstract: Using strong LLMs as judges; position bias, verbosity bias, self-enhancement
+    bias; multi-turn benchmark.
+  keywords:
+  - LLM-as-judge
+  - evaluation
+  - bias
+  relevance: high
+  notes: RQ2.2 质量评分的核心机制与偏差证据。
+- id: paper_009
+  title: 'AgentInstruct: Toward Generative Teaching with Agentic Flows'
+  authors:
+  - Arindam Mitra
+  - Luciano Del Corro
+  - Guoqing Zheng
+  - Shweti Mahajan
+  year: 2024
+  source: arxiv
+  source_id: '2407.03502'
+  url: http://arxiv.org/abs/2407.03502
+  abstract: Agentic flows to create synthetic instruction data (seed instructions,
+    raw text from web, agentic transformation).
+  keywords:
+  - agentic
+  - synthetic data
+  - instruction
+  relevance: high
+  notes: RQ2.2 agent 用于数据生成的直接证据。
+- id: paper_010
+  title: OpenGVL -- Benchmarking Visual Temporal Progress for Data Curation
+  authors:
+  - Paweł Budzianowski
+  - Emilia Wiśnios
+  - Michał Tyrolski
+  - Gracjan Góral
+  year: 2025
+  source: arxiv
+  source_id: '2509.17321'
+  url: http://arxiv.org/abs/2509.17321
+  abstract: VLM-based temporal task progress prediction to annotate/curate robot videos
+    at scale; GVL approach.
+  keywords:
+  - VLM
+  - curation
+  - temporal progress
+  - annotation
+  relevance: high
+  notes: RQ1.4/RQ2.3 语义级数据策展的直接证据（最接近 agent 方案）。
+- id: paper_011
+  title: Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining
+  authors:
+  - Yipeng Chen
+  - Wentao Tan
+  - Lei Zhu
+  - Fengling Li
+  - Jingjing Li
+  year: 2026
+  source: arxiv
+  source_id: '2603.01465'
+  url: http://arxiv.org/abs/2603.01465
+  abstract: Keyframe chaining for long-horizon manipulation.
+  keywords:
+  - keyframe
+  - long-horizon
+  - chaining
+  relevance: high
+  notes: RQ1.2 关键帧方法的现代形态。
+- id: paper_012
+  title: 'A Review of Robot Learning for Manipulation: Challenges, Representations,
+    and Algorithms'
+  authors:
+  - Oliver Kroemer
+  - Scott Niekum
+  - George Konidaris
+  year: 2019
+  source: arxiv
+  source_id: '1907.03146'
+  url: http://arxiv.org/abs/1907.03146
+  abstract: 'Survey of robot learning for manipulation: representations, algorithms,
+    challenges.'
+  keywords:
+  - survey
+  - manipulation
+  - representations
+  - LfD
+  relevance: high
+  notes: RQ1.2 经典 LfD/表征综述。
+- id: paper_013
+  title: Curating Demonstrations using Online Experience
+  authors:
+  - Annie S. Chen
+  - Alec M. Lessing
+  - Yuejiang Liu
+  - Chelsea Finn
+  year: 2025
+  source: arxiv
+  source_id: '2503.03707'
+  url: http://arxiv.org/abs/2503.03707
+  abstract: Using online policy experience to filter/curate demonstrations.
+  keywords:
+  - curation
+  - online experience
+  - filtering
+  relevance: high
+  notes: RQ1.3 真实机器人数据过滤。
+- id: paper_014
+  title: 'Phase-Localized Curation Does Not Help: A Negative Result on Per-Phase Metric
+    Selection for Demonstration Filtering'
+  authors:
+  - Aarav Bedi
+  year: 2026
+  source: arxiv
+  source_id: '2606.15064'
+  url: http://arxiv.org/abs/2606.15064
+  abstract: 'Negative result: per-phase metric selection for demonstration filtering
+    does not help.'
+  keywords:
+  - curation
+  - negative result
+  - phase
+  relevance: high
+  notes: RQ1.3 负面证据（保留负证据原则）。
+- id: paper_015
+  title: 'AgiBot World Colosseo: A Large-scale Manipulation Platform for Scalable
+    and Intelligent Embodied Systems'
+  authors:
+  - AgiBot-World-Contributors
+  - Qingwen Bu
+  - Jisong Cai
+  - Li Chen
+  year: 2025
+  source: arxiv
+  source_id: '2503.06669'
+  url: http://arxiv.org/abs/2503.06669
+  abstract: Large-scale manipulation platform; data collection and quality control
+    pipeline.
+  keywords:
+  - dataset
+  - platform
+  - quality control
+  relevance: high
+  notes: RQ1.1 大规模数据的质量控制管线。
+- id: paper_016
+  title: 'Robo-DM: Data Management For Large Robot Datasets'
+  authors:
+  - Kaiyuan Chen
+  - Letian Fu
+  - David Huang
+  - Yanxiang Zhang
+  - Lawrence Yunliang Chen
+  year: 2025
+  source: arxiv
+  source_id: '2505.15558'
+  url: http://arxiv.org/abs/2505.15558
+  abstract: Data management system for large robot datasets.
+  keywords:
+  - data management
+  - pipeline
+  - tooling
+  relevance: high
+  notes: RQ1.1/RQ2.4 数据管理工程形态。
+- id: paper_017
+  title: A Survey on Large Language Model based Autonomous Agents
+  authors:
+  - Lei Wang
+  - Chen Ma
+  - Xueyang Feng
+  - Zeyu Zhang
+  - Hao Yang
+  year: 2023
+  source: arxiv
+  source_id: '2308.11432'
+  url: http://arxiv.org/abs/2308.11432
+  abstract: 'Unified framework for LLM-based autonomous agents: profile, memory, planning,
+    action.'
+  keywords:
+  - agent
+  - survey
+  - framework
+  relevance: high
+  notes: RQ2.1 第二篇权威综述。
+- id: paper_018
+  title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
+  authors:
+  - Timo Schick
+  - Jane Dwivedi-Yu
+  - Roberto Dessì
+  - Roberta Raileanu
+  - Maria Lomeli
+  year: 2023
+  source: arxiv
+  source_id: '2302.04761'
+  url: http://arxiv.org/abs/2302.04761
+  abstract: Self-supervised tool use learning via API call insertion.
+  keywords:
+  - tool use
+  - API calls
+  - self-supervised
+  relevance: high
+  notes: RQ2.1 工具使用的起源工作。
+- id: paper_019
+  title: 'AutoRT: Embodied Foundation Models for Large Scale Orchestration of Robotic
+    Agents'
+  authors:
+  - Michael Ahn
+  - Debidatta Dwibedi
+  - Chelsea Finn
+  - Montse Gonzalez Arenas
+  year: 2024
+  source: arxiv
+  source_id: '2401.12963'
+  url: http://arxiv.org/abs/2401.12963
+  abstract: Orchestrating robotic agents at scale with VLMs; constitution constraints.
+  keywords:
+  - agent
+  - orchestration
+  - data collection
+  - VLM
+  relevance: high
+  notes: RQ2.3/RQ2.4 机器人 agent 批量数据采集与安全约束。
+- id: paper_020
+  title: 'MUTEX: Learning Unified Policies from Multimodal Task Specifications'
+  authors:
+  - Rutav Shah
+  - Roberto Martín-Martín
+  - Yuke Zhu
+  year: 2023
+  source: arxiv
+  source_id: '2309.14320'
+  url: http://arxiv.org/abs/2309.14320
+  abstract: Unified policies from multimodal task specifications (video, language,
+    speech).
+  keywords:
+  - multimodal
+  - task specification
+  - policy
+  relevance: medium
+  notes: RQ2.3 多模态语义任务理解。
+- id: paper_021
+  title: 'LLM Trainer: Automated Robotic Data Generation via Demonstration Augmentation
+    using LLMs'
+  authors:
+  - Abraham George
+  - Amir Barati Farimani
+  year: 2025
+  source: arxiv
+  source_id: '2509.20070'
+  url: http://arxiv.org/abs/2509.20070
+  abstract: LLM-based demonstration augmentation for robotic data generation.
+  keywords:
+  - LLM
+  - augmentation
+  - data generation
+  relevance: high
+  notes: RQ2.3 LLM 直接改造机器人训练数据。
+- id: paper_022
+  title: 'DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines'
+  authors:
+  - Omar Khattab
+  - Arnav Singhvi
+  - Paridhi Maheshwari
+  - Zhiyuan Zhang
+  - Keshav Santhanam
+  year: 2023
+  source: arxiv
+  source_id: '2310.03714'
+  url: http://arxiv.org/abs/2310.03714
+  abstract: Declarative LM pipelines compiled into self-improving programs.
+  keywords:
+  - pipeline
+  - optimization
+  - programming model
+  relevance: medium
+  notes: RQ2.4 可验证优化的管线工程模式。
+- id: paper_023
+  title: 'TextGrad: Automatic "Differentiation" via Text'
+  authors:
+  - Mert Yuksekgonul
+  - Federico Bianchi
+  - Joseph Boen
+  - Sheng Liu
+  year: 2024
+  source: arxiv
+  source_id: '2406.07496'
+  url: http://arxiv.org/abs/2406.07496
+  abstract: Textual gradients for automatic optimization of compound AI systems.
+  keywords:
+  - optimization
+  - textual gradient
+  - compound AI
+  relevance: medium
+  notes: RQ2.4 自动优化机制。
+- id: paper_024
+  title: 'MimicGen: A Data Generation System for Scalable Robot Learning using Human
+    Demonstrations'
+  authors:
+  - Ajay Mandlekar
+  - Soroush Nasiriany
+  year: 2023
+  source: arxiv
+  source_id: '2310.17596'
+  url: http://arxiv.org/abs/2310.17596
+  abstract: Trajectory-level augmentation via scene transformations; verification
+    by simulated rollout; success-only saving.
+  keywords:
+  - augmentation
+  - trajectory
+  - verification
+  relevance: high
+  notes: RQ3.3 轨迹级增强的验证范式。
+- id: paper_025
+  title: 'DABI: Evaluation of Data Augmentation Methods Using Downsampling in Bilateral
+    Control-Based Imitation Learning with Images'
+  authors:
+  - Masato Kobayashi
+  - Thanpimon Buamanee
+  year: 2024
+  source: arxiv
+  source_id: '2410.04370'
+  url: http://arxiv.org/abs/2410.04370
+  abstract: Downsampling-based augmentation evaluation for bilateral control IL.
+  keywords:
+  - augmentation
+  - evaluation
+  - downsampling
+  relevance: high
+  notes: RQ3.3 增强方法评测。
+- id: paper_026
+  title: Variable-Speed Teaching-Playback as Real-World Data Augmentation for Imitation
+    Learning
+  authors:
+  - Nozomu Masuya
+  - Hiroshi Sato
+  year: 2024
+  source: arxiv
+  source_id: '2412.03252'
+  url: http://arxiv.org/abs/2412.03252
+  abstract: Teaching-playback at different speeds as real-world augmentation.
+  keywords:
+  - augmentation
+  - speed
+  - playback
+  relevance: high
+  notes: RQ3.3 与稳态约束（速度无关）直接对话。
+- id: paper_027
+  title: 'RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning
+    from Demonstrations'
+  authors:
+  - Ezra Ameperosa
+  - Jeremy A. Collins
+  year: 2024
+  source: arxiv
+  source_id: '2411.16959'
+  url: http://arxiv.org/abs/2411.16959
+  abstract: Counterfactual augmentation unifying invariance/equivariance/causality.
+  keywords:
+  - augmentation
+  - counterfactual
+  - causality
+  relevance: high
+  notes: RQ3.3。
+- id: paper_028
+  title: 'RoboEngine: Plug-and-Play Robot Data Augmentation with Semantic Robot Segmentation
+    and Background Generation'
+  authors:
+  - Chengbo Yuan
+  - Suraj Joshi
+  year: 2025
+  source: arxiv
+  source_id: '2503.18738'
+  url: http://arxiv.org/abs/2503.18738
+  abstract: Semantic robot segmentation + background generation for visual augmentation.
+  keywords:
+  - augmentation
+  - segmentation
+  - background
+  relevance: high
+  notes: RQ3.3 语义驱动的视觉增强。
+- id: paper_029
+  title: Resolving State Ambiguity in Robot Manipulation via Adaptive Working Memory
+    Recoding
+  authors:
+  - Qingda Hu
+  - Ziheng Qiu
+  year: 2025
+  source: arxiv
+  source_id: '2512.24638'
+  url: http://arxiv.org/abs/2512.24638
+  abstract: Adaptive working memory recoding to resolve state ambiguity (identical
+    observations, different behaviors).
+  keywords:
+  - state ambiguity
+  - memory
+  - aliasing
+  relevance: high
+  notes: RQ3.4/GAP-08 状态别名的直接研究。
+- id: paper_030
+  title: 'RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for
+    Robot Manipulation'
+  authors:
+  - Kun Wu
+  - Chengkai Hou
+  year: 2024
+  source: arxiv
+  source_id: '2412.13877'
+  url: http://arxiv.org/abs/2412.13877
+  abstract: 107k trajectories, 479 tasks; benchmark with quality standards and splits.
+  keywords:
+  - benchmark
+  - dataset
+  - splits
+  relevance: high
+  notes: RQ3.1/RQ3.5 划分与质量基准。
+- id: paper_031
+  title: 'ATOM-Bench: A Real-World Benchmark for Atomic Skills and Compositional Generalization
+    in Manipulation Policies'
+  authors:
+  - Zenan Wu
+  - Bingqing Wei
+  year: 2026
+  source: arxiv
+  source_id: '2606.16826'
+  url: http://arxiv.org/abs/2606.16826
+  abstract: Atomic skills benchmark for compositional generalization; held-out protocols.
+  keywords:
+  - benchmark
+  - atomic skills
+  - compositional
+  relevance: high
+  notes: RQ3.1 评估协议与技能覆盖。
+- id: paper_032
+  title: 'Online Self-Calibration for Visual-Inertial Navigation Systems: Models,
+    Analysis and Degeneracy'
+  authors:
+  - Yulin Yang
+  - Patrick Geneva
+  year: 2022
+  source: arxiv
+  source_id: '2201.09170'
+  url: http://arxiv.org/abs/2201.09170
+  abstract: Online temporal+spatial self-calibration for VINS; time offset estimation
+    and degeneracy.
+  keywords:
+  - calibration
+  - time offset
+  - VINS
+  relevance: medium
+  notes: RQ3.2 时间偏移估计方法（弱证据，SLAM 域）。
+- id: paper_033
+  title: 'SCIZOR: A Self-Supervised Approach to Data Curation for Large-Scale Imitation
+    Learning'
+  authors:
+  - Yu Zhang
+  - Yuqi Xie
+  year: 2025
+  source: arxiv
+  source_id: '2505.22626'
+  url: http://arxiv.org/abs/2505.22626
+  abstract: 'Self-supervised curation: temporal-distance classifier as progress proxy;
+    no LLM/reward/labels.'
+  keywords:
+  - curation
+  - self-supervised
+  - progress
+  relevance: high
+  notes: RQ1.3 无 LLM 的自监督策展（现行策展的典型形态）。
+- id: paper_034
+  title: 'ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot
+    Data Curation'
+  authors:
+  - Tao Xu
+  - Jiaxin Wang
+  year: 2026
+  source: arxiv
+  source_id: '2606.16208'
+  url: http://arxiv.org/abs/2606.16208
+  abstract: Influence functions (accelerated) for multi-task robot data curation;
+    downstream validation.
+  keywords:
+  - curation
+  - influence function
+  - multi-task
+  relevance: high
+  notes: RQ1.3 影响力函数策展+下游验证。
+- id: paper_035
+  title: Language-Conditioned Change-point Detection to Identify Sub-Tasks in Robotics
+    Domains
+  authors:
+  - Divyanshu Raj
+  - Chitta Baral
+  year: 2023
+  source: arxiv
+  source_id: '2309.00743'
+  url: http://arxiv.org/abs/2309.00743
+  abstract: Language-conditioned change-point detection for subtask boundaries; no
+    downstream policy validation.
+  keywords:
+  - change-point
+  - subtask
+  - language
+  relevance: medium
+  notes: 旋钮 1（事件/子任务边界检测）的组件级先例。

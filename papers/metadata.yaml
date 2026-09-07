@@ -1,0 +1,567 @@
+papers:
+- id: paper_001
+  title: 'DROID: A Large-Scale In-The-Wild Robot Manipulation Dataset'
+  authors:
+  - Alexander Khazatsky
+  - Karl Pertsch
+  - Suraj Nair
+  - Ashwin Balakrishna
+  - Sudeep Dasari
+  year: 2024
+  venue: RSS 2024
+  source_id: '2403.12945'
+  pdf_path: papers/raw/2403.12945.pdf
+  bibtex: '@article{khazatsky2024droid, title={DROID: A Large-Scale In-The-Wild Robot
+    Manipulation Dataset}, author={Khazatsky, Alexander and others}, year={2024},
+    eprint={2403.12945}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_002
+  title: 'Open X-Embodiment: Robotic Learning Datasets and RT-X Models'
+  authors:
+  - Open X-Embodiment Collaboration
+  year: 2023
+  venue: ICRA 2024
+  source_id: '2310.08864'
+  pdf_path: papers/raw/2310.08864.pdf
+  bibtex: '@article{openx2023, title={Open X-Embodiment: Robotic Learning Datasets
+    and RT-X Models}, author={Open X-Embodiment Collaboration}, year={2023}, eprint={2310.08864}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_003
+  title: Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ALOHA/ACT)
+  authors:
+  - Tony Z. Zhao
+  - Vikash Kumar
+  - Sergey Levine
+  - Chelsea Finn
+  year: 2023
+  venue: RSS 2023
+  source_id: '2304.13705'
+  pdf_path: papers/raw/2304.13705.pdf
+  bibtex: '@inproceedings{zhao2023aloha, title={Learning Fine-Grained Bimanual Manipulation
+    with Low-Cost Hardware}, author={Zhao, Tony Z. and Kumar, Vikash and Levine, Sergey
+    and Finn, Chelsea}, year={2023}, eprint={2304.13705}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_004
+  title: 'LeRobot: An Open-Source Library for End-to-End Robot Learning'
+  authors:
+  - Remi Cadene
+  - Simon Aliberts
+  - Francesco Capuano
+  - Michel Aractingi
+  - Adil Zouitine
+  year: 2026
+  venue: arXiv
+  source_id: '2602.22818'
+  pdf_path: papers/raw/2602.22818.pdf
+  bibtex: '@article{cadene2026lerobot, title={LeRobot: An Open-Source Library for
+    End-to-End Robot Learning}, author={Cadene, Remi and others}, year={2026}, eprint={2602.22818}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_005
+  title: What Demonstration Curation Metrics Do to Your Policy
+  authors:
+  - Aarav Bedi
+  year: 2026
+  venue: arXiv
+  source_id: '2606.10229'
+  pdf_path: papers/raw/2606.10229.pdf
+  bibtex: '@article{bedi2026curation, title={What Demonstration Curation Metrics Do
+    to Your Policy}, author={Bedi, Aarav}, year={2026}, eprint={2606.10229}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_006
+  title: 'The Rise and Potential of Large Language Model Based Agents: A Survey'
+  authors:
+  - Zhiheng Xi
+  - Wenxiang Chen
+  - Xin Guo
+  - Wei He
+  - Yiwen Ding
+  year: 2023
+  venue: arXiv
+  source_id: '2309.07864'
+  pdf_path: papers/raw/2309.07864.pdf
+  bibtex: '@article{xi2023rise, title={The Rise and Potential of Large Language Model
+    Based Agents: A Survey}, author={Xi, Zhiheng and others}, year={2023}, eprint={2309.07864}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_007
+  title: 'ReAct: Synergizing Reasoning and Acting in Language Models'
+  authors:
+  - Shunyu Yao
+  - Jeffrey Zhao
+  - Dian Yu
+  - Nan Du
+  - Izhak Shafran
+  year: 2022
+  venue: ICLR 2023
+  source_id: '2210.03629'
+  pdf_path: papers/raw/2210.03629.pdf
+  bibtex: '@inproceedings{yao2022react, title={ReAct: Synergizing Reasoning and Acting
+    in Language Models}, author={Yao, Shunyu and others}, year={2022}, eprint={2210.03629}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_008
+  title: Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
+  authors:
+  - Lianmin Zheng
+  - Wei-Lin Chiang
+  - Ying Sheng
+  - Siyuan Zhuang
+  - Zhanghao Wu
+  year: 2023
+  venue: NeurIPS 2023 Datasets and Benchmarks
+  source_id: '2306.05685'
+  pdf_path: papers/raw/2306.05685.pdf
+  bibtex: '@article{zheng2023judging, title={Judging LLM-as-a-Judge with MT-Bench
+    and Chatbot Arena}, author={Zheng, Lianmin and others}, year={2023}, eprint={2306.05685}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_009
+  title: 'AgentInstruct: Toward Generative Teaching with Agentic Flows'
+  authors:
+  - Arindam Mitra
+  - Luciano Del Corro
+  - Guoqing Zheng
+  - Shweti Mahajan
+  - Dany Rouhana
+  year: 2024
+  venue: arXiv
+  source_id: '2407.03502'
+  pdf_path: papers/raw/2407.03502.pdf
+  bibtex: '@article{mitra2024agentinstruct, title={AgentInstruct: Toward Generative
+    Teaching with Agentic Flows}, author={Mitra, Arindam and others}, year={2024},
+    eprint={2407.03502}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_010
+  title: OpenGVL -- Benchmarking Visual Temporal Progress for Data Curation
+  authors:
+  - Paweł Budzianowski
+  - Emilia Wiśnios
+  - Michał Tyrolski
+  - Gracjan Góral
+  - Igor Kulakov
+  year: 2025
+  venue: arXiv
+  source_id: '2509.17321'
+  pdf_path: papers/raw/2509.17321.pdf
+  bibtex: '@article{budzianowski2025opengvl, title={OpenGVL -- Benchmarking Visual
+    Temporal Progress for Data Curation}, author={Budzianowski, Paweł and others},
+    year={2025}, eprint={2509.17321}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_011
+  title: Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining
+  authors:
+  - Yipeng Chen
+  - Wentao Tan
+  - Lei Zhu
+  - Fengling Li
+  - Jingjing Li
+  year: 2026
+  venue: arXiv
+  source_id: '2603.01465'
+  pdf_path: papers/raw/2603.01465.pdf
+  bibtex: '@article{chen2026keyframe, title={Non-Markovian Long-Horizon Robot Manipulation
+    via Keyframe Chaining}, author={Chen, Yipeng and others}, year={2026}, eprint={2603.01465}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_012
+  title: 'A Review of Robot Learning for Manipulation: Challenges, Representations,
+    and Algorithms'
+  authors:
+  - Oliver Kroemer
+  - Scott Niekum
+  - George Konidaris
+  year: 2019
+  venue: JMLR
+  source_id: '1907.03146'
+  pdf_path: papers/raw/1907.03146.pdf
+  bibtex: '@article{kroemer2019review, title={A Review of Robot Learning for Manipulation:
+    Challenges, Representations, and Algorithms}, author={Kroemer, Oliver and Niekum,
+    Scott and Konidaris, George}, year={2019}, eprint={1907.03146}}'
+  status: downloaded
+  evidence_level: indirect
+- id: paper_013
+  title: Curating Demonstrations using Online Experience
+  authors:
+  - Annie S. Chen
+  - Alec M. Lessing
+  - Yuejiang Liu
+  - Chelsea Finn
+  year: 2025
+  venue: arXiv
+  source_id: '2503.03707'
+  pdf_path: papers/raw/2503.03707.pdf
+  bibtex: '@article{chen2025curating, title={Curating Demonstrations using Online
+    Experience}, author={Chen, Annie S. and others}, year={2025}, eprint={2503.03707}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_014
+  title: 'Phase-Localized Curation Does Not Help: A Negative Result on Per-Phase Metric
+    Selection for Demonstration Filtering'
+  authors:
+  - Aarav Bedi
+  year: 2026
+  venue: arXiv
+  source_id: '2606.15064'
+  pdf_path: papers/raw/2606.15064.pdf
+  bibtex: '@article{bedi2026phase, title={Phase-Localized Curation Does Not Help:
+    A Negative Result on Per-Phase Metric Selection for Demonstration Filtering},
+    author={Bedi, Aarav}, year={2026}, eprint={2606.15064}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_015
+  title: 'AgiBot World Colosseo: A Large-scale Manipulation Platform for Scalable
+    and Intelligent Embodied Systems'
+  authors:
+  - AgiBot-World-Contributors
+  - Qingwen Bu
+  - Jisong Cai
+  - Li Chen
+  - Xiuqi Cui
+  year: 2025
+  venue: arXiv
+  source_id: '2503.06669'
+  pdf_path: papers/raw/2503.06669.pdf
+  bibtex: '@article{agibot2025colosseo, title={AgiBot World Colosseo: A Large-scale
+    Manipulation Platform for Scalable and Intelligent Embodied Systems}, author={{AgiBot-World-Contributors}},
+    year={2025}, eprint={2503.06669}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_016
+  title: 'Robo-DM: Data Management For Large Robot Datasets'
+  authors:
+  - Kaiyuan Chen
+  - Letian Fu
+  - David Huang
+  - Yanxiang Zhang
+  - Lawrence Yunliang Chen
+  year: 2025
+  venue: arXiv
+  source_id: '2505.15558'
+  pdf_path: papers/raw/2505.15558.pdf
+  bibtex: '@article{chen2025robodm, title={Robo-DM: Data Management For Large Robot
+    Datasets}, author={Chen, Kaiyuan and others}, year={2025}, eprint={2505.15558}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_017
+  title: A Survey on Large Language Model based Autonomous Agents
+  authors:
+  - Lei Wang
+  - Chen Ma
+  - Xueyang Feng
+  - Zeyu Zhang
+  - Hao Yang
+  year: 2023
+  venue: arXiv
+  source_id: '2308.11432'
+  pdf_path: papers/raw/2308.11432.pdf
+  bibtex: '@article{wang2023survey, title={A Survey on Large Language Model based
+    Autonomous Agents}, author={Wang, Lei and others}, year={2023}, eprint={2308.11432}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_018
+  title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
+  authors:
+  - Timo Schick
+  - Jane Dwivedi-Yu
+  - Roberto Dessì
+  - Roberta Raileanu
+  - Maria Lomeli
+  year: 2023
+  venue: NeurIPS 2023
+  source_id: '2302.04761'
+  pdf_path: papers/raw/2302.04761.pdf
+  bibtex: '@inproceedings{schick2023toolformer, title={Toolformer: Language Models
+    Can Teach Themselves to Use Tools}, author={Schick, Timo and others}, year={2023},
+    eprint={2302.04761}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_019
+  title: 'AutoRT: Embodied Foundation Models for Large Scale Orchestration of Robotic
+    Agents'
+  authors:
+  - Michael Ahn
+  - Debidatta Dwibedi
+  - Chelsea Finn
+  - Montse Gonzalez Arenas
+  - Keerthana Gopalakrishnan
+  year: 2024
+  venue: CoRL 2024
+  source_id: '2401.12963'
+  pdf_path: papers/raw/2401.12963.pdf
+  bibtex: '@inproceedings{ahn2024autort, title={AutoRT: Embodied Foundation Models
+    for Large Scale Orchestration of Robotic Agents}, author={Ahn, Michael and others},
+    year={2024}, eprint={2401.12963}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_020
+  title: 'MUTEX: Learning Unified Policies from Multimodal Task Specifications'
+  authors:
+  - Rutav Shah
+  - Roberto Martín-Martín
+  - Yuke Zhu
+  year: 2023
+  venue: CoRL 2023
+  source_id: '2309.14320'
+  pdf_path: papers/raw/2309.14320.pdf
+  bibtex: '@inproceedings{shah2023mutex, title={MUTEX: Learning Unified Policies from
+    Multimodal Task Specifications}, author={Shah, Rutav and others}, year={2023},
+    eprint={2309.14320}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_021
+  title: 'LLM Trainer: Automated Robotic Data Generation via Demonstration Augmentation
+    using LLMs'
+  authors:
+  - Abraham George
+  - Amir Barati Farimani
+  year: 2025
+  venue: arXiv
+  source_id: '2509.20070'
+  pdf_path: papers/raw/2509.20070.pdf
+  bibtex: '@article{george2025llmtrainer, title={LLM Trainer: Automated Robotic Data
+    Generation via Demonstration Augmentation using LLMs}, author={George, Abraham
+    and Farimani, Amir Barati}, year={2025}, eprint={2509.20070}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_022
+  title: 'DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines'
+  authors:
+  - Omar Khattab
+  - Arnav Singhvi
+  - Paridhi Maheshwari
+  - Zhiyuan Zhang
+  - Keshav Santhanam
+  year: 2023
+  venue: ICLR 2024
+  source_id: '2310.03714'
+  pdf_path: papers/raw/2310.03714.pdf
+  bibtex: '@inproceedings{khattab2023dspy, title={DSPy: Compiling Declarative Language
+    Model Calls into Self-Improving Pipelines}, author={Khattab, Omar and others},
+    year={2023}, eprint={2310.03714}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_023
+  title: 'TextGrad: Automatic "Differentiation" via Text'
+  authors:
+  - Mert Yuksekgonul
+  - Federico Bianchi
+  - Joseph Boen
+  - Sheng Liu
+  - Zhi Huang
+  year: 2024
+  venue: arXiv
+  source_id: '2406.07496'
+  pdf_path: papers/raw/2406.07496.pdf
+  bibtex: '@article{yuksekgonul2024textgrad, title={TextGrad: Automatic Differentiation
+    via Text}, author={Yuksekgonul, Mert and others}, year={2024}, eprint={2406.07496}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_024
+  title: 'MimicGen: A Data Generation System for Scalable Robot Learning using Human
+    Demonstrations'
+  authors:
+  - Ajay Mandlekar
+  - Soroush Nasiriany
+  - Bowen Wen
+  - Iretiayo Akinola
+  year: 2023
+  venue: CoRL 2023
+  source_id: '2310.17596'
+  pdf_path: papers/raw/2310.17596.pdf
+  bibtex: '@inproceedings{mandlekar2023mimicgen, title={MimicGen: A Data Generation
+    System for Scalable Robot Learning using Human Demonstrations}, author={Mandlekar,
+    Ajay and others}, year={2023}, eprint={2310.17596}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_025
+  title: 'DABI: Evaluation of Data Augmentation Methods Using Downsampling in Bilateral
+    Control-Based Imitation Learning with Images'
+  authors:
+  - Masato Kobayashi
+  - Thanpimon Buamanee
+  - Yuki Uranishi
+  year: 2024
+  venue: ICRA 2024
+  source_id: '2410.04370'
+  pdf_path: papers/raw/2410.04370.pdf
+  bibtex: '@inproceedings{kobayashi2024dabi, title={DABI: Evaluation of Data Augmentation
+    Methods Using Downsampling in Bilateral Control-Based Imitation Learning with
+    Images}, author={Kobayashi, Masato and others}, year={2024}, eprint={2410.04370}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_026
+  title: Variable-Speed Teaching-Playback as Real-World Data Augmentation for Imitation
+    Learning
+  authors:
+  - Nozomu Masuya
+  - Hiroshi Sato
+  - Koki Yamane
+  - Takuya Kusume
+  year: 2024
+  venue: Advanced Robotics
+  source_id: '2412.03252'
+  pdf_path: papers/raw/2412.03252.pdf
+  bibtex: '@article{masuya2024variablespeed, title={Variable-Speed Teaching-Playback
+    as Real-World Data Augmentation for Imitation Learning}, author={Masuya, Nozomu
+    and others}, year={2024}, eprint={2412.03252}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_027
+  title: 'RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning
+    from Demonstrations'
+  authors:
+  - Ezra Ameperosa
+  - Jeremy A. Collins
+  - Mrinal Jain
+  - Animesh Garg
+  year: 2024
+  venue: ICRA 2024
+  source_id: '2411.16959'
+  pdf_path: papers/raw/2411.16959.pdf
+  bibtex: '@inproceedings{ameperosa2024rocoda, title={RoCoDA: Counterfactual Data
+    Augmentation for Data-Efficient Robot Learning from Demonstrations}, author={Ameperosa,
+    Ezra and others}, year={2024}, eprint={2411.16959}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_028
+  title: 'RoboEngine: Plug-and-Play Robot Data Augmentation with Semantic Robot Segmentation
+    and Background Generation'
+  authors:
+  - Chengbo Yuan
+  - Suraj Joshi
+  - Shaoting Zhu
+  - Hang Su
+  year: 2025
+  venue: IROS 2025
+  source_id: '2503.18738'
+  pdf_path: papers/raw/2503.18738.pdf
+  bibtex: '@inproceedings{yuan2025roboengine, title={RoboEngine: Plug-and-Play Robot
+    Data Augmentation with Semantic Robot Segmentation and Background Generation},
+    author={Yuan, Chengbo and others}, year={2025}, eprint={2503.18738}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_029
+  title: Resolving State Ambiguity in Robot Manipulation via Adaptive Working Memory
+    Recoding
+  authors:
+  - Qingda Hu
+  - Ziheng Qiu
+  - Zijun Xu
+  - Kaizhao Zhang
+  year: 2025
+  venue: RA-L 2025
+  source_id: '2512.24638'
+  pdf_path: papers/raw/2512.24638.pdf
+  bibtex: '@article{hu2025ambiguity, title={Resolving State Ambiguity in Robot Manipulation
+    via Adaptive Working Memory Recoding}, author={Hu, Qingda and others}, year={2025},
+    eprint={2512.24638}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_030
+  title: 'RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for
+    Robot Manipulation'
+  authors:
+  - Kun Wu
+  - Chengkai Hou
+  - Jiaming Liu
+  - Zhengping Che
+  year: 2024
+  venue: arXiv
+  source_id: '2412.13877'
+  pdf_path: papers/raw/2412.13877.pdf
+  bibtex: '@article{wu2024robomind, title={RoboMIND: Benchmark on Multi-embodiment
+    Intelligence Normative Data for Robot Manipulation}, author={Wu, Kun and others},
+    year={2024}, eprint={2412.13877}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_031
+  title: 'ATOM-Bench: A Real-World Benchmark for Atomic Skills and Compositional Generalization
+    in Manipulation Policies'
+  authors:
+  - Zenan Wu
+  - Bingqing Wei
+  - Lu Liu
+  - Zheqi He
+  year: 2026
+  venue: arXiv
+  source_id: '2606.16826'
+  pdf_path: papers/raw/2606.16826.pdf
+  bibtex: '@article{wu2026atombench, title={ATOM-Bench: A Real-World Benchmark for
+    Atomic Skills and Compositional Generalization in Manipulation Policies}, author={Wu,
+    Zenan and others}, year={2026}, eprint={2606.16826}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_032
+  title: 'Online Self-Calibration for Visual-Inertial Navigation Systems: Models,
+    Analysis and Degeneracy'
+  authors:
+  - Yulin Yang
+  - Patrick Geneva
+  - Xingxing Zuo
+  - Guoquan Huang
+  year: 2022
+  venue: IJRR
+  source_id: '2201.09170'
+  pdf_path: papers/raw/2201.09170.pdf
+  bibtex: '@article{yang2022onlineselfcal, title={Online Self-Calibration for Visual-Inertial
+    Navigation Systems: Models, Analysis and Degeneracy}, author={Yang, Yulin and
+    others}, year={2022}, eprint={2201.09170}}'
+  status: downloaded
+  evidence_level: weak
+- id: paper_033
+  title: 'SCIZOR: A Self-Supervised Approach to Data Curation for Large-Scale Imitation
+    Learning'
+  authors:
+  - Yu Zhang
+  - Yuqi Xie
+  - Huihan Liu
+  - Rutav Shah
+  year: 2025
+  venue: arXiv
+  source_id: '2505.22626'
+  pdf_path: papers/raw/2505.22626.pdf
+  bibtex: '@article{zhang2025scizor, title={SCIZOR: A Self-Supervised Approach to
+    Data Curation for Large-Scale Imitation Learning}, author={Zhang, Yu and others},
+    year={2025}, eprint={2505.22626}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_034
+  title: 'ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot
+    Data Curation'
+  authors:
+  - Tao Xu
+  - Jiaxin Wang
+  - Runhao Zhang
+  - Jiayi Guan
+  year: 2026
+  venue: arXiv
+  source_id: '2606.16208'
+  pdf_path: papers/raw/2606.16208.pdf
+  bibtex: '@article{xu2026athena, title={ATHENA: Accelerated Multi-Task Heterogeneous
+    Influence Functions for Robot Data Curation}, author={Xu, Tao and others}, year={2026},
+    eprint={2606.16208}}'
+  status: downloaded
+  evidence_level: direct
+- id: paper_035
+  title: Language-Conditioned Change-point Detection to Identify Sub-Tasks in Robotics
+    Domains
+  authors:
+  - Divyanshu Raj
+  - Chitta Baral
+  - Nakul Gopalan
+  year: 2023
+  venue: arXiv
+  source_id: '2309.00743'
+  pdf_path: papers/raw/2309.00743.pdf
+  bibtex: '@article{raj2023changepoint, title={Language-Conditioned Change-point Detection
+    to Identify Sub-Tasks in Robotics Domains}, author={Raj, Divyanshu and others},
+    year={2023}, eprint={2309.00743}}'
+  status: downloaded
+  evidence_level: direct

@@ -1,0 +1,8 @@
+# 大文件与二进制
+g2-orion05-resample-training.zip
+papers/raw/*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/

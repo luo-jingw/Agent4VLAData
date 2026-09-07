@@ -1,0 +1,918 @@
+
+===== PAGE 1 =====
+FULL PAPER
+Variable-Speed Teaching–Playback as Real-World Data
+Augmentation for Imitation Learning
+Nozomu Masuyaa, Hiroshi Satoa, Koki Yamaneb, Takuya Kusumea, Sho Sakainoc,
+and Toshiaki Tsujid
+aMaster’s Program in Intelligent and Mechanical Interaction Systems, Degree Programs in
+Systems and Information and Engineering, Graduate School of Science and Technology,
+University of Tsukuba, Japan; bDoctoral Program in Intelligent and Mechanical Interaction
+Systems, Degree Programs in Systems and Information and Engineering, Graduate School of
+Science and Technology, University of Tsukuba, Japan; cDepartment of Intelligent Interaction
+Technologies, Institute of Systems and Information Engineering, University of Tsukuba,
+Japan; dGraduate School of Science and Engineering, Saitama University, Saitama, Japan.
+ARTICLE HISTORY
+Compiled May 7, 2025
+ABSTRACT
+Because imitation learning relies on human demonstrations in hard-to-simulate set-
+tings, the inclusion of force control in this method has resulted in a shortage of
+training data, even with a simple change in speed. Although the field of data augmen-
+tation has addressed the lack of data, conventional methods of data augmentation
+for robot manipulation are limited to simulation-based methods or downsampling
+for position control. This paper proposes a novel method of data augmentation that
+is applicable to force control and preserves the advantages of real-world datasets.
+We applied teaching–playback at variable speeds as real-world data augmentation to
+increase both the quantity and quality of environmental reactions at variable speeds.
+An experiment was conducted on bilateral control-based imitation learning using a
+method of imitation learning equipped with position–force control. We evaluated
+the effect of real-world data augmentation on two tasks, pick-and-place and wiping,
+at variable speeds, each from two human demonstrations at fixed speed. The results
+showed a maximum 55% increase in success rate from a simple change in speed of
+real-world reactions and improved accuracy along the duration/frequency command
+by gathering environmental reactions at variable speeds.
+KEYWORDS
+Imitation learning; motion-copying system; data augmentation
+1. Introduction
+Particularly in societies with a declining workforce, robots are expected to replace a
+wider range of human labor, such as handling irregularly shaped objects or conducting
+multiple household tasks. As the precise modeling of contact or irregularly shaped
+objects is infeasible, model-free methods are required to expand the workplace for
+robots. An example of a model-free method is reinforcement learning [1]. Although this
+method is completely model-free, it requires numerous attempts, which are difficult to
+achieve.
+CONTACT Nozomu Masuya. Email: masuya.nozomu.sm@alumni.tsukuba.ac.jp
+arXiv:2412.03252v2  [cs.RO]  6 May 2025
+
+===== PAGE 2 =====
+Imitation learning, such as behavioral cloning or learning from demonstrations, bal-
+ances the requirements of prior knowledge and iterations on real robots with the help
+of experts. In particular, imitation learning based on teleoperation, such as ALOHA [2]
+and bilateral control-based imitation learning [3–7] has succeeded in adapting to the
+environment and generating motion in real time. In these methods, first, teaching is
+performed through teleoperation by humans, and then motion is reproduced by the
+robot imitating human commands. This enables the collection of commands for robots
+in addition to their responses, making efficient use of human skills in controlling robots
+based on predictions.
+In conventional methods of imitation learning with force control, learning motion
+along variable-speed commands [8,9] requires human demonstrations at various speeds
+in the initial phase of teaching. The application of self-supervised learning [9], which
+utilizes the generated motion as additional training data, has succeeded in increas-
+ing the interpolating speed and accuracy. However, this approach still struggles to
+reproduce faster motion than that originally trained.
+Because the safe teleoperation of a robot requires speed limitations, this has limited
+the speed of motion to that of teleoperation to a smaller range than human mo-
+tion itself. Meanwhile, position–force-controlled teaching–playback, called the motion-
+copying system [10], has succeeded in reproducing motion at variable speeds, including
+at fast-forward speeds. Fast-forward data collection for one task at a fixed speed has
+been utilized [11], but the effect of fast-forward remains unclear, as is the feasibility
+of teaching tasks at variable speeds.
+The contribution of this paper is the proposal of a method to reduce human effort in
+teaching imitation learning based on force control through the validation of real-world
+data augmentation at variable speeds in bilateral control-based imitation learning. This
+study verified real-world spatio-temporal data augmentation using actual robots and
+the environment and verified the validity of the proposed method through experiments
+involving two tasks with two human demonstrations.
+2. Related Work
+2.1. Imitation Learning for Robot Manipulation
+As technologies in machine learning, particularly neural networks (NNs), have gained
+popularity, the field of imitation learning [12–16], including behavioral cloning and
+learning from demonstration, has attracted interest owing to its high efficiency and
+versatility. Imitation learning aims to transfer skills from experts to robots through ma-
+chine learning. In robot manipulation, imitation learning is utilized to extract human
+skills in handling unknown objects or phenomena, such as handling food or dealing
+with friction.
+Similarly, in other fields related to machine learning, the collection of expert data
+in an appropriate format, as well as algorithms for generating or selecting trajectories,
+is critical to the success of imitation. Data collection methods in imitation learning
+are largely divided into indirect and direct teaching methods [16]. Indirect teaching
+collects human demonstrations through the human body, whereas demonstrations in
+direct teaching are performed by the robot as imitation is expected. Although indirect
+teaching is safe and low-cost, the difference in embodiment between humans and robots
+makes imitation difficult.
+Direct teaching methods include kinesthetic teaching [17], virtual-reality based tele-
+2
+
+===== PAGE 3 =====
+operation [13,18,19], and leader–follower teleoperation [2,3]. In contrast to kinesthetic
+teaching, which directly involves the single robot expected to imitate it, virtual-reality-
+and leader–follower-based teleoperation methods enable the acquisition of commands
+and responses separately. Because robots can have delays, particularly at high frequen-
+cies, the separation of commands and responses is crucial to achieving human-like quick
+motion. Therefore, teleoperation-based imitation learning is one of the most promising
+methods for acquiring human manipulation skills.
+2.2. Data Augmentation for Robot Manipulation
+In machine learning, data augmentation is a method for reconstructing diverse real-
+world datasets from a limited amount and variety of data. For visual data, rotation,
+distortion, masking, mixing, and adding noise are among the well-known examples,
+in addition to synthesizing from games or simulations [20,21], or additional data is
+generated with an NN, such as a generative adversarial network (GAN) [22].
+In robot manipulation, the subjects of data augmentation are widened to include
+mechanical data such as position and force, in addition to visual or other sensory
+data. Generative approaches, including simulations, are options with maximal diver-
+sity when modeling is possible. Mitrano et al. [23] proposed a data augmentation based
+on simulations and optimization. While this approach provides an increased diversity
+of scenarios preserving the state of contact, it is limited to known environments and ob-
+jects, owing to the assumptions that make simulation possible. Yu et al. ’s ROSIE [24]
+can randomize the properties of items in visual data using a text-guided image gen-
+eration model. Although this method has successfully augmented the appearance of
+objects, its application to motion and force requires a large dataset from robots, which
+is currently unavailable.
+In contrast, downsampling and rearrangement are among the easy-to-implement
+options, as robots are controlled at a high frequency for precision and stability, enabling
+the acquisition of motion data at higher frequencies than that of cameras or NN
+models. Rahmatizadeh et al. [25] implemented the downsampling and rearrangement
+of trajectory data from 33 to 4 Hz in addition to synthesizing additional trajectory
+data between demonstrations. This method was implemented for bilateral control-
+based imitation learning [3,5,6,9], generating training data from 25 to 100 Hz from
+mechanical data of up to 1 kHz. Kobayashi et al. [26] proposed an efficient multi-modal
+combination of downsampled mechanical and low-frequency visual data in bilateral
+control-based imitation learning, minimizing the time difference between the visual
+and mechanical data. A change in speed can also be accomplished by downsampling
+for limited mechanical data; e.g., Yamamoto et al. [27] augmented the speed and phase
+of visual data and joint angles through downsampling. While this method enables
+conveyor picking at variable speeds, it is limited to position control, leaving room for
+force control.
+Sakaino et al.’s fast-forward data collection [11] included the downsampling of hu-
+man commands and a real-world collection of environmental reactions, including force,
+through teaching–playback. This method enables the collection of hard-to-simulate
+force reactions with minimal human effort; however, its effect and feasibility for
+variable-speed tasks remain unclear.
+3
+
+===== PAGE 4 =====
+3. Background
+3.1. Four-channel Bilateral Control
+The bilateral teleoperation of robots has long been a field of research for applica-
+tions in extreme environments, hazardous tasks, or minimally invasive surgeries [28].
+Four-channel bilateral control [29,30] is a method of bilateral teleoperation that re-
+constructs actions and reactions between a leader robot for the operator and follower
+robot performing the task, with symmetrical feedback of both position and force. In
+four-channel bilateral control, the leader and follower robots are controlled to satisfy
+the following equations:
+θres
+f
+−θres
+l
+= 0
+(1)
+and
+τ res
+f
++ τ res
+l
+= 0,
+(2)
+where θ is the vector of the joint angle, τ is that of the joint torque, and the subscripts
+l and f represent the leader and follower, respectively. A block diagram of four-channel
+bilateral control is shown in figure 1. The superscripts res and ref denote the response
+and reference, respectively. In four-channel bilateral control, the scaling of the position
+Figure 1. Block diagram of four-channel bilateral control.
+and force between the leader and follower is available through oblique coordinate
+control [30]. However, scaling the length of time within bilateral control clearly collides
+with the law of cause and effect, rendering it infeasible.
+3.2. Motion-Copying System
+The motion-copying system [10,31–33], a teaching–playback method with position–
+force control, is derived from the substitution of the leader robot in four-channel
+bilateral control with motion data previously obtained through four-channel bilateral
+control [10,31,32] or an equivalent source of position and force data [33].
+This method enables the replay of skilled human motion, obtained in four-channel
+bilateral control, without continuous teleoperation. In addition to simple replay, mo-
+tion can be slowed or fast-forwarded [10,31] by altering the playback speed in addition
+to spatial scaling [32].
+A block diagram of the motion-copying system during the playback phase is shown
+in figure 2. The definitions of the variables, superscripts, and subscripts are the same
+as those for the four-channel bilateral control. Clearly, playback using this method
+4
+
+===== PAGE 5 =====
+excludes feedback from the environment to the command values.
+Figure 2. Block diagram of the motion-copying system, teaching–playback with force control.
+3.3. Bilateral Control-Based Imitation Learning
+Bilateral control-based imitation learning [3–5,8] is a method of teleoperation-based
+imitation learning with position–force control. This method is derived from the sub-
+stitution of the leader robot of the four-channel bilateral control with an NN model
+trained to reproduce human commands from the state of the follower robot. The use
+of force control and the preservation of the controller enables a robot to perform non-
+prehensile manipulation [9], grasp unknown objects without crushing [5], and perform
+other contact-rich tasks at the same speed as humans. To train the NN model, this
+method utilizes four-channel bilateral control to obtain the command values of the
+position and force separately from the response of the follower robot, which makes
+contact with the environment. Figure 3 depicts the block diagram of bilateral control-
+based imitation learning. The definitions of θ, ω, τ, superscripts, and subscripts are
+the same as those of the four-channel bilateral control and motion-copying system,
+and the circumflexes (ˆ) denote the estimates by the NN model. The configuration
+of bilateral control-based imitation learning differs from that of teaching–playback
+(figure 2) in the feedback from the follower robot to the NN model.
+Figure 3. Block diagram of bilateral control-based imitation learning.
+4. Method: Teaching–Playback at Variable Speeds as Real-World Data
+Augmentation
+We utilized real-world teaching playback to obtain many hard-to-simulate environ-
+mental reactions. Real-world data augmentation was conducted for three main reasons.
+First, because the robot system and its surrounding environment contains nonlinearity,
+variations in speed invoke nonlinear hard-to-simulate changes in the reaction. Second,
+5
+
+===== PAGE 6 =====
+as imitation learning utilizes environmental reactions as input, room remains for im-
+provement of accuracy through learning the invariance of commands with a small
+change in reaction. Third, imitation learning in contact-rich tasks with force control
+requires a dataset of contact forces, whose collection must occur in a real environment.
+In this study, bilateral control-based imitation learning was selected as the method
+for imitation learning to enable force control, and a motion-copying system was used
+for data augmentation. Linear interpolation was utilized to alter the speed of the
+motion data, and velocity data, both command and response, were multiplied through
+the speed ratio. In addition, to address the increased probability of failure owing to
+the absence of feedback, the motion was repeated until a certain number of successful
+playbacks were reached according to the tasks, and only successful data were used to
+train the NN model.
+The experimental flowchart before training the NN models is shown in figure 4.
+Simple duplication and speed adjustments were performed to evaluate the effect of
+real-world data augmentation. Both methods shared the same command values, but
+the corresponding response values were different.
+Figure 4. Difference between the proposed method and a simple fast-forward in data.
+5. Experiment and Evaluation
+5.1. Setup of Robots
+5.1.1. Manipulator
+Figure 5 depicts the manipulators used in this study. They are called CRANE-X7
+and are manufactured by RT Corporation, Tokyo, Japan. The CRANE-X7 consists
+of an arm with seven degrees of freedom and a rigid end effector with one degree
+of freedom, each equipped with rotary encoders capable of current control. The end
+effectors were replaced with a cross-structured hand to enable the grasping of small
+objects [5]. In addition, the third joint was mechanically fixed to eliminate redundant
+degrees of freedom. We used two CRANE-X7 robots in the initial teaching process
+using bilateral control and one in teaching–playback and evaluation.
+6
+
+===== PAGE 7 =====
+Figure 5. CRANE-X7 with a cross-structured hand.
+5.1.2. Controller for Each Manipulator
+Each joint of the manipulator was controlled using a hybrid position and force con-
+troller, as shown in figure 6. The superscript dis depicts the disturbance, and the def-
+initions of the other variables and superscripts are the same as in the aforementioned
+block diagrams. The controller consisted of a proportional–derivative (PD) controller
+for the joint angle and a proportional (P) controller for the joint force, equipped with
+a disturbance observer (DOB) and a reaction force observer (RFOB). The parame-
+Figure 6. Hybrid controller with DOB and RFOB.
+ters for the DOB/RFOB and gains for the controllers were those identified or set by
+Saigusa et al. [9]. The sampling frequency of the robots was set to 500 Hz.
+5.2. Setup of Imitation Learning
+Bilateral control-based imitation learning was used to evaluate the effects of real-world
+data augmentation.
+As mentioned earlier, datasets with simple duplication and changes in the speed of
+the command/response value of the human demonstration were also prepared to eval-
+uate the effect of real-world responses through comparison with the proposed method.
+The sampling frequency of both the bilateral control and teaching–playback was
+set to 500 Hz. NN models were trained using data obtained through either teaching–
+playback or simply duplicating and altering the speed. Each NN model consisted of
+eight layers, 200 units of long short-term memory (LSTM) [34,35] cells, and one fully
+connected layer, as shown in figure 7. The input had 22 dimensions in total, seven
+each for the follower’s joint angles, angular velocities, and torques, and one for the la-
+bel, depending on the task. The output had 42 dimensions: the follower’s joint angles,
+angular velocities, and torques in addition to those of the leader’s, making the model
+7
+
+===== PAGE 8 =====
+a follower-to-follower/leader (F2FL) [36] structure to ensure that the prediction was
+based on a variety of environments. Each input and output dimension was normalized,
+with the average set to 0 and the standard deviation set to 1. The frequency of the
+NN model was 50 Hz. Each sample of the obtained data, which was at 500 Hz, was
+downsampled and rearranged [25] as ten samples. In the evaluation, the control fre-
+quency of the robot remained at 500 Hz, whereas the command value inferred by the
+NN model only changed at 50 Hz. In addition, for the training data, Gaussian noise
+with a size of 0.01 times the standard deviation was added to the input to prevent
+overfitting. The learning rate was 1.0 × 10−4 and the models were trained for 5000
+epochs.
+Figure 7. Configuration of NN model.
+5.3. Setup of Tasks
+The experiments were conducted on two tasks, pick-and-place and wiping, using dif-
+ferent data and environments for training and evaluation.
+5.3.1. Pick-and-Place Task
+In the pick-and-place task, as depicted in figure 8, the robot first grasped an object
+placed within the circle on the left side, carried it, and then placed it within the circle
+on the right side. A trial was considered a failure when the entire object dropped out
+of the circle or the task was not completed within 40 s.
+Four objects, as shown in figure 9, were prepared for this task. Two sponges, a
+hard and soft one, were utilized for both training and evaluation, whereas the other
+two objects were selected only for evaluation. The hard sponge was a natural rubber
+sponge approximately 1 cm thick, whereas the soft sponge was a urethane sponge
+approximately 3 cm thick; both were selected from the objects of Yamane et al, [5].
+An electric tap and cloth were selected from everyday items to simulate a much wider
+range of impedance and shape uncertainties.
+In the initial data collection phase, two demonstrations were conducted using four-
+channel bilateral control. One was with the hard sponge, which took 6.6 s, and the
+other with the soft sponge, which took 7.0 s. For data augmentation, the environmental
+responses from playbacks were collected at 0.5, 1, and 2 times the speed of these two
+sponges, 10 times each, totaling 60 playbacks. The data obtained from the playback
+were labeled by the length of time when the angle of the end effector was smaller than
+3.7 rad, which means that the hand was closed. Seven samples of each sponge and
+speed were used for training, and the other three samples were used for validation. In
+the trial, labels of 1.5, 3, 6, 9, 12, and 15 s were used, and unlearned objects, electric
+taps, and cloth, as depicted in figure 9, were added.
+8
+
+===== PAGE 9 =====
+(a) Initial State
+(b) Grasping
+(c) Carrying
+(d) Placing
+Figure 8. Procedure of the pick-and-place task.
+(a) Hard Sponge
+(b) Soft Sponge
+(c) Electric Tap
+(d) Cloth
+Figure 9. Objects for the pick-and-place task.
+5.3.2. Wiping Task
+In the wiping task, depicted in figure 10, the robot first pressed an eraser towards a
+whiteboard placed horizontally on a desk, grasped the eraser, and then wiped the board
+continuously at different frequencies. The height of the surface was set at either 12 or
+15 cm from the desk. The eraser was equipped with an aluminum frame for adjustment
+of height and was loosely attached to the robot’s hand. Trials were considered to have
+failed when the eraser lost contact with the whiteboard or when the robot did not
+proceed to wiping.
+In the data collection phase, two demonstrations were conducted using four-channel
+bilateral control. One was at a height of 12 cm, and the other was at 15 cm. All
+demonstrations were performed at a frequency of 1.0 Hz while listening to the sound
+of a metronome set at 120 beats per minute.
+In data augmentation, both demonstrations of the two heights were played back with
+0.5, 1 and 1.5 times the speed, five times each. A total of 30 playbacks were collected,
+each with environmental reaction from pressing, grasping, and 40 s of wiping. For each
+height and speed, three playbacks were utilized as training data, and two were used
+for validation. The gathered data were labeled by the frequency of motion multiplied
+by the speed of playbacks, that is, 0.5, 1, or 1.5 Hz.
+In the trial, labels of 0.25, 0.5, 0.75, 1, 1.25, 1.5, and 1.75 Hz were used. Each trial
+lasted 50 s and included pressing, grasping, and wiping.
+5.4. Result
+5.4.1. Pick-and-Place Task
+Tables 1 and 2 depict the success rates of the trials in the pick-and-place task. Labels
+between 4.5 and 12 s were interpolated for the NN models, and the others were ex-
+9
+
+===== PAGE 10 =====
+(a) Initial State
+(b) Pressing
+(c) Grasping
+(d) Wiping
+Figure 10. Procedure of the wiping task.
+Table 1.
+Task success rate of the pick-and-place task, trained with real-world playbacks at 0.5x, 1x, and 2x the speed of human demonstrations.
+Label
+Object
+1.5 s
+3 s
+4.5 s
+6 s
+9 s
+12 s
+15 s
+4.5–12 s
+Overall
+Hard Sponge
+1/5(20%)
+4/5(80%)
+3/5(60%)
+3/5(60%)
+5/5(100%)
+5/5(100%)
+0/5(0%)
+16/20(80%)
+21/35(60%)
+Soft Sponge
+1/5(20%)
+3/5(60%)
+5/5(100%)
+4/5(80%)
+5/5(100%)
+4/5(80%)
+3/5(60%)
+18/20(90%)
+25/35(71%)
+Electric Tap
+0/5(0%)
+2/5(40%)
+4/5(80%)
+5/5(100%)
+4/5(80%)
+5/5(100%)
+3/5(60%)
+18/20(90%)
+23/35(66%)
+Cloth
+1/5(20%)
+3/5(60%)
+3/5(60%)
+5/5(100%)
+5/5(100%)
+5/5(100%)
+0/5(0%)
+18/20(90%)
+22/35(63%)
+Overall
+3/20(15%)
+12/20(60%)
+15/20(75%)
+19/20(95%)
+19/20(95%)
+19/20(95%)
+6/20(30%)
+70/80(88%)
+74/140(53%)
+trapolated. Real-world data augmentation outperformed the success rate, except for
+five conditions: hard sponge and electric tap labeled 1.5 s, electric tap labeled 9 s,
+and hard sponge and cloth labeled 15 s. The overall success rate differed more than
+20% and more than 50% for interpolation, given that the change in speed equaled to
+a range of 3.3–14 s.
+The actual times consumed for each successful trial are shown in figure 11. Ac-
+cording to the figure, real-world data augmentation resulted in smaller leaps from the
+given labels at slower conditions, such as 12 and 15 s, and a stronger correlation to the
+given labels, even for extrapolation. This shows that the application of real-world data
+augmentation contributed to higher accuracy and stability, particularly in slower con-
+ditions, and the limitations of extrapolation through the NN model to faster motion,
+particularly twice as fast as taught.
+5.4.2. Wiping Task
+The results of the wiping task are presented in tables 3 to 4. Labels between 0.5 and
+1.5 Hz were interpolation for the NN models, and others were extrapolated. The overall
+success rate with real-world data augmentation was slightly higher than that without,
+Table 2.
+Task success rate of the pick-and-place task, trained with human demonstrations simply duplicated and changed in speed.
+Label
+Object
+1.5 s
+3 s
+4.5 s
+6 s
+9 s
+12 s
+15 s
+4.5–12 s
+Overall
+Hard Sponge
+1/5(20%)
+1/5(20%)
+1/5(20%)
+2/5(40%)
+3/5(60%)
+4/5(80%)
+3/5(60%)
+10/20(50%)
+15/35(43%)
+Soft Sponge
+0/5(0%)
+0/5(0%)
+1/5(20%)
+3/5(60%)
+3/5(60%)
+1/5(20%)
+2/5(40%)
+8/20(40%)
+10/35(29%)
+Electric Tap
+0/5(0%)
+0/5(0%)
+0/5(0%)
+0/5(0%)
+5/5(100%)
+2/5(40%)
+1/5(20%)
+7/20(35%)
+8/35(23%)
+Cloth
+0/5(0%)
+2/5(40%)
+1/5(20%)
+1/5(20%)
+2/5(40%)
+1/5(20%)
+2/5(40%)
+5/20(25%)
+9/35(26%)
+Overall
+1/20(5%)
+3/20(15%)
+3/20(15%)
+6/20(30%)
+13/20(65%)
+8/20(40%)
+8/20(40%)
+25/80(31%)
+42/140(30%)
+10
+
+===== PAGE 11 =====
+Label (s)
+1.5
+3
+4.5
+6
+9
+12
+15
+Completion Time (s)
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+Interpolation
+Extrapolation
+Extra-
+polation
+(a) With real-world data augmentation
+Label (s)
+1.5
+3
+4.5
+6
+9
+12
+15
+Completion Time (s)
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+20
+Interpolation
+Extrapolation
+Extra-
+polation
+(b) Without real-world data augmentation
+Figure 11.
+Actual completion time in successful trials of pick-and-place task. Matching the label (red dashed
+line) was better.
+Table 3.
+Task success rate of the wiping task, trained with real-world playbacks of 0.5x, 1x, and 1.5x the speed of human demonstrations at 1 Hz.
+Label
+Height
+0.25 Hz
+0.5 Hz
+0.75 Hz
+1 Hz
+1.25 Hz
+1.5 Hz
+1.75 Hz
+0.5–1.5 Hz
+Overall
+15 cm
+4/5(80%)
+4/5(80%)
+5/5(100%)
+5/5(100%)
+5/5(100%)
+5/5(100%)
+5/5(100%)
+24/25(96%)
+33/35(94%)
+12 cm
+1/5(20%)
+1/5(20%)
+4/5(80%)
+3/5(60%)
+4/5(80%)
+4/5(80%)
+5/5(100%)
+16/25(64%)
+22/35(63%)
+Overall
+5/10(50%)
+5/10(50%)
+9/10(90%)
+8/10(80%)
+9/10(90%)
+9/10(90%)
+10/10(100%)
+40/50(80%)
+55/70(79%)
+whereas at low frequencies, real-world data augmentation had a higher success rate at
+15 cm and a lower success rate at 12 cm. The main reason for failure without real-world
+data augmentation was the initiation of periodical movement before pressing, resulting
+in the eraser bumping towards the whiteboard. As no failures of this type were observed
+with real-world data augmentation, this indicated that the proposed method enabled
+learning the procedure of the task according to force feedback. However, failures with
+real-world data augmentation are primarily sudden losses of contact force or repeated
+pressing and grasping. Because these failures were more frequent at low heights, this
+indicated insufficient height detection.
+Figure 12 depicts the actual frequency of wiping in successful trials, averaged for
+each trial. Given the fluctuation in frequency at the beginning of motion in human
+demonstrations and the lack of a metronome-like input to the NN model, small dif-
+ferences can be tolerated. From the data shown in the figure, real-world data aug-
+mentation contributed to the accuracy along the given label at both high and low
+frequencies, in contrast to the model without the proposed method, which remained
+between 0.7 and 1.4 Hz. A limited frequency range, larger distributions and outliers
+in the proposed method indicate the necessity for fine-tuning and a wider range of
+training data, which are available by more playbacks in diverse settings.
+Table 4.
+Task success rate of wiping task, trained with human demonstrations simply duplicated and changed in speed.
+Label
+Height
+0.25 Hz
+0.5 Hz
+0.75 Hz
+1 Hz
+1.25 Hz
+1.5 Hz
+1.75 Hz
+0.5–1.5 Hz
+Overall
+15 cm
+0/5( 0%)
+1/5(20%)
+3/5(60%)
+3/5(60%)
+5/5(100%)
+5/5(100%)
+5/5(100%)
+17/25(20%)
+22/35(68%)
+12 cm
+4/5(80%)
+5/5(100%)
+4/5(80%)
+4/5(80%)
+4/5(80%)
+4/5(80%)
+5/5(100%)
+21/25(84%)
+30/35(86%)
+Overall
+4/10(40%)
+6/10(60%)
+7/10(70%)
+7/10(70%)
+9/10(90%)
+9/10(90%)
+10/10(100%)
+38/50(76%)
+52/70(74%)
+11
+
+===== PAGE 12 =====
+Frequency Label (Hz)
+0.25
+0.5
+0.75
+1
+1.25
+1.5
+1.75
+Actual Frequency (Hz)
+0
+0.2
+0.4
+0.6
+0.8
+1
+1.2
+1.4
+1.6
+1.8
+2
+Interpolation
+Extra-
+polation
+Extra-
+polation
+(a) With real-world data augmentation
+Frequency Label (Hz)
+0.25
+0.5
+0.75
+1
+1.25
+1.5
+1.75
+Actual Frequency (Hz)
+0
+0.2
+0.4
+0.6
+0.8
+1
+1.2
+1.4
+1.6
+1.8
+2
+Interpolation
+Extra-
+polation
+Extra-
+polation
+(b) Without real-world data augmentation
+Figure 12.
+Actual frequency of wiping motion in successful trials of the wiping task, averaged for each trial.
+Matching the label (red dashed line) was better.
+5.5. Discussions
+From the results obtained in the experiments, real-world data augmentation con-
+tributed to higher velocity-wise accuracy compared with simple changes in speed and
+improved the success rate with more repetitions of real-world playbacks. As the vari-
+ation in speed in human demonstrations was less than 10% for each task, real-world
+data augmentation also succeeded in extrapolating the velocity with which NN models
+can struggle. Although the results did not follow the label perfectly, more samples of
+diverse playbacks or combinations with self-supervised learning [9] can enable fine-
+tuning.
+This method has some limitations. First, as this method relies on simple teaching–
+playback, the naive use of this method can only contribute to an increased diversity of
+speed and not position. Second, as teaching–playback does not incorporate feedback
+from the environment, it cannot be applied to tasks that require continued feedback,
+such as carrying cups full of water without spilling.
+Our future work will include the incorporation of this method with simulation-based
+data augmentation through the recreation of force information with autoregression,
+towards data augmentation for contact-rich tasks with variable positions in addition
+to variable speed.
+6. Conclusion
+Because the world is not necessarily linear, changes in speed can result in hard-to-
+simulate differences in real-world responses that conventional data augmentation can
+encounter. In particular, the use of force control in imitation learning has made a
+real-world dataset of the contact force necessary, which is difficult to obtain through
+simulations.
+In this paper, we propose real-world data augmentation for imitation learning at
+variable speeds through teaching–playback, and we verified its effect on imitation learn-
+ing. The proposed method, combined with bilateral control-based imitation learning,
+enables contact-rich manipulation at variable speeds from only two fixed-speed human
+demonstrations. Experimental results showed that the proposed method contributed
+to accuracy and stability along with command input by obtaining environmental re-
+actions at a variety of speeds and higher success rates by multiplying real-world play-
+backs.
+We expect that a combination of this method and fine-tuning through self-
+12
+
+===== PAGE 13 =====
+supervised learning will enable the generation of accurate variable-speed motions in
+imitation learning. We also expect that this will enable generative data augmentation
+for both variable positions and variable speeds through a combination of the obtained
+data and simulation-based data augmentation.
+Disclosure statement
+The authors declare no potential conflicts of interest.
+Funding
+This work was supported by JSPS KAKENHI Grant Number 24K00905 and JST-
+ALCA-Next Japan, Grant Number JPMJAN24F1. This study was based on the results
+obtained from the JPNP20004 project subsidized by the New Energy and Industrial
+Technology Development Organization (NEDO).
+Notes on contributor(s)
+Nozomu Masuya received the B.E. degree in engineering systems from the University
+of Tsukuba, Japan, in 2023. He is currently working on an M.E. degree in intelligent
+and mechanical interaction systems at the Graduate School of Science and Technology
+at the University of Tsukuba. His research interests include motion control, robotics,
+artificial intelligence, and machine learning.
+Hiroshi Sato received the B.E. degree from Shibaura Institute of Technology, Tokyo,
+Japan, in 2023. He is currently working on an M.E. degree in intelligent and mechan-
+ical interaction systems at the Graduate School of Science and Technology at the
+University of Tsukuba, Japan. His research interests include motion control, robotics,
+and machine learning.
+Koki Yamane received the B.E. degree in engineering systems and M.E. degree
+in intelligent and mechanical interaction systems from the University of Tsukuba,
+Japan, in 2022 and 2024, respectively. He is currently pursuing a Ph.D. in intelligent
+and mechanical interaction systems at the University of Tsukuba, Japan. His research
+interests include motion control, robotics, image processing, and machine learning.
+Takuya Kusume received the B.E. degree from the National Institution for Academic
+Degree and University Evaluation, Japan, in 2022, and M.E. degree in intelligent and
+mechanical interaction systems from the University of Tsukuba, Japan, in 2024.
+Sho Sakaino received the B.E. degree in system design engineering and the M.E.
+and Ph.D. degrees in integrated design engineering from Keio University, Yokohama,
+Japan, in 2006, 2008, and 2011, respectively. He was an assistant professor at Saitama
+University between 2011 and 2019. Since 2019, he has been an associate professor at
+the University of Tsukuba. His research interests include mechatronics, motion control,
+robotics, and haptics. He received the IEEE IES Best Conference Paper Award in 2022.
+He also received the IEEJ Industry Application Society Distinguished Transaction
+Paper Award in 2011 and 2020 and the RSJ Advanced Robotics Excellent Paper
+Award in 2020.
+Toshiaki Tsuji received the B.E. degree in system design engineering and the M.E.
+and Ph. D degrees in integrated design engineering from Keio University, Yokohama,
+13
+
+===== PAGE 14 =====
+Japan, in 2001, 2003, and 2006, respectively. He was a research associate in the De-
+partment of Mechanical Engineering, Tokyo University of Science, from 2006 to 2007.
+He is currently an associate professor in the Department of Electrical and Electronic
+Systems, Saitama University. His research interests include motion control, haptics,
+and rehabilitation robots. He received the FANUC FA and Robot Foundation Origi-
+nal Paper Award in 2007 and 2008, respectively. He also received the RSJ Advanced
+Robotics Excellent Paper Award and IEEJ Industry Application Society Distinguished
+Transaction Paper Award in 2020.
+References
+[1] Levine S, Pastor P, Krizhevsky A, et al. Learning Hand-Eye Coordination for Robotic
+Grasping with Deep Learning and Large-Scale Data Collection. The International Journal
+of Robotics Research. 2018;37(4-5):421–436. Available from: https://doi.org/10.1177/
+0278364917710318.
+[2] Zhao TZ, Kumar V, Levine S, et al. Learning Fine-Grained Bimanual Manipulation with
+Low-Cost Hardware. In: Proceedings of Robotics: Science and Systems; July; Daegu,
+Republic of Korea; 2023.
+[3] Adachi T, Fujimoto K, Sakaino S, et al. Imitation Learning for Object Manipulation Based
+on Position/Force Information Using Bilateral Control. In: 2018 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS); 2018. p. 3648–3653.
+[4] Akagawa T, Sakaino S. Autoregressive model considering low frequency errors in command
+for bilateral control-based imitation learning. IEEJ Journal of Industry Applications.
+2023;12(1):26–32.
+[5] Yamane K, Saigusa Y, Sakaino S, et al. Soft and rigid object grasping with cross-structure
+hand using bilateral control-based imitation learning. IEEE Robotics and Automation
+Letters. 2024 Feb;9(2):1198–1205. Available from: http://dx.doi.org/10.1109/LRA.
+2023.3335768.
+[6] Buamanee T, Kobayashi M, Uranishi Y, et al. Bi-act: Bilateral control-based imitation
+learning via action chunking with transformer. In: 2024 IEEE International Conference
+on Advanced Intelligent Mechatronics (AIM); 2024. p. 410–415.
+[7] Kobayashi M, Buamanee T, Uranishi Y, et al. Ilbit: Imitation learning for robot using
+position and torque information based on bilateral control with transformer ; 2024.
+[8] Sakaino S, Fujimoto K, Saigusa Y, et al. Imitation learning for variable speed contact
+motion for operation up to control bandwidth. IEEE Open Journal of the Industrial
+Electronics Society. 2022;3:116–127.
+[9] Saigusa Y, Sakaino S, Tsuji T. Imitation Learning for Nonprehensile Manipulation
+Through Self-Supervised Learning Considering Motion Speed. IEEE Access. 2022;
+10:68291–68306.
+[10] Yokokura Y, Katsura S, Ohishi K. Motion copying system based on real-world haptics
+in variable speed. In: 2008 13th International Power Electronics and Motion Control
+Conference; 2008. p. 1604–1609.
+[11] Sakaino S, Masuya N, Sato H, et al. Practical implementations of bilateral control-based
+imitation learning at irex2023. In: the 10th IEEJ International Workshop on Sensing,
+Actuation, Motion Control, and Optimization; 2024. p. 213–218.
+[12] Lee AX, Lu H, Gupta A, et al. Learning Force-Based Manipulation of Deformable Objects
+from Multiple Demonstrations. In: 2015 IEEE International Conference on Robotics and
+Automation (ICRA); 2015. p. 177–184.
+[13] Yang PC, Sasaki K, Suzuki K, et al. Repeatable Folding Task by Humanoid Robot Worker
+Using Deep Learning. IEEE Robotics and Automation Letters. 2017;2(2):397–403.
+[14] Osa T, Pajarinen J, Neumann G, et al. An algorithmic perspective on imitation learning.
+Foundations and Trends® in Robotics. 2018;7(1-2):1–179. Available from: http://dx.
+14
+
+===== PAGE 15 =====
+doi.org/10.1561/2300000053.
+[15] Hussein A, Gaber MM, Elyan E, et al. Imitation learning: A survey of learning meth-
+ods. ACM Comput Surv. 2017 Apr;50(2). Available from: https://doi.org/10.1145/
+3054912.
+[16] Fang B, Jia S, Guo D, et al. Survey of imitation learning for robotic manipulation. Inter-
+national Journal of Intelligent Robotics and Applications. 2019;3(4):362–369. Available
+from: https://doi.org/10.1007/s41315-019-00103-5.
+[17] Ghalamzan E AM, Ragaglia M. Robot learning from demonstrations: Emulation learn-
+ing in environments with moving obstacles. Robotics and Autonomous Systems. 2018;
+101:45–56. Available from: https://www.sciencedirect.com/science/article/pii/
+S0921889017302981.
+[18] Zhang T, McCarthy Z, Jow O, et al. Deep imitation learning for complex manipula-
+tion tasks from virtual reality teleoperation. In: 2018 IEEE International Conference on
+Robotics and Automation (ICRA); 2018. p. 5628–5635.
+[19] Si W, Wang N, Yang C. A review on manipulation skill acquisition through teleoperation-
+based learning from demonstration. Cognitive Computation and Systems. 2021;3(1):1–16.
+Available from: https://ietresearch.onlinelibrary.wiley.com/doi/abs/10.1049/
+ccs2.12005.
+[20] Mumuni A, Mumuni F. Data augmentation: A comprehensive survey of modern ap-
+proaches. Array. 2022;16:100258. Available from: https://www.sciencedirect.com/
+science/article/pii/S2590005622000911.
+[21] Maharana K, Mondal S, Nemade B. A review: Data pre-processing and data aug-
+mentation techniques. Global Transitions Proceedings. 2022;3(1):91–99. International
+Conference on Intelligent Engineering Approach(ICIEA-2022); Available from: https:
+//www.sciencedirect.com/science/article/pii/S2666285X22000565.
+[22] Bissoto A, Valle E, Avila S. Gan-based data augmentation and anonymization for skin-
+lesion analysis: A critical review. In: Proceedings of the IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition (CVPR) Workshops; June; 2021. p. 1847–1856.
+[23] Mitrano P, Berenson D. Data augmentation for manipulation. In: Robotics: Science and
+Systems 2022; 2022.
+[24] Yu T, Xiao T, Tompson J, et al. Scaling Robot Learning with Semantically Imagined
+Experience. In: Proceedings of Robotics: Science and Systems; July; Daegu, Republic of
+Korea; 2023.
+[25] Rahmatizadeh R, Abolghasemi P, Behal A, et al. From virtual demonstration to real-
+world manipulation using lstm and mdn. Proceedings of the AAAI Conference on Artificial
+Intelligence. 2018 Apr;32(1). Available from: https://ojs.aaai.org/index.php/AAAI/
+article/view/12099.
+[26] Kobayashi M, Buamanee T, Uranishi Y. Dabi: Evaluation of data augmentation methods
+using downsampling in bilateral control-based imitation learning with images ; 2024.
+Available from: https://arxiv.org/abs/2410.04370.
+[27] Yamamoto K, Ito H, Ichiwara H, et al. Real-time motion generation and data augmen-
+tation for grasping moving objects with dynamic speed and position changes. In: 2024
+IEEE/SICE International Symposium on System Integration (SII); 2024. p. 390–397.
+[28] Hokayem PF, Spong MW. Bilateral teleoperation: An historical survey. Automatica.
+2006;42(12):2035–2057. Available from: https://www.sciencedirect.com/science/
+article/pii/S0005109806002871.
+[29] Tavakoli M, Aziminejad A, Patel RV, et al. High-fidelity bilateral teleoperation systems
+and the effect of multimodal haptics. IEEE Transactions on Systems, Man, and Cyber-
+netics, Part B (Cybernetics). 2007;37(6):1512–1528.
+[30] Sakaino S, Sato T, Ohnishi K. Multi-DOF Micro-Macro Bilateral Controller Using Oblique
+Coordinate Control. IEEE Transactions on Industrial Informatics. 2011;7(3):446–454.
+[31] Yokokura Y, Katsura S, Ohishi K. Stability analysis and experimental validation of a
+motion-copying system. IEEE Transactions on Industrial Electronics. 2009;56(10):3906–
+3913.
+15
+
+===== PAGE 16 =====
+[32] Igarashi K, Katsura S. Motion-data processing and reproduction based on motion-copying
+system. IEEJ Journal of Industry Applications. 2015;4(5):543–549.
+[33] Fujisaki K, Katsura S. Motion-copying system with in-tool sensing. IEEJ Journal of In-
+dustry Applications. 2023;12(4):793–799.
+[34] Hochreiter S, Schmidhuber J. Long Short-Term Memory. Neural computation. 1997 12;
+9:1735–80.
+[35] Sak H, Senior AW, Beaufays F. Long Short-Term Memory Recurrent Neural Network
+Architectures for Large Scale Acoustic Modeling. In: Interspeech; 2014. p. 338–342.
+[36] Hayashi K, Sasagawa A, Sakaino S, et al. A New Autoregressive Neural Network Model
+with Command Compensation for Imitation Learning Based on Bilateral Control. In:
+2021 IEEE International Conference on Mechatronics (ICM); 2021. p. 1–7.
+16

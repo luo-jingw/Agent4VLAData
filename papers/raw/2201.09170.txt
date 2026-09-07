@@ -1,0 +1,5096 @@
+
+===== PAGE 1 =====
+Online Self-Calibration for
+Visual-Inertial Navigation Systems:
+Models, Analysis and Degeneracy
+Journal Title
+XX(X):1–31
+©The Author(s) 2021
+Yulin Yang1, Patrick Geneva1, Xingxing Zuo2 and Guoquan Huang1
+Abstract
+In this paper, we study in-depth the problem of online self-calibration for robust and accurate visual-inertial state
+estimation. In particular, we ﬁrst perform a complete observability analysis for visual-inertial navigation systems (VINS)
+with full calibration of sensing parameters, including IMU and camera intrinsics and IMU-camera spatial-temporal
+extrinsic calibration, along with readout time of rolling shutter (RS) cameras (if used). We investigate different inertial
+model variants containing IMU intrinsic parameters that encompass most commonly used models for low-cost inertial
+sensors. With these models, the state transition matrix and visual measurement Jacobians are analytically derived and
+the observability analysis of linearized VINS with full sensor calibration is performed. The analysis results prove that, as
+intuitively assumed in the literature, VINS with full sensor calibration has four unobservable directions, corresponding to
+the system’s global yaw and translation, while all sensor calibration parameters are observable given fully-excited 6-axis
+motion. Moreover, we, for the ﬁrst time, identify primitive degenerate motions for IMU and camera intrinsic calibration,
+which, when combined, may produce complex degenerate motions. This result holds true for the different inertial model
+variants investigated in this work and has signiﬁcant impacts on practical applications of online self-calibration to many
+robotic platforms. Extensive Monte-Carlo simulations and real-world experiments are performed to validate both the
+observability analysis and identiﬁed degenerate motions, showing that online self-calibration improves system accuracy
+and robustness to calibration inaccuracies. We compare the proposed online self-calibration on commonly-used IMUs
+against the state-of-art ofﬂine calibration toolbox Kalibr, and show that the proposed system achieves better consistency
+and repeatability. As sensor calibration plays an important role in making real VINS work well in practice, based on our
+analysis and experimental evaluations, we also provide practical guidelines for how to perform online IMU-camera
+sensor self-calibration.
+Keywords
+Sensor calibration, visual–inertial systems, state estimation, observability analysis, degenerate motions, Monte Carlo
+analysis
+1
+Introduction
+Due to the decreasing cost of integrated inertial/visual sensor
+rigs, visual-inertial navigation system (VINS), which fuses
+high-rate inertial readings from an IMU and images of the
+surrounding environment from a camera, has gained great
+popularity in 6 degree-of-freedom (DoF) motion tracking for
+mobile devices and autonomous robots – such as micro aerial
+vehicles (MAV) (Shen et al. 2014), self-driving cars (Heng
+et al. 2019), unmanned ground vehicles (UGV) (Zhang et al.
+2021; Lee et al. 2020) and smart phones (Li and Mourikis
+2013a; Guo et al. 2014) – during the past decades (Huang
+2019). Many efﬁcient and robust VINS algorithms based on
+ﬁltering (Mourikis and Roumeliotis 2007; Li and Mourikis
+2013a; Wu et al. 2015; Geneva et al. 2020; Eckenhoff et al.
+2021) or batch least squares solver (Leutenegger et al. 2015;
+Forster et al. 2017; Qin et al. 2018; Usenko et al. 2020;
+Campos et al. 2021) techniques have been developed in
+recent years to address this pose estimation problem.
+There
+are
+many
+factors
+which
+attribute
+to
+VINS
+performance, such as visual feature tracking/triangulation,
+velocity/biases initialization and sensor calibration. Among
+them, robust and accurate sensor calibration – including the
+rigid transformation between sensors (spatial calibration),
+time offset between IMU-camera (temporal calibration),
+image line readout time for rolling shutter (RS) cameras, and
+IMU/camera intrinsics – is crucial, especially when plug-
+and-play visual-inertial sensor rigs with widely available
+off-the-shelf low-cost IMUs and rolling shutter cameras
+are deployed. In addition, sensor calibration itself can
+vary due to extended usage, sensor failure replacement
+and environmental effects such as varying temperature,
+humidity, vibrations, non-rigid mounting, and among others.
+For example, IMU biases and intrinsics suffer from the
+temperature and humidity changes (Li et al. 2014), and rigid
+transformation between IMU and camera can vary if the
+sensor is replaced or subjected to vibration. As such, online
+sensor self-calibration in VINS has attracted signiﬁcant
+attentions and research efforts (Li and Mourikis 2013a; Guo
+1 Robot Perception and Navigation Group, University of Delaware,
+Newark, DE 19716, USA.
+2 Department of Informatics, Technical
+University of Munich, Garching b. Munich, 85748, Germany.
+Corresponding author:
+Yulin Yang, Department of Mechanical Engineering, University of
+Delaware, 126 Spencer Lab, Newark, DE 19716, USA.
+Email: yuyang@udel.edu
+Prepared using xxxxx
+arXiv:2201.09170v3  [cs.RO]  29 Jan 2022
+
+===== PAGE 2 =====
+2
+Journal Title XX(X)
+et al. 2014; Yang et al. 2019; Eckenhoff et al. 2021; Yang
+et al. 2020b) in recent years, due to its potential to handle
+poor prior calibration or calibration changes, which can
+degrade the state estimate accuracy in the case that these
+calibrations are treated to be true.
+System observability analysis for VINS with online
+IMU-camera (Mirzaei and Roumeliotis 2008; Kelly and
+Sukhatme 2011; Guo and Roumeliotis 2013) or IMU/camera
+intrinsic (Tsao and Jan 2019; Yang et al. 2020b) calibration
+has also been carried out to show that these calibration
+parameters can be identiﬁed given fully excited motions.
+However, complete analysis for VINS with full calibration
+parameters – including IMU/camera intrinsics, IMU-camera
+rigid transformation, temporal time offset, and camera RS
+readout time – is still absent from the existing literature.
+Blindly performing online calibration is risky, as in
+most cases domain knowledge on speciﬁc motions and
+prior distribution choices are needed to ensure calibration
+can converge consistently (Schneider et al. 2019). In
+the meantime, existing research efforts (Li and Mourikis
+2014; Yang et al. 2019, 2020b) have also identiﬁed
+several basic motion proﬁles, termed degenerate motions,
+that cause online sensor self-calibration failures. In this
+work, we investigate degenerate motions which impact the
+deployment of VINS on mobile robots, which typically have
+constrained motions, when jointly estimating IMU/camera
+intrinsics, IMU-camera spatial-temporal calibration, and RS
+readout time. For example, aerial and ground vehicles can
+only perform a few motion proﬁles due to their under-
+actuation, and can easily “fall” into degenerate conditions
+for calibration during typical deployment. As compared to
+our investigation into degenerate motions when performing
+full-parameter self-calibration, and their impacts especially
+for under-actuated autonomous robots, most approaches on
+VINS sensor self-calibration are limited to either handheld
+or trajectory segments involving rich motion information (Li
+et al. 2014; Schneider et al. 2019).
+In this paper, we build an accurate and robust monocular
+VINS estimator with full self-calibration. We also investigate
+in-depth the observability analysis for visual-inertial self-
+calibration and perform degenerate motion analysis for all
+calibration parameters. In particular, the main contributions
+of this work include:
+• An
+efﬁcient
+ﬁlter-based
+visual-inertial
+estimator
+capable of performing self-calibration for all spatial-
+temporal extrinsic and intrinsic parameters.
+• We perform a complete observability and degeneracy
+analysis for the proposed visual-inertial models and,
+for the ﬁrst time, identify the degenerate motions that
+cause IMU and camera intrinsic parameters to become
+unobservable.
+• Extensive simulations and real-world experiments
+are performed to verify the parameter convergence
+of the estimator with online self-calibration under
+fully-excited 6DoF motion and a series of identiﬁed
+degenerate motions of practical signiﬁcance.
+• We show that under general motion, self-calibration
+is necessary to achieve accurate pose estimation in
+a robust manner for consumer grade sensors, which
+continue to become more prevalent, with only minimal
+computational impact. Additionally, we show that
+degenerate motions can and do have a signiﬁcant
+negative impact on the performance of the estimator,
+leading to a series of guideline recommendations.
+The rest of the paper is organized as follows: After
+reviewing the related work in Section 2 and estimation
+preliminaries in Section 3, we present the sensing models
+including inertial and camera models in Section 4. In
+Section 5, we derive the lienarized system dynamics and
+measurement model of the VINS with full sensor calibration.
+Based on that, we perform the observability analysis and
+degenerate motion identiﬁcation in Sections 6 and 7, while
+the proposed estimator is presented in Section 8. In Sections
+9, 10, 11 and 12, we extensively validate our analysis
+and estimator through both simulations and real-world
+experiments. Finally, we offer discussions and ﬁnal remarks
+in Sections 13 and 14.
+2
+Related Works
+Extensive works have studied online or ofﬂine IMU and
+camera calibration for VINS. However, the joint self-
+calibration of all the calibration parameters for visual and
+inertial sensors (including IMU/camera intrinsics, IMU-
+camera spatial-temporal calibration and RS readout time)
+was not investigated sufﬁciently, and the observability
+analysis and degenerate motion identiﬁcation for the
+complete VINS with calibration are still missing from the
+literature. In terms of the complete parameter calibration for
+VINS, the related works can be divided into the following
+four categories:
+2.1
+Camera Calibration
+Visual-only ofﬂine calibration of camera intrinsic parameters
+is well studied (Hartley and Zisserman 2004). For example,
+Faugeras et al. (1992) demonstrated camera self-calibration
+without a pattern, based on which Qian and Chellappa (2004)
+and Civera et al. (2009) proposed to use sum of Gaussian
+ﬁlters. Recently, Agudo (2021) extended the above works to
+use RGB video with objects of non-rigid shape for camera
+self-calibration.
+Many works have also focused on RS camera calibration,
+especially for the image line readout time. For instance,
+after formulating the geometric models of RS cameras and
+investigating how RS affects the image generation, Meingast
+et al. (2005) leveraged ﬂashing LED lights to calibrate the
+RS readout time. Similarly, Oth et al. (2013) used continuous
+time trajectory representation to model RS effects and
+performed calibration with an April tag pattern (Olson 2011).
+However, these methods assume known camera intrinsics
+(including distortion parameters) when calibrating the RS
+readout time.
+Nguyen and Lhuillier (2017) investigated the self-
+calibration of multiple omnidirectional RS cameras. They
+ﬁrst initialized the rigid transformation and time offset
+between cameras based on the structure-from-motion (SFM)
+trajectories generated from each monocular camera with
+global shutter (GS) assumption. Then, all the camera related
+parameters (i.e., the rigid transformation, time offset, camera
+intrinsics, and RS readout time for each camera) are
+reﬁned by a bundle adjustment (BA) with all the camera
+Prepared using xxxxxxxxxxx
+
+===== PAGE 3 =====
+Yulin Yang et al.
+3
+measurements. Kukelova et al. (2020) presented the ﬁrst
+minimal solution to absolute pose estimation of a RS camera
+with unknown focal length and unknown radial distortion,
+from seven point correspondences. With the proposed solvers
+they can achieve accurate solutions for camera poses, RS
+readout time, focal length and radial distortion. Note that
+both Kukelova et al. (2020) and Nguyen and Lhuillier (2017)
+are ofﬂine calibration algorithms and rely only on visual
+sensors. Karpenko et al. (2011) proposed to combine a
+gyroscope for RS camera image correction with natural
+scenes. However, it requires the pre-calibration of rotation
+between gyroscope and RS camera and the motion of the
+camera is restricted to rotation only. Tsao and Jan (2019)
+investigated online camera intrinsic calibration (only focal
+length and principal points) within a VINS framework.
+In contrast to the above works only focusing on camera
+calibration, our proposed method fuses the measurements
+of an IMU and a monocular camera, and provides online
+calibration of all the camera parameters including camera
+intrinsics and RS readout time, Both radial-tangential
+(radtan) and equivalent-distant (equidist) distortion (Furgale
+et al. 2013) are supported.
+2.2
+IMU Intrinsic Calibration
+Generally, the gyroscope and acceleration biases are needed
+for accurate inertial modeling. They are both modeled as
+random walks and estimated as part of IMU states. It is a
+common practice to estimate biases online in VINS such
+as Jones and Soatto (2011), Kelly and Sukhatme (2011),
+Leutenegger et al. (2015) and Mourikis and Roumeliotis
+(2007).
+Besides these biases, the IMU intrinsic parameters –
+including the scale correction and axis misalignment for
+gyroscope and accelerometer, the rotation from gyroscope
+or accelerometer frame to IMU frame, and the gravity
+sensitivity – also need to be calibrated ofﬂine or online,
+especially for low-cost inertial sensors. Bristeau et al. (2011)
+calibrated the IMU’s scale correction and axis misalignment
+for aerial vehicles by solving a least squares problem
+with known special sensor motions. Xiao et al. (2019)
+improved the IMU pre-integration (Forster et al. 2017) to
+incorporate the IMU intrinsic parameters in a keyframe
+based VINS algorithm for online self-calibration. Jung et al.
+(2020) studied IMU intrinsic calibration within multi-state
+constrained Kalman ﬁlter (MSCKF) by using a stereo camera
+and an IMU sensor, where they also examined the inertial
+calibration results under planar and random motions.
+Building upon our prior work (Yang et al. 2020b), in
+which we have investigated online IMU intrinsic calibration
+with the minimal sensor conﬁguration of a single IMU
+and a monocular camera and compared the performance
+of four different IMU intrinsic model variants in VINS,
+in this work, we study 18 different IMU intrinsic model
+variants which can encompass or be equivalent to most
+published IMU models for inertial navigation and perform
+online self-calibration. Comprehensive degenerate motion
+analysis, which can cause online self-calibration to fail, is
+also provided.
+2.3
+Joint IMU-Camera Self Calibration
+Since VINS fuses IMU measurements and camera images,
+the joint calibration of IMU-camera parameters is preferred
+to improve system accuracy and robustness. Extensive works
+have studied joint sensor calibration in VINS. For instance,
+Mirzaei and Roumeliotis (2008) proposed to use an extended
+Kalman ﬁlter (EKF) for the spatial calibration (i.e. the
+rigid transformation between the camera and IMU) of VINS
+and performed an observability analysis. They showed that
+the rigid transformation is not fully observable under one-
+axis rotation. Zachariah and Jansson (2010) proposed to
+use the recursive Sigma-Point Kalman ﬁlter to estimate
+IMU intrinsics and IMU-camera spatial parameters with
+measurements from an IMU and a monocular camera.
+However, Mirzaei and Roumeliotis (2008) and Zachariah
+and Jansson (2010) did not calibrate the camera intrinsics
+or IMU-camera time offset and both relied on calibration
+chessboards.
+Furgale et al. (2013) developed the well-known calibration
+toolbox: Kalibr, a continuous-time spline-based batch
+estimator, for IMU-camera extrinsics, time offset and camera
+intrinsics calibration. Rehder et al. (2016) extended Kalibr to
+incorporate and estimate IMU intrinsics (including scaling
+parameters, axis misalignments, and gravity sensitivity).
+Huai et al. (2021) further extended the above work to
+calibrate readout time for RS cameras. Nikolic et al. (2016)
+formulated a maximum likelihood estimation problem
+based on discrete IMU poses to calibrate the IMU-camera
+spatial-temporal and IMU intrinsic parameters. The above
+mentioned works are all ofﬂine methods and need calibration
+targets. In addition, they do not support full-parameter
+joint optimization of camera intrinsics with other calibration
+parameters.
+Schneider et al. (2019) reduced IMU-camera calibration
+optimization complexity by selecting the most informative
+trajectory segments for calibration. The selection is based
+on the information matrix of the measurements from the
+trajectory segments. Although this work does not need a
+calibration board, the temporal calibration between IMU and
+camera is not included.
+Many recent VINS algorithms perform online IMU-
+camera joint calibration. Qin et al. (2018) and Qin and Shen
+(2018) is able to perform online IMU-camera extrinsic and
+time offset calibration with natural scene to improve the
+system robustness and accuracy. Guo et al. (2014) proposed
+to use linear pose interpolation to model RS effects and
+calibrate readout time. Eckenhoff et al. (2019) proposed a
+multi-camera aided VINS with online IMU-camera spatial-
+temporal and camera intrinsic calibration. Eckenhoff et al.
+(2021) further proposed a generalized polynomial based pose
+interpolation for readout time calibration of RS cameras.
+However, the IMU intrinsics were not considered in the
+above systems. The closest work to ours is by Li et al. (2014)
+which included IMU-camera extrinsics, time offset, rolling-
+shutter readout time, camera and IMU intrinsics into the state
+vector within MSCKF (Mourikis and Roumeliotis 2007)
+based visual-inertial odometry and successfully calibrated
+all these parameters. They showed that these parameters
+can converge in simulation with fully excited motions and
+veriﬁed the system using a real-world experiment. However,
+system observability and degenerate motion analysis are
+Prepared using xxxxxxxxxxx
+
+===== PAGE 4 =====
+4
+Journal Title XX(X)
+still missing, which are the focus of our work along with
+more extensive multi-run statistical validations. In addition,
+we also compared different IMU model variants which
+have appeared in literature to investigate their estimation
+performances within VINS.
+2.4
+Observability and Degeneracy
+Observability analysis plays an important role in state
+estimation (Huang et al. 2010; Martinelli 2012; Hesch
+et al. 2013), especially when the system incorporates
+calibration parameters (Martinelli 2011; Li and Mourikis
+2014; Yang et al. 2019, 2020b). We wish to identify
+whether these calibration parameters can be calibrated
+with visual and inertial measurements, and also identify
+degenerate motions, which might cause calibration to fail.
+In addition, observability properties can be leveraged for
+consistent estimator design (Huang 2012; Hesch et al.
+2013; Wu et al. 2017a). Mirzaei and Roumeliotis (2008)
+performed the observability analysis for VINS with IMU-
+camera spatial calibration and showed that the spatial
+calibration is observable given fully excited motion of
+the IMU. They also found that that one-axis rotation is
+degenerate for the calibration of IMU-camera translation.
+Kelly and Sukhatme (2011) studied the IMU-camera self-
+calibration and performed nonlinear observability analysis
+using Lie derivative to show that the rigid transformation
+between IMU-camera is observable given random motions.
+Guo and Roumeliotis (2013) simpliﬁed the proof and
+analytically showed that the spatial calibration between the
+IMU and RGBD camera is observable. Li and Mourikis
+(2014) analyzed the identiﬁability for IMU-camera temporal
+calibration given the measurements of a single IMU and
+a monocular camera and identiﬁed a degenerate motion
+that can cause the IMU-camera time offset to become
+unobservable. Jung et al. (2020) studied the observability
+of stereo VINS with IMU intrinsics also based on Lie
+derivative to build the observability matrix and showed
+that the IMU intrinsics (including scale correction and axis
+misalignment for gyroscope and accelerometer, respectively)
+is observable given fully exited motions. Tsao and Jan (2019)
+built the observability matrix for VINS using linearized
+system model and showed that the camera intrinsics (only
+including focal length and principal points in their work) is
+observable. However, none of the above mentioned works
+ever performed and veriﬁed the observability analysis with
+full-parameter calibration for VINS.
+In our previous work (Yang et al. 2019), we built
+the observability matrix for VINS using the linearized
+system with IMU-camera spatial-temporal calibration and
+showed that given fully excited motions all these calibration
+parameters are observable. We have also, for ﬁrst time,
+identiﬁed four degenerate motions that can cause these
+calibration to become unobservable. In our recent work
+(Yang et al. 2020b), we performed observability analysis
+for
+monocular
+VINS
+with
+IMU
+intrinsic
+calibration
+(including scale and axis-misalignment for gyroscope and
+accelerometer, the rotation from gyroscope or accelerometer
+to IMU frame), and identiﬁed the degenerate motions
+for the IMU intrinsics. Building upon these prior works,
+in this work, we perform full-parameter calibration –
+including IMU intrinsics with gravity sensitivity, camera
+intrinsics and the IMU-camera spatial-temporal calibration
+with RS readout time – for VINS with a single IMU
+and a monocular RS camera. Comprehensive observability
+analysis and degenerate motion identiﬁcation are performed
+for these calibration parameters. Both simulations and real
+world experiments are also leveraged to verify our analysis.
+3
+Estimation Preliminaries
+The state x is propagated forward from timestep k −1 to
+k using incoming system control inputs uk−1 based on the
+following generic nonlinear function:
+xk = f(xk−1, uk−1, wk−1)
+(1)
+where wk−1 ∼N(0, Qk−1) denotes the white Gaussian
+noise of the control input. The state estimate at k can be
+predicted from the state estimate at k −1 with the nonlinear
+system:
+ˆxk|k−1 = f(ˆxk−1|k−1, uk−1, 0)
+(2)
+where the subscript i|j denotes the estimate at time i given
+the measurements up to time j; ˆx denotes the estimated
+value for state x and ˜x = x ⊟ˆx represents the error states,
+where “⊟” can be deﬁned within a manifold (Barfoot 2017).
+The inverse operation of “⊟” can be deﬁned as x = ˆx ⊞˜x,
+accordingly. The state covariance can be deﬁned on the error
+states as ˜x ∼N(0, P).
+After linearizing the nonlinear function [see Eq. (1)]
+at current state estimate ˆxk−1|k−1, the propagated state
+covariance Pk|k−1
+for state estimate
+ˆxk|k−1
+can be
+computed as:
+˜xk|k−1 ≃Φk−1|k−1˜xk−1|k−1 + Gk−1wk−1
+(3)
+Pk|k−1 = Φk−1Pk−1|k−1Φ⊤
+k−1 + Gk−1Qk−1G⊤
+k−1
+(4)
+where Φk−1 and Gk−1 are the state transition matrix
+and noise Jacobians, respectively. A nonlinear measurement
+function can be described as:
+zk = h(xk) + nk
+(5)
+where nk ∼N(0, Rk) is white Gaussian noise. For the EKF
+update, we need to ﬁrst linearize the above equation at the
+current state estimate ˆxk|k−1 as:
+zk = h(ˆxk|k−1 ⊞˜xk|k−1) + nk
+(6)
+≃h(ˆxk|k−1) + Hk˜xk|k−1 + nk
+(7)
+⇒˜zk ≜zk −h(ˆxk|k−1) ≃Hk˜xk|k−1 + nk
+(8)
+where Hk is the measurement Jacobian and ˜zk is the
+measurement residual. With these, we can now perform an
+EKF update to reﬁne state estimates and covariance at time
+step k (Maybeck 1979):
+ˆxk|k = ˆxk|k−1 ⊞Kk(zk −h(ˆxk|k−1))
+(9)
+Pk|k = Pk|k−1 −KkHkPk|k−1
+(10)
+Kk = Pk|k−1H⊤
+k (HkPk|k−1H⊤
+k + Rk)−1
+(11)
+Prepared using xxxxxxxxxxx
+
+===== PAGE 5 =====
+Yulin Yang et al.
+5
+Figure 1. An IMU sensor composed of accelerometer and
+gyroscope. The base “inertial” frame can be determined to
+coincide with either accelerometer frame {a} or gyroscope
+frame {w}. There is a rigid 6D transformation between camera
+frame {C} and inertial frame {I}.
+4
+Sensing Models
+4.1
+IMU Intrinsic Model
+We deﬁne an IMU as containing two separate frames of
+reference (see Fig. 1): gyroscope frame {w}, accelerometer
+frame {a}. The base “inertial” frame {I} should be
+determined to coincide with either {w} or {a}. Different
+from the model in Schneider et al. (2019), we deﬁne the raw
+angular velocity reading wωm from the gyroscope and linear
+acceleration readings aam from the accelerometer as:
+wωm = Tw
+w
+I RIω + Tg
+Ia + bg + ng
+(12)
+aam = Ta
+a
+IRIa + ba + na
+(13)
+where Tw and Ta are invertible 3 × 3 matrices which
+represent the scale imperfection and axis misalignment for
+{w} and {a}, respectively. w
+I R and a
+IR denote the rotation
+from the gyroscope frame and acceleration frame to base
+“inertial” frame {I}, respectively. Note that, if we choose
+{I} coincides with {w}, then w
+I R = I3. Otherwise, a
+IR =
+I3. bg and ba are the gyroscope and accelerometer biases,
+which are modeled as random walks; ng and na are the zero-
+mean Gaussian noises contaminating the measurements. Tg
+denotes the gravity sensitivity, which represents the effects
+of gravity to the gyroscope readings. Similar to the works
+by Li et al. (2014) and Schneider et al. (2019), we do not
+take into account the translation between the gyroscope and
+accelerometer, since it is negligible for most IMUs. We can
+write the true (or corrected) angular velocity Iω and linear
+acceleration Ia as:
+Iω = I
+wRDw
+ wωm −Tg
+Ia −bg −ng
+
+(14)
+Ia = I
+aRDa (aam −ba −na)
+(15)
+where Dw = T−1
+w and Da = T−1
+a . In practice we calibrate
+Da, Dw, I
+aR (or I
+wR) and Tg to prevent the need to have
+the unnecessary matrix inversions in the above measurement
+equations. We only calibrate either I
+wR or I
+aR in Eq. (14)
+and Eq. (15) since the base “inertial” frame coincides with
+one of sensor frames. If both I
+wR and I
+aR were calibrated,
+it would make the rotation between the IMU and camera
+unobservable due to over parameterization which will be
+validated in Section 9.5.
+4.1.1
+IMU intrinsic model variants. Given the above
+general model [see Eq. (14) and Eq. (15)], different choices
+of these intrinsic parameters can be made (Li et al. 2014;
+Nikolic et al. 2016; Rehder and Siegwart 2017; Schneider
+et al. 2019; Xiao et al. 2019; Jung et al. 2020). In the
+following, we present a range of commonly-used IMU
+Table 1. IMU model variants and their estimated parameters.
+Model
+Dim.
+Dw
+Da
+I
+wR
+I
+aR
+Tg
+imu0
+0
+-
+-
+-
+-
+-
+imu1
+15
+Dw6
+Da6
+I
+wR
+-
+-
+imu2
+15
+Dw6
+Da6
+-
+I
+aR
+-
+imu3
+15
+Dw9
+Da6
+-
+-
+-
+imu4
+15
+Dw6
+Da9
+-
+-
+-
+imu5
+18
+Dw6
+Da6
+I
+wR
+I
+aR
+-
+imu6
+24
+D′
+w6
+D′
+a6
+I
+wR
+-
+Tg9
+imu11
+21
+Dw6
+Da6
+I
+wR
+-
+Tg6
+imu12
+21
+Dw6
+Da6
+-
+I
+aR
+Tg6
+imu13
+21
+Dw9
+Da6
+-
+-
+Tg6
+imu14
+21
+Dw6
+Da9
+-
+-
+Tg6
+imu21
+24
+Dw6
+Da6
+I
+wR
+-
+Tg9
+imu22
+24
+Dw6
+Da6
+-
+I
+aR
+Tg9
+imu23
+24
+Dw9
+Da6
+-
+-
+Tg9
+imu24
+24
+Dw6
+Da9
+-
+-
+Tg9
+imu31
+9
+-
+Da9
+-
+-
+-
+imu32
+9
+Dw9
+-
+-
+-
+-
+imu33
+6
+-
+-
+-
+-
+Tg6
+imu34
+9
+-
+-
+-
+-
+Tg9
+intrinsic model variants, and will later compare against each
+other within an online ﬁlter-based VINS. Speciﬁcally, each
+model is deﬁned as follows:
+• imu1: includes the rotation I
+wR, 6 parameters for Dw
+(and thus denoted by Dw6) and 6 parameters for Da
+(and thus denoted by Da6), as they assume the upper-
+triangular structure:
+D∗6 =
+
+
+d∗1
+d∗2
+d∗4
+0
+d∗3
+d∗5
+0
+0
+d∗6
+
+
+(16)
+• imu2: includes the rotation I
+aR instead, Da6 and Dw6,
+which is the model used by Schneider et al. (2019).
+• imu3: combines imu1’s Dw6 and I
+wR into a general
+3 × 3 matrix containing 9 parameters in total. Thus, in
+this variant we estimate the upper-triangle Da6 and a
+full matrix Dw9 as:
+D∗9 =
+
+
+d∗1
+d∗4
+d∗7
+d∗2
+d∗5
+d∗8
+d∗3
+d∗6
+d∗9
+
+
+(17)
+• imu4: is an extension of imu2 with a combination of
+the Da6 and I
+aR. Similarly, in this variant we estimate
+the upper-triangle Dw6 and a full matrix Da9.
+• imu1A (A = 1, · · · , 4): combines imuA with a 6-
+parameter gravity sensitivity Tg6 as:
+Tg6 =
+
+
+tg1
+tg2
+tg4
+0
+tg3
+tg5
+0
+0
+tg6
+
+
+(18)
+• imu2A (A = 1, · · · , 4): combines imuA a the 9-
+parameter gravity sensitivity Tg9 as:
+Tg9 =
+
+
+tg1
+tg4
+tg7
+tg2
+tg5
+tg8
+tg3
+tg6
+tg9
+
+
+(19)
+Prepared using xxxxxxxxxxx
+
+===== PAGE 6 =====
+6
+Journal Title XX(X)
+zC
+zn
+Figure 2. Distorting from normalized to a raw image pixel.
+• imu5: contains Dw6, Da6, I
+wR and I
+aR. This is a
+redundant over-parameterized model which will be
+used to verify that I
+wR and I
+aR should not be calibrated
+simultaneously.
+• imu6: contains D′
+w6, D′
+a6,
+I
+wR and Tg9. This is
+equivalent to the scale-misalignment IMU intrinsic
+model (Rehder et al. 2016) used in the calibration
+toolbox (Furgale et al. 2013). D′
+∗6 assumes the lower
+triangular structure:
+D′
+∗6 =
+
+
+d∗1
+0
+0
+d∗2
+d∗4
+0
+d∗3
+d∗5
+d∗6
+
+
+(20)
+• imu3A (A = 1, · · · , 4): models a subset of the
+parameters of the general model while assuming the
+others known; that is, only calibrates Da9 in imu31,
+Dw9 in imu32, Tg6 in imu33, and Tg9 in imu34.
+These different models are summarized in Table 1. Note that
+for presentation clarity, imu22 is used in the ensuing system
+derivations and analysis.
+4.2
+Camera Model
+Consider a 3D point feature, Gpf, that is captured by a
+camera with visual measurement function written as:
+zC =
+u
+v
+
++ nC
+(21)
+where nC denotes the measurement noise; u and v are the
+distorted image pixel coordinates:
+u
+v
+
+= hd (zn, xCin)
+(22)
+where zn = [un vn]⊤represents the normalized image pixel
+and hd(·) maps the normalized image pixel onto the image
+plane based on the camera intrinsic parameters xCin and
+camera model. Speciﬁcally, a pinhole model with radial-
+tangential (radtan) or equivalent-distant (equidist) distortion
+can be used, and the radtan model is used in the following
+derivations and analysis [see Furgale et al. (2013); OpenCV
+Developers Team (2021)]. Fig. 2 visualizes this image
+distortion operation. xCin and hd(·) are given by:
+xCin =
+fu
+fv
+cu
+cv
+k1
+k2
+p1
+p2
+⊤
+(23)
+u
+v
+
+=
+fu
+0
+0
+fv
+ ud
+vd
+
++
+cu
+cv
+
+(24)
+
+ud
+vd
+
+=
+
+dun + 2p1unvn + p2(r2 + 2u2
+n)
+dvn + p1(r2 + 2v2
+n) + 2p2unvn
+
+(25)
+where r2 = u2
+n + v2
+n; d = 1 + k1r2 + k2r4; fu and fv are
+the camera focal length; cu and cv denotes the image
+principal point; k1 and k2 represent the radial distortion
+coefﬁcients while p1 and p2 are tangential distortion
+coefﬁcients.
+Normalized image pixel u and v can be acquired by
+projecting 3D feature Cpf = [Cxf Cyf Czf]⊤in camera
+frame into 2D plane as:
+zn = hp
+ Cpf
+
+≜
+1
+Czf
+Cxf
+Cyf
+
+(26)
+Cpf = ht(I
+GR, GpI, C
+I R, CpI, Gpf)
+(27)
+≜C
+I RI
+GR
+ Gpf −GpI
+
++ CpI
+where {C
+I R, CpI} represents the rigid transformation
+between the IMU and camera frames.
+4.2.1
+Temporal calibration. Two common variants of
+camera sensing modes are global shutter (GS) and rolling
+shutter (RS). GS cameras expose all pixels at a single time
+instance, while, typically lower-cost, RS cameras expose
+each row sequentially. As shown by Guo et al. (2014), it
+may lead to large estimation errors if this RS effect is not
+taken into account when using RS cameras. Additionally, the
+camera and IMU measurement timestamps can be incorrect
+due to processing or communication delays, or different
+clock references. To address this, we model both the time
+offset and camera readout time to ensure all measurements
+are processed in a common clock frame of reference and
+at the correct corresponding poses. Specially, td denotes the
+time offset between IMU and camera timeline and tr denotes
+the RS readout time for the whole image. If t denotes the time
+when the pixel is captured, the RS measurement function for
+a pixel captured in the m-th row (out of total M rows) is
+given by:
+Cpf = ht(I(t)
+G R, GpI(t), C
+I R, CpI, Gpf)
+(28)
+≜C
+I RI(t)
+G R
+ Gpf −GpI(t)
+
++ CpI
+tI = tC + td
+(29)
+t = tI + m
+M tr
+(30)
+where tI is the IMU state time corresponding to the captured
+image time tC when the ﬁrst row of the image is collected. If
+the readout time tr = 0, then the camera is actually a GS
+camera and all rows are a function of the same pose. As
+usual, {G
+I(t)R, GpI(t)} is the IMU global pose corresponding
+to the camera measurement time t.
+5
+System Models
+The state vector x of the visual-inertial system under
+consideration includes the inertial navigation state xI,
+IMU intrinsic parameter xin, IMU-camera spatial-temporal
+extrinsic calibration xIC, camera intrinsic calibration xCin
+and feature positions xf, which is given by:
+x =
+x⊤
+I
+x⊤
+IC
+x⊤
+Cin
+x⊤
+f
+⊤
+(31)
+xI =
+
+x⊤
+n
+|
+x⊤
+b
+|
+x⊤
+in
+⊤
+(32)
+=
+I
+G¯q⊤
+Gp⊤
+I
+Gv⊤
+I
+|
+b⊤
+g
+b⊤
+a
+|
+x⊤
+in
+⊤
+xin =
+x⊤
+Dw
+x⊤
+Da
+I
+a¯q⊤
+x⊤
+T g
+⊤
+(33)
+Prepared using xxxxxxxxxxx
+
+===== PAGE 7 =====
+Yulin Yang et al.
+7
+xIC =
+C
+I ¯q⊤
+Cp⊤
+I
+td
+tr
+⊤
+(34)
+where I
+G¯q denotes quaternion with JPL convention (Trawny
+and Roumeliotis 2005) and corresponds to the rotation
+matrix I
+GR, which represents the rotation from {G} to {I}.
+GpI and GvI denote the IMU position and velocity in {G}.
+xn denotes the IMU navigation states containing the I
+G¯q,
+GpI and GvI. xb denotes the IMU bias states containing
+bg and ba. C
+I ¯q and CpI denotes the rigid transformation
+between {C} and {I}. td and tr represent the IMU-camera
+time offset and camera readout time. IMU intrinsics, xin,
+contains xDw, xDa, xT g and I
+a¯q, where xDw, xDa and xT g
+are non-zero elements stored column-wise in Dw, Da and
+Tg. Speciﬁcally, they are deﬁned as:
+xD∗=
+d∗1 d∗2 d∗3 d∗4 d∗5 d∗6
+⊤
+(35)
+xT g =
+tg1 tg2 tg3 tg4 tg5 tg6 tg7 tg8 tg9
+⊤
+(36)
+It is important to note we use the quaternion left
+multiplicative error deﬁned by ¯q ≈[ 1
+2δθ⊤1]⊤⊗ˆ¯q, where
+⊗denotes quaternion multiplication and error state is
+equivalent to the SO(3) error (i.e. I
+GR ≈(I3 −⌊δθ⌋)I
+G ˆR)
+(Trawny and Roumeliotis 2005). The dynamics of the inertial
+navigation state xI is given by (Chatﬁeld 1997):
+I
+G ˙¯q = 1
+2Ω(Iω)I
+G¯q ,
+G ˙pI = GvI
+(37)
+G ˙vI = I
+GR⊤Ia −Gg ,
+˙bg = nwg ,
+˙ba = nwa
+where Ω(ω) =
+−⌊ω⌋
+ω
+−ωT
+0
+
+, nwg and nwa are zero-mean
+white Gaussian noises driving bg and ba, respectively, and
+the known global gravity assumes Gg = [0 0 9.81]⊤, while
+the rest of the states have zero dynamics.
+5.1
+Analytic Inertial Integration
+In the following, we present the analytic IMU integration
+and corresponding error state transition matrix, which was
+originally presented in our prior work (Yang et al. 2020a) and
+later extended to include IMU intrinsics (Yang et al. 2020b).
+Speciﬁcally, we compute the integration of IMU dynamics
+based on Eq. (37) from time step tk to tk+1:
+Ik+1
+G
+R = ∆R⊤
+k
+Ik
+G R
+(38)
+GpIk+1 = GpIk + GvIkδtk + Ik
+G R⊤∆pk −1
+2
+Ggδt2
+k (39)
+GˆvIk+1 = GˆvIk + Ik
+G R⊤∆vk −Ggδtk
+(40)
+bgk+1 = bgk +
+Z tk+1
+tk
+nwgdτ
+(41)
+bak+1 = bak +
+Z tk+1
+tk
+nwadτ
+(42)
+where δtk = tk+1 −tk, and the three IMU integration
+quantities are given by:
+∆Rk ≜Ik
+Ik+1R = exp
+Z tk+1
+tk
+Iτ ωdτ
+
+(43)
+∆pk ≜
+Z tk+1
+tk
+Z s
+tk
+Ik
+Iτ RIτ adτds
+(44)
+∆vk ≜
+Z tk+1
+tk
+Ik
+Iτ RIτ adτ
+(45)
+where exp(·) is the SO(3) matrix exponential (Chirikjian
+2011). The current best estimate of the true angular velocity,
+Ikω, and linear acceleration, Ika, within this time interval
+[tk, tk+1] is the expectation of Eq. (14) and Eq. (15).
+Assuming constant Ik ˆω and Ikˆa within the time interval, we
+approximate ∆ˆRk, ∆ˆpk and ∆ˆvk as:
+∆ˆRk ≃exp
+ Ik ˆωδtk
+
+(46)
+∆ˆpk ≃
+Z tk+1
+tk
+Z s
+tk
+Ik
+Iτ ˆRdτds
+
+Ikˆa ≜Ξ2
+Ikˆa
+(47)
+Ξ2 ≜
+Z tk+1
+tk
+Z s
+tk
+exp
+ Ik ˆωδτ
+
+dτds
+(48)
+∆ˆvk ≃
+Z tk+1
+tk
+Ik
+Iτ ˆRdτ
+
+Ikˆa ≜Ξ1
+Ikˆa
+(49)
+Ξ1 ≜
+Z tk+1
+tk
+exp
+ Ik ˆωδτ
+
+dτ
+(50)
+where δτ = tτ −tk, Ξ1 and Ξ2 are deﬁned as integration
+components which can be evaluated either analytically (Yang
+et al. 2020b) or numerically using the Runge–Kutta fourth-
+order (RK4) method. Ik ˆω and Ikˆa are computed as (note that
+we drop the timestamp k for simplicity):
+I ˆω = I
+w ˆR ˆDw
+w ˆω
+(51)
+w ˆω = wωm −ˆTg
+Iˆa −ˆbg =:
+w ˆw1
+w ˆw2
+w ˆw3
+⊤(52)
+Iˆa = I
+a ˆR ˆDa
+aˆa
+(53)
+aˆa = aam −ˆba =:
+aˆa1
+aˆa2
+aˆa3
+⊤
+(54)
+where I
+w ˆR = I3 for imu22. As Ik ˆω and Ikˆa are assumed to be
+constant, the state estimate at tk+1 is propagated as follows
+[see Eq. (38)-(42)]:
+Ik+1
+G
+ˆR ≃∆R⊤
+k
+Ik
+G ˆR
+(55)
+GˆpIk+1 ≃GˆpIk + GˆvIkδtk + Ik
+G ˆR⊤∆ˆpk −1
+2
+Ggδt2
+k (56)
+GˆvIk+1 ≃GˆvIk + Ik
+G ˆR⊤∆ˆvk −Ggδtk
+(57)
+ˆbgk+1 = ˆbgk
+(58)
+ˆbak+1 = ˆbak
+(59)
+5.2
+Linearized System Model
+We ﬁrst linearize the three IMU pre-integration components
+[see Eq. (43)-(45)]:
+∆Rk = ∆ˆRk∆˜Rk ≜∆ˆRk exp
+
+Jr(∆ˆθk)Ik ˜ωδtk
+
+(60)
+∆pk = ∆ˆpk + ∆˜pk ≜∆ˆpk −Ξ4
+Ik ˜ω + Ξ2
+Ik˜a
+(61)
+∆vk = ∆ˆvk + ∆˜vk ≜∆ˆvk −Ξ3
+Ik ˜ω + Ξ1
+Ik˜a
+(62)
+where Jr(∆ˆθk) ≜Jr
+ Ik ˆωδtk
+
+denotes the right Jacobian
+of SO(3) (Chirikjian 2011). The derivation and the
+deﬁnitions of Ik ˜ω and Ik˜a can be found in Appendix 15. The
+integrated components Ξ3 and Ξ4 are deﬁned as:
+Ξ3 ≜
+Z tk+1
+tk
+Ik
+Iτ R⌊Iτ a⌋Jr
+ Ikωδτ
+
+δτdτ
+(63)
+Ξ4 ≜
+Z tk+1
+tk
+Z s
+tk
+Ik
+Iτ R⌊Iτ a⌋Jr
+ Ikωδτ
+
+δτdτds
+(64)
+Prepared using xxxxxxxxxxx
+
+===== PAGE 8 =====
+8
+Journal Title XX(X)
+With
+the
+IMU
+preintegration,
+the
+linearized
+inertial
+navigation system of error state is given by:
+δθk+1 ≃∆ˆR⊤
+k δθk + Jr
+
+∆ˆθk
+
+δtk
+Ik ˜ω
+G˜pIk+1 ≃G˜pIk + G˜vkδtk −Ik
+G ˆR⊤⌊∆ˆpk⌋δθk + Ik
+G ˆR⊤∆˜pk
+G˜vIk+1 ≃G˜vIk −Ik
+G ˆR⊤⌊∆ˆvk⌋δθk + Ik
+G ˆR⊤∆˜vk
+As such, the full linearized error-state system for imu22 is:
+˜xIk+1 ≃ΦI(k+1,k)˜xIk + GIkndk
+(65)
+ΦI(k+1,k) =
+
+
+Φnn
+ΦwaHb
+ΦwaHin
+06×9
+I6
+06×24
+024×9
+024×6
+I24
+
+
+(66)
+GIk =
+
+
+ΦwaHn
+09×6
+06
+I6δtk
+024×6
+024×6
+
+
+(67)
+where ΦI(k+1,k) and GIk are the state transition matrix
+and noise Jacobians for the inertial state xI dynamics, Hb,
+Hin and Hn are Jacobians related to bias, IMU intrinsics
+and noises, which can be found in Appendix 15, ndk =
+[n⊤
+dg n⊤
+da n⊤
+dwg n⊤
+dwa]⊤is the discrete-time IMU noises,
+while Φnn and Φwa can be computed as:
+Φnn =
+
+
+∆ˆR⊤
+k
+03
+03
+−Ik
+G ˆR⊤⌊∆ˆpk⌋
+I3
+I3δtk
+−Ik
+G ˆR⊤⌊∆ˆvk⌋
+03
+I3
+
+
+(68)
+Φwa =
+
+
+Jr(δθk)δtk
+03
+−Ik
+G ˆR⊤Ξ4
+Ik
+G ˆR⊤Ξ2
+−Ik
+G ˆR⊤Ξ3
+Ik
+G ˆR⊤Ξ1
+
+
+(69)
+Without loss of generality, we consider a single 3D feature
+Gpf in the state vector xf. Since there is zero dynamics for
+xIC, xCin and xf, we can write the state transition matrix
+for the whole state vector x as [see Eq. (31)]:
+Φk+1,k =
+
+
+ΦI(k+1,k)
+0
+0
+0
+0
+ΦIC
+0
+0
+0
+0
+ΦCin
+0
+0
+0
+0
+Φf
+
+
+(70)
+where ΦIC = I8, ΦCin = I8, and Φf = I3.
+5.3
+Linearized Measurement Model
+We ﬁrst build the overall camera measurements function
+hC(·) by incorporating the distortion function hd(·) [see Eq.
+(22)], the projection function hp(·) [see Eq. (26)] and the
+transformation function ht(·) [see Eq. (28)]:
+zC = hC(x) + nC
+(71)
+= hd(zn, xCin) + nC
+(72)
+= hd(hp(Ckpf), xCin) + nC
+(73)
+= hd(hp(ht(C(t)
+G
+R, GpC(t), Gpf)), xCin) + nC (74)
+We need to linearize the overall visual model for the update,
+which is given by:
+˜zC ≃HC ˜x + nC
+(75)
+where
+˜zC ≜zC −hC(ˆx)
+and
+HC ≜∂˜zC
+∂˜x .
+Using
+the
+chainrule we get the following Jacobian matrix:
+HC =
+h
+∂˜zC
+∂˜xI
+∂˜zC
+∂˜xIC
+∂˜zC
+∂˜xCin
+∂˜zC
+∂˜xf
+i
+(76)
+=
+h
+Hpf
+∂C ˜pf
+∂˜xI
+Hpf
+∂C ˜pf
+∂˜xIC
+∂˜zC
+∂˜xCin
+Hpf
+∂C ˜pf
+∂˜xf
+i
+where Hpf = ∂˜zC
+∂˜zn
+∂˜zn
+∂C ˜pf . All the pertinent matrices ∂C ˜pf
+∂˜xI ,
+∂C ˜pf
+∂˜xIC ,
+∂C ˜pf
+∂˜xf
+and Hpf can be computed as shown in
+Appendix 16.
+6
+Observability Analysis
+Observability analysis plays an important role in determining
+whether
+or
+not
+the
+states
+are
+estimable
+for
+given
+measurements and can also be leveraged to identify
+degenerate motions that can negatively affect estimation
+performance (Huang 2012; Martinelli 2014). While the
+observability analysis of VINS has been well studied (Hesch
+et al. 2014), the observability properties and degenerate
+motions of VINS with full self-calibration (in particular,
+IMU and camera intrinsic calibration) have not been
+sufﬁciently investigated. To this end, following Hesch et al.
+(2014), we construct the observability matrix as follows:
+O =
+
+
+O1
+O2
+...
+Ok
+
+=
+
+
+HC1Φ1,1
+HC2Φ2,1
+...
+HCkΦk,1
+
+
+(77)
+We write the k-th row of O as:
+Ok =
+Mn
+Mb
+Min
+MIC
+MCin
+Mf
+
+(78)
+where Mn, Mb, Min, MIC, MCin and Mf represent
+the matrix block relating to the state [see Eq. (31)] with
+detailed derivations in Appendix 17. We now look to ﬁnd the
+unobservable subspace N such that ON = 0. The following
+can be found:
+Lemma 1. Given fully excited motions, monocular VINS
+system with online calibration of IMU intrinsics xin,
+camera intrinsics xCin and IMU-camera spatial-temporal
+parameters
+xIC
+(including
+RS
+readout
+time)
+has
+4
+unobservable directions, which relate to the global yaw and
+global translation.
+N =
+
+
+I1
+G ˆRGg
+03
+−⌊GˆpI1⌋Gg
+I3
+−⌊GˆvI1⌋Gg
+03
+046×1
+046×3
+−⌊Gˆpf⌋Gg
+I3
+
+
+(79)
+Proof. See Appendix 18.
+We notice that the terms Min and MIC (shown in
+Appendix 17) contain w ˆω, aˆa, I ˆω and GˆvI, corresponding
+to the sensor platform motion. This implies that, Min and
+MIC, corresponding to IMU intrinsics xin and IMU-camera
+spatial-temporal parameters xIC (including RS effects), are
+motion-dependent and time-varying. Speciﬁcally, we have
+the following properties for the IMU intrinsics and camera
+spatial-temporal parameters:
+Prepared using xxxxxxxxxxx
+
+===== PAGE 9 =====
+Yulin Yang et al.
+9
+Proposition 1. For monocular VINS, the IMU intrinsic
+calibration and IMU-camera spatial-temporal calibration
+(including RS readout time) are sensitive to sensor motions.
+Given fully excited motions, xin and xIC are observable.
+Given this observation and numerical simulations of VINS
+based on a monocular camera and IMU, shown in Fig. 4,
+we can conﬁrm that all these calibration parameters are
+observable and can be estimated given fully-excited motions.
+While we omit the derivations and simulation results here,
+the other IMU intrinsic model variants besides the imu22
+presented are also fully observable in the case of fully-
+excited motions.
+Similarly, the camera intrinsics, MCin, are mainly
+affected by the environmental structure (the u and v
+measurements of the 3D point features) with no motion terms
+are involved. Hence, we have:
+Proposition 2. For monocular VINS, the camera intrinsic
+calibration xCin
+is affected by the structure of the
+environment features and less sensitive to sensor motions.
+The camera intrinsic parameters are observable for most
+motion cases, even for under-actuated motions (i.e. planar
+motion), which can also be veriﬁed by our simulation results
+shown in Fig. 4-8. While we omit the results here, the
+equidist camera distortion model also satisﬁes the above
+proposition.
+7
+Degenerate Motion Identiﬁcation
+While the observability properties found in the preceding
+section hold with general motions, this may not always be
+the case in reality and thus the identiﬁcation of degenerate
+motion proﬁles that cause extra unobservable directions
+in the state space, becomes important. Based on the
+observability analysis, we can further identify the degenerate
+motions corresponding to the state of the system, such as
+the inertial state and features, along with the calibration
+parameters introduced during online self-calibration. As the
+degenerate motion analysis of VINS has been studied in
+the prior work (Martinelli 2012; Hesch et al. 2013; Wu
+et al. 2017b; Yang and Huang 2019), we here focus only
+on motions that cause the calibration parameters to become
+unobservable.
+7.1
+Inertial IMU Intrinsic Parameters
+As mentioned in Section 6, Min is heavily motion affected,
+and thus, the IMU intrinsics are extremely susceptible to
+be unobservable under certain motions. Because the bias
+terms and IMU intrinsics are tightly-coupled, by carefully
+inspecting the observability matrix O, we ﬁnd a selection of
+basic motion types which can cause the IMU intrinsics to
+become unobservable for imu22. Note that similar results are
+applicable to other IMU model variants.
+7.1.1
+Degenerate motions for Dw. As the gyroscope
+related IMU intrinsics Dw are coupled with gyroscope bias
+bg and the angular velocity readings wω from the IMU, we
+have the following results:
+Lemma 2. If any component of wω (including wω1, wω2,
+wω3) is constant, then Dw will become unobservable.
+Proof. If ww1 is constant, dw1 will be unobservable with
+unobservable directions as:
+Nw1 =
+
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e1)⊤ww1
+01×3
+1
+01×42
+⊤(80)
+If ww2 is constant, dw2 and dw3 will be unobservable with
+unobservable directions as:
+Nw2 =
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e1)⊤ww2
+01×4
+1
+01×41
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e2)⊤ww2
+01×5
+1
+01×40
+⊤
+(81)
+If ww3 is constant, dw4, dw5 and dw6 are unobservable with
+unobservable directions as:
+Nw3 =
+
+
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e1)⊤ww3
+01×6
+1
+01×39
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e2)⊤ww3
+01×7
+1
+01×38
+01×9
+( ˆD−1
+w
+I
+w ˆR⊤e3)⊤ww3
+01×8
+1
+01×37
+
+
+⊤
+(82)
+See Appendix 19 for the veriﬁcation of these unobservable
+directions.
+7.1.2
+Degenerate motions for Da. Similarly, as aa can
+affect the observability property for the accelerometer related
+IMU intrinsics Da, we have:
+Lemma 3. If any component of aa (including aa1, aa2 and
+aa3) is constant, then Da will become unobservable.
+Proof. If aa1 is constant, da1, pitch and yaw of I
+aR are
+unobservable with unobservable directions as:
+Na1 =
+
+
+012×1
+012×1
+012×1
+ˆD−1
+a e1aa1
+ˆD−1
+a e2 ˆda1aa1
+ˆD−1
+a e3 ˆda1 ˆda3aa1
+06×1
+06×1
+06×1
+1
+0
+0
+0
+ˆda3
+0
+0
+−ˆda2
+0
+0
+ˆda5
+ˆda6 ˆda3
+0
+−ˆda4
+−ˆda2 ˆda6
+0
+0
+ˆda2 ˆda5 −ˆda4 ˆda3
+03×1
+−I
+a ˆRe3
+I
+a ˆR(e1 ˆda2 + e2 ˆda3)
+028×1
+028×1
+028×1
+
+
+(83)
+If aa2 is constant, da2, da3 and roll of I
+aR are unobservable
+with unobservable directions as:
+Na2 =
+
+
+012×1
+012×1
+012×1
+ˆD−1
+a e1aa2
+ˆD−1
+a e2aa2
+ˆD−1
+a e3 ˆda3aa2
+06×1
+06×1
+06×1
+0
+0
+0
+1
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+ˆda6
+0
+0
+−ˆda5
+03×1
+03×1
+−I
+a ˆRe1
+028×1
+028×1
+028×1
+
+
+(84)
+If aa3 is constant, da4, da5 and da6 are unobservable with
+unobservable directions as:
+Na3 =
+
+
+01×12
+( ˆD−1
+a e1)⊤aa3
+01×9
+1
+01×33
+01×12
+( ˆD−1
+a e2)⊤aa3
+01×10
+1
+01×32
+01×12
+( ˆD−1
+a e3)⊤aa3
+01×11
+1
+01×31
+
+
+⊤
+(85)
+See Appendix 19 for the veriﬁcation of these unobservable
+directions.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 10 =====
+10
+Journal Title XX(X)
+Table 2. Summary of basic degenerate motions for online IMU
+intrinsics calibration (imu22).
+Motion Types
+Dim.
+Unobservable Parameters
+constant wω1
+1
+dw1
+constant wω2
+2
+dw2, dw3
+constant wω3
+3
+dw4, dw5, dw6
+constant aa1
+3
+da1, pitch and yaw of I
+aR
+constant aa2
+3
+da2, da3, roll of I
+aR
+constant aa3
+3
+da4, da5, da6
+constant Ia1
+3
+tg1, tg2, tg3
+constant Ia2
+3
+tg4, tg5, tg6
+constant Ia3
+3
+tg7, tg8, tg9
+7.1.3
+Degenerate motions for Tg. As Ia (the acceleration
+in IMU frame) can affect the observability property for
+the gravity sensitivity Tg, by close inspection of special
+conﬁgurations for Ia, we have:
+Lemma 4. If any component of Ia (including Ia1, Ia2 and
+Ia3) is constant, then Tg will become unobservable.
+Proof. If Ia1 is constant, tg1, tg2 and tg3 are unobservable
+with unobservable directions as:
+Ng1 =
+
+03×9
+I3Ia1
+03×18
+−I3
+03×25
+⊤
+If Ia2 is constant, tg4, tg5 and tg6 are unobservable with
+unobservable directions as:
+Ng2 =
+
+03×9
+I3Ia2
+03×21
+−I3
+03×22
+⊤
+If Ia3 is constant, tg7, tg8 and tg9 are unobservable with
+unobservable directions as:
+Ng3 =
+
+03×9
+I3Ia3
+03×24
+−I3
+03×19
+⊤
+See Appendix 19 for the veriﬁcation of these unobservable
+directions.
+7.1.4
+Discussion on IMU intrinsic degeneracy. It is
+evident from the above analysis that the IMU intrinsic
+calibration is sensitive to sensor motion and thus all 6
+axes need to be excited to ensure all of them can be
+calibrated. These ﬁndings are summarized in Table 2. It
+should be noted that any combination of these primitive
+motions is still degenerate and causes all related parameters
+to become unobservable (e.g., planar motion with constant
+acceleration). It is also important to mention that it is
+common that I
+aR ≃I3 and Da ≃I3 for most IMUs, and
+thus, aˆa ≃Ia. As such, the degenerate motions for Da will
+also lead to the unobservability of Tg, and vice-versa. Again,
+this degenerate motion analysis can be extended to other
+model variants, which is omitted here for brevity.
+7.2
+IMU-Camera Spatial-Temporal
+Parameters
+Leveraging our previous work (Yang et al. 2019) where we
+have studied four commonly-seen degenerate motions of
+VINS with only IMU-camera spatial-temporal calibration,
+we here show these degenerate motions hold true for VINS
+with full-parameter calibration:
+Table 3. Summary of basic degenerate motions for online
+IMU-camera spatial-temporal calibration.
+Motion Types
+Unobservable Parameters
+Observable
+pure translation
+CpI
+C
+I R, td, tr
+one-axis rotation
+CpI along rotation axis
+C
+I R, td, tr
+constant Iω
+td and
+C
+I R, tr
+constant Iv
+CpI along rotation axis
+constant Iω
+td and
+C
+I R, tr
+constant Ga
+CpI along rotation axis
+Lemma 5. The IMU-camera spatial-temporal calibration
+will become unobservable, if the sensor platform undergoes
+the following degenerate motions:
+• Pure translation
+• One-axis rotation
+• Constant local angular and linear velocity
+• Constant local angular velocity and global linear
+acceleration
+Proof. If the system undergoes pure translation (no rota-
+tion), the translation part CpI of the spatial calibration will
+be unobservable, residing along the following unobservable
+directions:
+Npt =
+
+03×45
+I3
+03×10
+−(G
+I1 ˆRI
+C ˆR)⊤⊤
+(86)
+If the system undergoes random (general) translation
+but with only one-axis rotation, the translation calibration
+CpI along the rotation axis will be unobservable, with the
+following unobservable direction:
+Noa =
+h
+01×45 (C
+I ˆRI ˆk)⊤01×10 −(G
+I1 ˆRI ˆk)⊤i⊤
+(87)
+where Ik is the constant rotation axis in the IMU frame {I}.
+If the VINS undergoes constant local angular velocity Iω
+and linear velocity Iv, the time offset td will be unobservable
+with the following unobservable direction:
+Nt1 =
+
+01×42 (C
+I ˆRI ˆω)⊤−(C
+I ˆRI ˆv)⊤−1 01×12
+⊤
+(88)
+If the VINS undergoes constant local angular velocity
+Iω and global acceleration Ga, the time offset td will be
+unobservable with the following unobservable direction:
+Nt2 =
+(89)
+
+01×6
+Gˆa 01×30 (C
+I ˆRI ˆω)⊤
+01×3
+−1 01×9 −(GˆvI1)⊤⊤
+Table
+3
+summarizes
+these
+degenerate
+motions
+for
+completeness. It is important to note that unlike td (whose
+Jacobian is mainly affected by the sensor motion), the
+Jacobian for RS readout time, tr, is also affected by the
+feature observations due to the term m
+M [see Eq. (136)], and
+is observable, as hundreds of features can be observed from
+different image rows during exploration.
+7.3
+Camera Intrinsic Parameters
+As mentioned before, the camera intrinsics are mainly
+affected by the observed features. By investigating special
+feature conﬁgurations, we ﬁnd the following degenerate case
+for camera calibration when using a radtan distortion model:
+Prepared using xxxxxxxxxxx
+
+===== PAGE 11 =====
+Yulin Yang et al.
+11
+Lemma 6. The camera intrinsics will become unobservable
+if the following conditions are satisﬁed:
+• The features keep the same depth relative to the
+camera (e.g., Czf is constant in value).
+• The camera moves with one-axis rotation and the
+rotation axis is deﬁned as Ck = e3.
+Proof. The camera focal length fu, fv, the camera distortion
+model k1, k2, p1 and p2 will become unobservable with
+unobservable direction:
+NCin =
+
+01×47 fu fv 01×2 2k1 4k2 p1 p2 Gk⊤⊤
+with Gk = G
+I0 ˆRI
+C ˆRCkCzf .
+See Appendix 19 for the veriﬁcation of these unobservable
+directions.
+As an example, if a ground vehicle is performing planar
+motion with a upward facing camera only observing features
+from the ceilings, the above two conditions will hold and
+thus the camera intrinsics with radtan distortion model
+will be unobservable. Nevertheless, since it is common to
+observe hundreds of features, it might be rarely the case that
+every feature maintains the same relative depth, Czf, to the
+camera, and thus, this degeneracy may not happen in practice
+if features are tracked uniformly throughout images. It is
+interesting to note that this degenerate case does not work
+for camera models with equidist distortion.
+8
+State Estimator
+Leveraging our MSCKF-based VINS (Geneva et al. 2020),
+the proposed estimator extends the state vector xk at time
+step k to include the current IMU state xIk, a sliding window
+of cloned IMU poses xc, the calibration parameters (xIC and
+xCin) and feature state xf.
+xk =
+x⊤
+Ik
+x⊤
+c
+x⊤
+IC
+x⊤
+Cin
+x⊤
+f
+⊤
+(90)
+xc =
+h
+Ick−1
+G
+¯q⊤Gp⊤
+Ick−1 . . .
+Ick−n
+G
+¯q⊤Gp⊤
+Ick−n
+i⊤
+(91)
+where xI, xIC, xCin and xf are the same as Eq. (31),
+xc denotes the sliding window containing n cloned IMU
+poses with index from ck −n to ck −1. Note that the IMU
+intrinsics xin are contained in the current IMU state xIk.
+As xc, xIC, xCin and xf have zero dynamics, we only
+propagate the estimate and covariance of the next IMU state
+based on Eq. (55)-(59) and Eq. (65), which all incorporate
+the IMU intrinsics xin.
+As in (Li and Mourikis 2013a), we handle the IMU-
+camera time offset td when we clone the “true” IMU pose
+corresponding to image measurements. For example, if we
+clone the current IMU pose {Ik
+G ¯q, GpIk} into the sliding
+window as {Ick
+G ¯q, GpIck} using:
+G
+IckR ≃G
+IkR exp(Ik ˆω˜td)
+(92)
+GpIck ≃GpIk + GvIk˜td
+(93)
+with the linearized clone Jacobians as:
+δθIck
+G˜pIck
+
+≃
+
+I3
+03
+Ik ˆω
+03
+I3
+GˆvIk
+ 
+
+δθIk
+G˜pIk
+˜td
+
+
+(94)
+Both xin and td will be updated through correlations when
+visual feature measurements are present.
+Features are processed in two different ways: short
+features update the state through the MSCKF nullspace
+operation (Mourikis and Roumeliotis 2007; Yang et al.
+2017), and long-tracked features are initialized into the state
+vector and reﬁned over time for improved accuracy (Li
+and Mourikis 2013b). We utilize ﬁrst-estimates Jacobians
+(FEJ) (Huang et al. 2010; Li and Mourikis 2013a) to
+preserve the system unobservable subspace and improve
+the estimator consistency. We directly model the camera
+intrinsic and IMU-camera spatial calibration through the
+visual measurement functions [see Eq. (71)] and update them
+in the ﬁlter with Jacobians in Eq. (76).
+For the RS cameras, the feature measurements from
+different image rows are captured at different timestamps.
+This indicates that we cannot directly ﬁnd a cloned pose in
+the sliding window for {G
+I(t)R, GpI(t)} shown in Eq. (28).
+Therefore, for the readout time calibration, we model the
+feature measurement affected by RS effects through pose
+interpolation (Guo et al. 2014; Eckenhoff et al. 2021). For
+example, if the feature measurement is in the m-th row with
+total M rows in an image, we can ﬁnd two bounding clones
+ci −1 and ci based on the measurement time t. Hence, the
+corresponding time t is between two clones within the sliding
+window, that is: tck−n ≤tci−1 ≤t ≤tci ≤tck. We can then
+ﬁnd the virtual IMU pose {G
+I(t)R, GpI(t)} between clones
+ci −1 and ci with:
+λ = (tI + m
+M tr −tci−1)/(tci −tci−1)
+(95)
+G
+I(t)R = G
+Ici−1R exp
+
+λ log
+
+G
+Ici−1R⊤G
+IciR
+
+(96)
+GpI(t) = (1 −λ)GpIci−1 + λGpIci
+(97)
+To summarize, feature measurements which occur at
+different rows of the image can be related to the state
+vector deﬁned in Eq. (90) through the above linear pose
+interpolation. This measurement function can then be
+linearized for use in the EKF update (see Appendix 20).
+Note that a higher-order polynomial pose interpolation as
+used by Eckenhoff et al. (2021) can be utilized if necessary.
+In the above derivations, although we assume the image
+timestamp refers to the timestamp of the ﬁrst image row,
+the interpolation scalar in Eq. (95) can be easily modiﬁed
+to account for situations when the image timestamp of the
+RS camera refers to the middle or last image row.
+9
+Simulation Validations
+The proposed estimator is implemented within the Open-
+VINS framework (Geneva et al. 2020), which contains a real-
+time modular sliding window EKF-based ﬁlter and simu-
+lator. The project can already handle IMU-camera spatial-
+temporal and camera intrinsic calibrations, excluding RS
+readout time. In this work we extend the estimator to address
+the calibration of all the parameters presented. The new
+VINS estimator maintains the original faster than real-time
+performance in both simulated and real-world datasets.
+The core of the simulator has a continuous-time SE(3)
+B-spline trajectory representation which allows for the
+calculation of pose, velocity, and accelerations at any given
+Prepared using xxxxxxxxxxx
+
+===== PAGE 12 =====
+12
+Journal Title XX(X)
+Figure 3. Simulated trajectories for Monte-Carlo simulations. Left: tum corridor with fully excited 3D motion; Middle left: tum room
+with 1 axis rotation and 3D translation; Middle right: sine 3d with constant acceleration along x direction; Right: udel gore planar
+motion with constant z and only yaw rotation. The green triangle and red circle denote the beginning and ending of these
+trajectories, respectively.
+Figure 4. Calibration results for proposed system evaluated on tum corridor with fully excited motion (using imu22 and radtan). 3σ
+bounds (dotted lines) and estimation errors (solid lines) for six different runs (different colors) with different realization of the
+measurement noise and initial perturbations. All the calibration parameters converge nicely.
+timestamp along the trajectory. The true angular velocity
+and linear accelerations can be directly found and corrupted
+using the random walk biases and white noises. The basic
+conﬁgurations for our simulator are listed in Table 4.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 13 =====
+Yulin Yang et al.
+13
+Figure 5. Absolute trajectory errors (ATE) using imu22 and radtan on the tum corridor with full 3D motion given different levels of
+perturbation. Each parameter calibrated was only perturbed while other parameters were initialized to their true values and not
+estimated. ATE above eight meters were not reported in the ﬁgures and can be considered diverged.
+Table 4. Simulation parameters and prior standard deviations
+that perturbations of measurements and initial states were
+drawn from.
+Parameter
+Value
+Parameter
+Value
+IMU Scale
+0.003
+IMU Skew
+0.003
+Rot. atoI (rad)
+0.003
+Rot. wtoI (rad)
+0.003
+Gyro. White Noise
+1.6968e-04
+Gyro. Rand. Walk
+1.9393e-05
+Accel. White Noise
+2.0000e-3
+Accel. Rand. Walk
+3.0000e-3
+Focal Len. (px/m)
+0.50
+Cam. Center (px)
+0.60
+d1 and d2
+0.008
+d3 and d4
+0.002
+Rot. CtoI (rad)
+0.004
+Pos. IinC (m)
+0.010
+Readout Time (ms)
+0.5
+Timeoff (s)
+0.005
+Cam Freq. (hz)
+20
+IMU Freq. (hz)
+400
+Avg. Feats
+100
+Num. SLAM
+50
+Num. Clones
+20
+Feat. Rep.
+GLOBAL
+Figure 6. Calibration results for the proposed system evaluated
+on tum room with one-axis rotation using imu22 and radtan.
+Note that the estimation errors and 3σ bounds for dw1, dw2, dw3
+and the IMU-camera position calibration along the rotation axis
+can not converge.
+All simulation convergence ﬁgures show the 3σ bounds
+(dotted lines) and estimation errors (solid lines) for six
+different runs (different colors) with different realization
+of the measurement noises and initial calibration state
+perturbations.
+To simulate RS visual bearing measurements, we follow
+the logic presented by Li and Mourikis (2013a) and
+Eckenhoff et al. (2021). Speciﬁcally, static environmental
+features are ﬁrst generated along the length of the trajectory
+at random depths and bearings. Then, for a given imaging
+time of features in view, we project each into the current
+image frame using the true camera intrinsic and distortion
+model to ﬁnd the corresponding observation row. Given this
+projected row and image time, we can ﬁnd the pose at which
+this row should have been (i.e., the pose at which that RS
+row should have been exposed). We can then re-project this
+feature into the new pose and iterate until the projected row
+does not change (which typically requires 2-3 iterations).
+We now have a feature measurement which occurred at
+the correct pose for its given RS row. This measurement
+is then corrupted with white noise. The imaging timestamp
+corresponding to the starting row is then shifted by the true
+IMU-camera time offset td to simulate cross-sensor delay.
+9.1
+Simulation with Fully-Excited Motion
+We ﬁrst perform a general trajectory simulation, for which
+we perform full calibration of the IMU-camera extrinsics,
+time offset, RS readout time, camera intrinsics with radtan
+model and IMU intrinsics with imu22. The trajectory, shown
+in the left of Figure 3, is designed based on tum corridor
+sequence of TUM visual-inertial dataset with full excitation
+of all 6 axes and provides a realistic 3D hand-held motion
+(Schubert et al. 2018). From the results shown in Figure
+4 and 9, the estimation errors and 3σ bounds for all the
+calibration parameters (including imu22 and radtan) can
+converge quite nicely, verifying that the analysis for general
+motions holds true. We plot results from six different
+realizations of the initial calibration guesses based on the
+speciﬁed priors, and it is clear that the estimates for all these
+calibration parameters are able to converge from different
+initial guesses to near the ground truth. Each parameter is
+able to “gain” information since their 3σ bounds shrink.
+These results verify our Lemma 1 that all these online
+calibration parameters are observable given a fully-excited
+motion.
+9.2
+Sensitivities to Perturbations
+The next natural question is how robust the system is
+to the initial perturbations and whether the use of online
+sensor calibration enables improvements in robustness and
+accuracy. Shown in Figure 5, for each of the different
+calibration parameters we perturb it with different levels
+Prepared using xxxxxxxxxxx
+
+===== PAGE 14 =====
+14
+Journal Title XX(X)
+Table 5. Average absolute trajectory error (ATE) and normalized estimation errror squared (NEES) over 20 runs of the proposed
+system evaluated on tum corridor with true or perturbed calibration parameters, with and without online calibration. radtan camera
+distortion model and different IMU intrinsic models are used. The notation “true” means the groundtruth calibration, while
+“perturbed” means the perturbed calibration states. Failures are denoted with “-”.
+IMU Model
+ATE (deg)
+ATE (m)
+Ori. NEES
+Pos. NEES
+IMU Model
+ATE (deg)
+ATE (m)
+Ori. NEES
+Pos. NEES
+true w/ calib imu1
+0.462
+0.164
+1.910
+1.423
+perturbed w/ calib imu1
+0.454
+0.163
+2.173
+1.473
+true w/ calib imu2
+0.460
+0.164
+2.103
+1.422
+perturbed w/ calib imu2
+0.446
+0.162
+2.150
+1.465
+true w/ calib imu3
+0.461
+0.163
+1.883
+1.422
+perturbed w/ calib imu3
+0.459
+0.163
+2.125
+1.454
+true w/ calib imu4
+0.458
+0.163
+2.102
+1.424
+perturbed w/ calib imu4
+0.450
+0.162
+2.150
+1.456
+true w/ calib imu11
+0.544
+0.177
+1.947
+1.472
+perturbed w/ calib imu11
+0.550
+0.178
+2.243
+1.498
+true w/ calib imu12
+0.540
+0.177
+2.123
+1.476
+perturbed w/ calib imu12
+0.544
+0.178
+2.175
+1.493
+true w/ calib imu13
+0.544
+0.176
+1.914
+1.472
+perturbed w/ calib imu13
+0.546
+0.177
+2.180
+1.482
+true w/ calib imu14
+0.544
+0.179
+2.124
+1.483
+perturbed w/ calib imu14
+0.538
+0.177
+2.169
+1.504
+true w/ calib imu21
+0.572
+0.183
+1.990
+1.514
+perturbed w/ calib imu21
+0.576
+0.182
+2.250
+1.508
+true w/ calib imu22
+0.567
+0.184
+2.145
+1.513
+perturbed w/ calib imu22
+0.590
+0.187
+2.194
+1.561
+true w/ calib imu23
+0.571
+0.183
+1.962
+1.514
+perturbed w/ calib imu23
+0.593
+0.185
+2.200
+1.550
+true w/ calib imu24
+0.566
+0.183
+2.141
+1.512
+perturbed w/ calib imu24
+0.585
+0.186
+2.189
+1.552
+true w/ calib imu31
+0.447
+0.161
+2.076
+1.378
+perturbed w/ calib imu31
+0.451
+0.162
+2.110
+1.428
+true w/ calib imu32
+0.444
+0.161
+1.879
+1.396
+perturbed w/ calib imu32
+0.447
+0.162
+1.968
+1.430
+true w/ calib imu33
+0.529
+0.175
+2.096
+1.378
+perturbed w/ calib imu33
+0.527
+0.177
+2.101
+1.411
+true w/ calib imu34
+0.548
+0.180
+2.103
+1.430
+perturbed w/ calib imu34
+0.549
+0.179
+2.113
+1.422
+true w/ calib imu6
+0.572
+0.183
+1.734
+1.517
+perturbed w/ calib imu6
+0.567
+0.179
+1.910
+1.491
+true w/o calib
+0.433
+0.159
+2.069
+1.332
+perturbed w/o calib
+-
+-
+-
+-
+Figure 7. Calibration results for the proposed system evaluated the sine 3d with constant acceleration along x direction using
+imu22 and radtan. The estimation errors and 3σ bounds for da1, pitch and yaw of I
+aR cannot converge. Note that tg1, tg2 and tg3
+are also unobservable.
+of noise on the tum corridor trajectory (note that we also
+change the initial prior provided to the ﬁlter as the initial
+prior changes). We can see that the proposed estimator
+is relatively invariant to the initial inaccuracies of the
+parameters and is, in general, able to output a near constant
+trajectory error. A ﬁlter, which does not perform this
+online estimation, has its trajectory estimation error quickly
+increase to non-usable levels. It is interesting to see that even
+small levels of perturbations can cause huge trajectory errors
+which further veriﬁes the motivations to perform online
+calibration.
+9.3
+Comparison of Inertial Model Variants
+We next compare the different proposed inertial model
+variants. We estimate all calibration parameters and perturb
+them based on Table 4. Shown in Table 5, it is clear that the
+choice between the variants has little impact on estimation
+accuracy which indicates they provide almost the same
+amount of correction to the inertial readings.
+The accuracy of the standard VIO system which does not
+calibrate any parameters online and uses the groundtruth
+calibration values, denoted true w/o calib, has the best
+accuracy due to the use of the true parameters. If we do
+perturb the initial calibration and do not estimate it, denoted
+perturbed w/o calib, the system quickly becomes unstable
+and diverges unless smaller levels of perturbations are used.
+Note that the results presented in Section 9.2 are for each
+parameter perturbed individually, while here all calibration
+parameters are perturbed at once thus resulting in divergence.
+With full online calibration, the system can still output
+stable and consistent trajectories with only a small loss in
+estimation accuracy given perturbed calibration values.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 15 =====
+Yulin Yang et al.
+15
+Figure 8. Calibration results of the proposed system evaluated on udel gore with planar motion using imu22 and radtan. With
+planar motion, the estimation errors and 3 σ bounds of dw1, dw2, dw3, tg7, tg8, tg9 and the IMU-camera position cannot converge.
+Due to lack of motion excitation, the parameters of Da and I
+aR converge much slower than the other motion cases.
+Figure 9. Camera temporal and read out time calibration results of the proposed system (using imu22 and radtan) for different
+trajectories. The temporal parameters can ﬁnally converge in all the 4 motion types. Note that the readout time converges slower in
+the planar motion case probably due to the lack of motion in the beginning.
+9.4
+Degenerate Motion Veriﬁcation
+We now verify the identiﬁed degenerate motions and present
+results for three special motions. In all simulations, we
+perform full-parameter calibration to fully test our system
+and present the complete results in Appendix 21. The
+trajectories shown in Figure 3 are created as follows:
+• One-axis rotation with a modiﬁed tum room trajectory,
+see middle left, which has its roll and pitch orientation
+Prepared using xxxxxxxxxxx
+
+===== PAGE 16 =====
+16
+Journal Title XX(X)
+Figure 10. Camera to IMU orientation errors when using IMU
+imu2 (left) and the over paramterized imu5 (right). Note that
+only the IMU intrinsics and relative pose between IMU and
+camera were online calibrated.
+changes removed to create a yaw and 3D translation
+only dataset.
+• Constant local ax with modiﬁed sine 3d, see middle
+right, for which we have a constant pitch and make the
+current yaw angle tangent to the trajectory in the x-y
+plane (gives constant local acceleration along local x-
+axis).
+• Planar motion with modiﬁed udel gore, see right,
+which has its roll and pitch orientation removed and
+all poses are projected to x-y plane (planar motion in
+the global x-y plane).
+9.4.1
+One-axis rotation motion. Shown in Figure 6, the
+ﬁrst 3 parameters (dw1, dw2 and dw3) for Dw do not
+converge at all (the 3σ bounds are almost straight lines),
+which matches our analysis, see Table 2. These parameters
+should be unobservable in the case of one-axis rotation with
+wwx (roll) and wwy (pitch) are constant. Additionally, the
+translation between IMU and camera does not converge
+either. The x-error of the IMU-camera translation even
+diverges reinforcing the undesirability of degenerate motions
+and veriﬁes the analysis presented in Table 3.
+9.4.2
+Constant local acceleration motion. The results
+shown in Figure 7, where we have enforced that the local
+acceleration along the x-axis, ax, is constant. The da1, and
+pitch and yaw of I
+aR does not converge, thus validating
+our analysis shown in Table 2. Note that in the simulation,
+we have set I
+aR ≃I3 and Da ≃I3. Hence, aˆa ≃Ia and
+Iax is also near constant. Therefore, three terms of gravity
+sensitivity (tg1, tg2 and tg2) are also unobservable and
+converge much slower than other terms.
+9.4.3
+Planar motion. Shown in Figure 8, with one-axis
+rotation (yaw axis) for planar motion the dw1, dw2 and dw3
+for Dw and the IMU-camera translation are unobservable
+and does not converge. Since the Iaz is constant, the last
+three terms of gravity sensitivity (tg7, tg8 and tg9) become
+unobservable and cannot converge. Both these results verify
+our analysis shown in Tables 2 and 3. Additionally, this
+trajectory is quite smooth with small excitation of linear
+Figure 11. Results on TUM Rolling Shutter VIO Dataset
+without rolling shutter readout time calibration, with different
+IMU intrinsic models. The averaged absolute trajectory errors
+(ATE) of 5 runs in degree (top) and meters (bottom) are
+provided. Note that the camera intrinsics, and IMU-camera
+spatial-temporal calibration.
+acceleration, hence, the terms of Da and I
+aR in general
+converge much slower than the fully excited motion case.
+9.5
+Simulated Over Parametrization
+We now look to investigate the impact of poor choice
+of calibration parameters which over parameterizes the
+IMU intrinsics. The imu5 model, see Table 1, is an over
+parametrization since we calibrate both 9 parameters for
+gyroscope and accelerometer, which causes the IMU-camera
+orientation to be affected since the intermediate inertial
+frame {I} is not constrained. If we change the relative
+rotation from {I} to {C}, then this perturbed rotation can
+be absorbed into the {a} to {I} and {w} to {I} terms. Thus,
+it means we have an extra 3 degrees of freedom (DoF) for
+rotation not constrained by our measurements. We compare
+this imu5 model to its close equivalent imu2 model in Figure
+10. We can see that even though the trajectory fully excites
+the sensor platform, the convergence of C
+I R becomes much
+worse if we calibrate IMU-camera extrinsics and all 18
+parameters for the IMU model imu5 even when the same
+priors and measurements are used. This further motivates the
+use of the minimal calibration parameters to ensure fast and
+robust convergence of all state parameters.
+10
+Real-World TUM RS VIO Datasets
+We ﬁrst evaluate our proposed algorithms on the TUM
+RS VIO Dataset which contains a time-synchronized stereo
+pair of two uEye UI-3241LE-M-GL cameras (left: global-
+shutter and right: rolling-shutter) and a Bosch BMI160
+IMU (Schubert et al. 2019). When collecting data, the
+cameras were operated at 20Hz while the IMU operated
+at 200Hz and an OptiTrack system captured the ground-
+truth motion. The dataset is provided in both “raw” and
+Prepared using xxxxxxxxxxx
+
+===== PAGE 17 =====
+Yulin Yang et al.
+17
+Figure 12. Results on TUM Rolling Shutter VIO Dataset with
+rolling shutter readout time calibration, with different IMU
+intrinsic models. The averaged absolute trajectory errors (ATE)
+of 5 runs in degree (top) and meters (bottom) are provided.
+Note that the camera intrinsics, and IMU-camera
+spatial-temporal calibration.
+Table 6. Averaged absolute trajectory errors (ATE) of 5 runs
+over all 8 sequences of the TUM Rolling Shutter VIO Dataset
+with rolling shutter, camera intrinsics, and IMU-CAM
+spatial-temporal calibration.
+IMU Model
+ATE (deg)
+ATE (m)
+imu0
+72.994
+363.610
+imu1
+2.574
+0.092
+imu2
+2.679
+0.094
+imu3
+2.590
+0.093
+imu4
+2.205
+0.076
+imu5
+3.418
+0.149
+imu32
+2.368
+0.079
+“calibrated” formats. The “calibrate” dataset has had IMU
+intrinsics calibrated from Kalibr (Furgale et al. 2013) pre-
+applied to the “raw” dataset along with some re-sampling.
+We evaluate our proposed system by using the right (RS)
+camera directly with the raw datasets, which have very
+noisy measurements with varying sensing rates. Hence,
+the raw datasets are more challenging compared to the
+calibrated datasets. We re-calibrated the camera intrinsics
+and IMU-camera spacial-temporal parameters using the raw
+calibration datasets as the provided calibration parameters
+were only for the calibrated datasets. We directly use Eq. (30)
+since the dataset timestamps correspond to the ﬁrst row of the
+image. Note that we set the initial values for Da, Dw, I
+aR and
+I
+wR as identity and Tg as zeros, while the initial readout time
+for the whole RS image is set to 20ms as prior calibration.
+All IMU intrinsic models listed in Table 1 were run with
+and without RS calibration. The results are presented in the
+following sections.
+10.1
+RS Self-Calibration
+The results are shown in Figure 11 and 12, with and
+without RS readout calibration, respectively. It is clear
+that the systems without RS readout time calibration and
+without IMU intrinsic calibration (imu0 and imu31-imu34)
+are unstable and diverges to large orientation and positional
+errors. With IMU intrinsic calibration, the system still fails
+for certain datasets (imu1-imu24) and thus online readout
+time calibration will greatly improve the system robustness
+for RS cameras. The ﬁnally estimated RS readout time for
+each image is around 30ms, which means given the image
+resolution of 1280 × 1024, the row readout time should be
+around 29us.
+10.2
+IMU Intrinsic Self-Calibration
+We focus on the results in Figure 12 which has RS enabled.
+It is clear from the performance of imu0 that without
+IMU intrinsic calibration the BMI160 IMU will cause large
+trajectory errors, with the models which do perform intrinsic
+calibration being an order of magnitude more accurate.
+Table 6 shows the average error over all sequences for the
+ﬁrst 6 IMU models. It can be seen that the imu5 model
+which over parameterizes the intrinsics has worst accuracy in
+both orientation and position trajectory estimates, while the
+accuracy of the other imu1 - imu4 models is comparable to
+each other (similar accuracy level). We further do an ablation
+study with models imu31 - imu34 to ﬁnd the individual
+impact of each of the IMU intrinsic parameters. We can
+see that the imu32 model which estimates Dw9 has large
+accuracy gains over the other four. This indicates that the
+readings from gyroscope of BMI160 are very noisy. The
+calibration of Dw9 dominates the performance of this VINS
+system, and just the calibration of it can achieve similar
+results as full IMU model calibration (see bottom of Table
+6). Through all these we show that online IMU intrinsic
+calibration can enhance both the system robustness and
+accuracy.
+10.3
+Comparison to Kalibr Calibration
+We run Kalibr’s ofﬂine calibration with scale-misalignment *
+IMU model on 5 calibration datasets provided for the Bosch
+BMI160 IMU and treat these results as reference values
+to compare to the proposed online calibration results. The
+Kalibr calibration datasets were collected with the stereo
+camera pair both operating with a global shutter mode along
+with an April tag board (Furgale et al. 2013). For the
+results evaluation, we directly report T′
+w = (D′
+w)−1, T′
+a =
+(D′
+a)−1 and w
+I R = I
+wR⊤. By contrast, the proposed system
+is run on one RS camera with only temporal environmental
+feature tracks on the 8 data sequences using imu6, which is
+equivalent to the scale-misalignment IMU model of Kalibr.
+As shown in the boxplots in Figure 13, even though we
+run on more challenging datasets in real-time, our proposed
+system can still achieve reasonable calibration results for
+D′
+w, D′
+a, Tg and I
+wR, which are close to the values from
+baseline Kalibr. Additionally we can see that the values of
+∗https://github.com/ethz-asl/kalibr/wiki/Multi-IMU-and-IMU-intrinsic-
+calibration
+Prepared using xxxxxxxxxxx
+
+===== PAGE 18 =====
+18
+Journal Title XX(X)
+Figure 13. IMU intrinsic evaluation of Bosch BMI160 IMU used in TUM Rolling Shutter VIO datasets using the proposed method
+with imu6 and Kalibr relative to the “ideal” sensor intrinsics. The boxplots show the ﬁnal converged value of both methods. Kalibr
+(magenta, right in each group) was run with two global shutter cameras and a Bosch BMI160 IMU available over 5 calibration
+datasets using April tag board, while the proposed system (blue, left) was run with only one rolling shutter camera and the same
+IMU on the 8 data sequences without any tags. Note that imu6 is equivalent to the scale-misalignment IMU model of Kalibr.
+Figure 14. Visual-Inertial Sensor Rig contains a MicroStrain
+GX5-25 IMU, MicroStrain GX5-35, Xsens MTi 100, FLIR
+Blackﬂy camera and RealSense T265 tracking camera. The
+RealSense T265 tracking camera contains an integrated IMU
+and a ﬁsheye stereo camera.
+gravity sensitivity Tg of the BMI160 IMU are generally one
+or two orders smaller than the other IMU intrinsics. This
+matches the results presented in Figure 12, for which the
+estimation errors of imu1 - imu4 (without gravity sensitivity)
+are similarly to those of imu11 - imu14 (with gravity
+sensitivity of 6 parameters) and imu21 - imu24 (with gravity
+sensitivity of 9 parameters). This means that the proposed
+system performance is less sensitive to gravity sensitivity, no
+matter 0, 6 or 9 parameters are used.
+We can also see that the terms in scale-misalignment for
+gyroscope D′
+w for the BMI160 IMU are much larger than D′
+a
+and Tg. This indicates that the readings from gyroscope of
+BMI160 are very noisy and the calibration of D′
+w dominates
+the performance of this VINS system. This fact is again
+conﬁrmed by model imu32, which only calibrates the D′
+w
+and can achieve similar results as full IMU model calibration
+(see bottom of Table 6).
+11
+More Validation and Investigation of
+Camera and IMU Impacts
+We further evaluate the proposed self-calibration system on
+a custom made visual-inertial sensor rig (VI-Rig, shown in
+Figure 14) which contains multiple IMU and camera sensors
+to facilitate an investigation into how they individually
+impact overall performance. Speciﬁcally, it contains a
+MicroStrain GX5-25, MicroStrain GX5-35, Xsens MTi 100,
+FLIR blackﬂy camera and RealSense T265 tracking camera
+which contains an integrated BMI055 IMU along with a
+ﬁsheye stereo camera. Here we note that all cameras used
+are not rolling shutter to ensure fair comparison against the
+baseline Kalibr (Furgale et al. 2013) which only supports
+IMU-camera calibration with global shutter cameras. In total
+10 datasets were collected of an April tag board on which
+both the proposed system and the Kalibr calibration toolbox
+were run to report repeatbility statistics and expected real-
+world performance of both systems. During data collection,
+all 6-axis motion of VI-Rig were excited to avoid degenerate
+motions for calibration parameters.
+11.1
+Visual Front-End and Initial Conditions
+To provide a fair comparison, we modiﬁed the front-
+end of the proposed system to directly use the same
+April tag detection as Kalibr and to only use such tags
+during estimation. Additionally, while the proposed system
+was only run with one of the four IMUs and either the
+Blackﬂy or left T265 Realsense camera, Kalibr used all the
+available sensors to ensure the highest and most consistent
+performance (4 IMUs and 3 cameras). The imu6 model is
+used during evaluation, which is equivalent to the scale-
+misalignment IMU model of Kalibr. We deﬁne the “ideal”
+IMU sensor intrinsics as D′
+w = D′
+a = I3, I
+wR = I
+aR = I3
+and Tg = 03 if factory or ofﬂine calibration has been pre-
+applied. Generally, these values are what the users expect
+for a ready-to-use IMU, and are the initial values that the
+proposed estimator starts from. The quality of each IMU can
+Prepared using xxxxxxxxxxx
+
+===== PAGE 19 =====
+Yulin Yang et al.
+19
+Table 7. Average processing time for each image (including propagation and update) for the proposed system with (w/) and without
+(w/o) online calibration (unit: second) on the 10 datasets collected with VI-Rig. The time increase (0.0036s in average) for online
+calibration is negligible compared to no calibration.
+Algorithm
+Data-1
+Data-2
+Data-3
+Data-4
+Data-5
+Data-6
+Data-7
+Data-8
+Data-9
+Data-10
+Avg.
+w/ online calib
+0.0227
+0.0231
+0.0228
+0.0223
+0.0229
+0.0220
+0.0214
+0.0228
+0.0223
+0.0215
+0.0224
+w/o online calib
+0.0187
+0.0191
+0.0189
+0.0190
+0.0190
+0.0185
+0.0186
+0.0186
+0.0189
+0.0190
+0.0188
+Figure 15. Comparison of the proposed method and Kalibr relative to a baseline Kalibr value. The boxplots show the ﬁnal
+converged value of both methods, while for camera intrinsic only the proposed is reported since Kalibr ﬁxes this during optimization.
+Kalibr (magenta, right in each group) was run with all cameras and IMUs available over 10 datasets, while the proposed system
+(blue, left) was run with either the Blackﬂy camera or left T265 ﬁsheye and the MicroStrain GX-25 IMU resulting in 10 runs for each.
+Figure 16. Comparison of the proposed method with imu6 and Kalibr relative to the “ideal” sensor intrinsics. The boxplots show the
+ﬁnal converged value of both methods. Kalibr (magenta, right in each group) was run with all cameras and IMUs available over 10
+datasets, while the proposed system (blue, left) was run with either the Blackﬂy camera or left T265 ﬁsheye resulting in 20 runs.
+be evaluated by how close the converged calibrated values
+are to these “ideal” values.
+11.2
+IMU-Camera Spatiotemporal Extrinsics
+and Intrinsics
+We ﬁrst investigate the convergence of the IMU-camera
+extrinsics and temporal parameters along with the camera
+Prepared using xxxxxxxxxxx
+
+===== PAGE 20 =====
+20
+Journal Title XX(X)
+Figure 17. Comparison of the proposed method with imu6 and Kalibr relative to the “ideal” sensor intrinsics. The boxplots show the
+ﬁnal converged value of both methods. Kalibr (magenta, right in each group) was run with all cameras and IMUs available over 10
+datasets, while the proposed system (blue, left) was run with either the Blackﬂy camera or left T265 ﬁsheye resulting in 20 runs.
+Figure 18. Comparison of the proposed method with imu6 and Kalibr relative to the “ideal” sensor intrinsics. The boxplots show the
+ﬁnal converged value of both methods. Kalibr (magenta, right in each group) was run with all cameras and IMUs available over 10
+datasets, while the proposed system (blue, left) was run with either the Blackﬂy camera or left T265 ﬁsheye resulting in 20 runs.
+Figure 19. Comparison of the proposed method with imu6 and Kalibr relative to the “identity” sensor intrinsics. The boxplots show
+the ﬁnal converged value of both methods. Kalibr (magenta, right in each group) was run with all cameras and IMUs available over
+10 datasets, while the proposed system (blue, left) was run with either the Blackﬂy camera or left T265 ﬁsheye resulting in 20 runs.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 21 =====
+Yulin Yang et al.
+21
+intrinsics of the proposed system. The results shown in
+Figure 15 demonstrate that the proposed system is able
+to calibrate the spatial and temporal parameters with both
+high repeatability and accuracy relative to the ofﬂine Kalibr
+calibration baseline. Additionally shown is the convergence
+of camera intrinsics estimated by the proposed algorithm
+relative to the Kalibr static calibration results which are ﬁxed
+during their IMU-camera calibration. Although the camera
+intrinsic estimates of blackﬂy and T265 camera have a few
+deviations compared to the reference values from Kalibr,
+the proposed system has very good convergence and high
+repeatability (the groundtruth is not known here).
+11.3
+IMU Intrinsic Parameters
+The calibration results are summarized as boxplots shown
+in Figure 16 - 19 for the MicroStrain MS-GX5-25, MS-
+GX5-35, Xsens MTi-100 and T265 IMU, respectively. As
+shown, the calibration errors of the proposed system are quite
+close to the results of Kalibr, and the estimate differences
+of D′
+w, D′
+a and Tg are around 1e-3, 1e-1 and 1e-4,
+respectively, for MS-GX5-25, MX-GX5-35 and Xsens MTi-
+100. Additionally, our proposed algorithm demonstrates
+better repeatability as the calibration errors have smaller
+variances and less outliers. In general, we can discuss the
+following results concerning the IMUs presented throughout
+the paper (see Figure 13 and 16 - 19):
+• The MicroStrain MS-GX5-25, MS-GX5-35 and Xsens
+MTi-100 IMU are more close to “ideal” IMU than
+T265 IMU and BMI160 IMU. This is reasonable
+since both the MicroStrain and Xsens IMU are
+more expensive high-end IMUs with likely more
+sophisticate out-of-factory calibration than T265 IMU
+and BMI 160 IMU.
+• For each IMU, the gravity sensitivity terms are, in
+general, one or two orders smaller than the other
+terms of the IMU intrinsic model. This suggests that
+the gravity sensitivity should not have signiﬁcant
+effects on system performance. This is likely due to
+the handheld motion of the platform and levels of
+achievable acceleration magnitudes.
+• The BMI160 IMU (Figure 13), has a much more
+signiﬁcant gyroscope calibration, D′
+w, compared to
+its accelerometer calibration and other IMUs. Thus
+the BMI160 can see large accuracy gains from only
+calibrating D′
+w, while for other IMUs, the calibration
+of D′
+a should be more impactful.
+Hence, these results validate the accuracy and consistency
+of the IMU intrinsic calibration of the proposed online real-
+time algorithm, which outputs comparable calibration results
+to Kalibr’s ofﬂine calibration procedures.
+11.4
+Timing Evaluation
+We also evaluate the running time for the proposed system
+with and without online sensor calibration shown in Table
+7. We use the 10 datasets recorded with the VI-Rig
+and only use the measurements from MicroStrain GX5-
+25 IMU and the left camera of T265 for evaluation. In
+order to get more realistic timing evacuation, no April tags
+are detected and only the natural features tracked from
+images are used. We track 200 features from each image
+and keep at most 30 SLAM point features in the state
+vector with a sliding window of 20 clones. The averaged
+execution time for processing each coming image (including
+propagation and update) is recorded (shown in Table 7). The
+average execution time of the proposed system with online
+calibration is 0.0224s, which shows negligible increases than
+0.0188s, which is the average running time without online
+calibration.
+12
+Real-World Degenerate Motion
+Demonstration and Analysis
+Next, we evaluate the proposed system on a collection
+of real-world datasets which exhibit varying degrees of
+degenerate motions. Speciﬁcally, we evaluate on the EuRoc
+MAV dataset (Burri et al. 2016) which has under-actuated
+MAV with weakly excited acceleration and approximately 1-
+axis rotation. We also evaluate on the KAIST complex urban
+dataset (Jeong et al. 2019) which is a planar autonomous
+vehicle dataset with relatively constant velocity throughout.
+We note that we do not estimate the gravity sensitivity since
+it has been demonstrated in the preceding sections that it is
+not signiﬁcant for VINS performance, and test only the imu1
+- imu4 models.
+12.1
+EuRoC MAV: Under-Actuated Motion
+The EuRoC MAV dataset (Burri et al. 2016) contains a
+series of trajectories from a MAV and provides 20 Hz
+grayscale stereo images, 200 Hz inertial readings, and an
+external groundtruth pose from a motion capture system.
+The proposed estimator is run with just the left camera
+on each of the Vicon room datasets and report the results
+in Table 8. Here we can see that not performing IMU
+intrinsic calibration, imu0 model, outperforms the methods
+which additionally estimate the IMU intrinsics. This makes
+sense since the IMU intrinsics suffer from a large number
+of degenerate motions caused with constant local angular
+velocity and linear acceleration which can be expected
+for the MAV platform. Additionally, we believe that this
+is speciﬁcally caused by the MAV being unable to fully
+excite its 6DoF motion for a given small time interval
+and thus undergoes (nearly) degenerate motions locally
+throughout the whole trajectory, hurting the sliding-window
+ﬁlter. We can see that for more dynamic datasets, such as
+V2 03 difﬁcult, there are still some partial improvements in
+accuracy possibly due to the more dynamic motion exhibited.
+In order to verify our reasoning that the accuracy loss
+is caused by degenerate motions, we use the groundtruth
+trajectories of tum room1 with full 6DoF motion and EuRoc
+V1 02 to simulate synthetic inertial and feature bearing
+measurements (see Section 9 on how we perform simulation)
+and evaluate our system with these simulated data. Figure
+20 and 21 shows four different run with estimation errors
+and 3σ bounds for Da and I
+aR. It is clear that the motion
+of sensor on the EuRoc V1 02 trajectory (right) is mildly
+excited and the acceleration readings are varying very slowly
+within the local window, causing poor convergence of the
+Da and I
+aR with relatively ﬂat 3σ bounds as compared to the
+tum room1 (left). This veriﬁes that the online IMU intrinsic
+calibration will beneﬁt VINS with fully-excited motion (e.g.,
+Prepared using xxxxxxxxxxx
+
+===== PAGE 22 =====
+22
+Journal Title XX(X)
+Table 8. Absolute Trajectory Error (ATE) on EuRoC MAV Vicon room sequences (with units degrees/meters).
+IMU Model
+V1 01 easy
+V1 02 medium
+V1 03 difﬁcult
+V2 01 easy
+V2 02 medium
+V2 03 difﬁcult
+Average
+imu0
+0.657 / 0.043
+1.805 / 0.060
+2.437 / 0.069
+0.869 / 0.109
+1.373 / 0.080
+1.277 / 0.180
+1.403 / 0.090
+imu1
+0.601 / 0.055
+1.924 / 0.065
+2.334 / 0.073
+1.201 / 0.115
+1.342 / 0.086
+1.710 / 0.168
+1.519 / 0.094
+imu2
+0.552 / 0.054
+1.990 / 0.062
+2.197 / 0.083
+0.960 / 0.107
+1.453 / 0.085
+1.666 / 0.216
+1.470 / 0.101
+imu3
+0.606 / 0.055
+1.905 / 0.065
+2.359 / 0.073
+1.180 / 0.114
+1.335 / 0.088
+1.640 / 0.167
+1.504 / 0.094
+imu4
+0.569 / 0.056
+1.969 / 0.069
+2.165 / 0.076
+0.846 / 0.127
+1.636 / 0.094
+1.577 / 0.195
+1.461 / 0.103
+Figure 20. Simulation results for Da of the proposed system evaluated with groundtruth tum room1 (left) and EuRoc V1 02 (right)
+trajectories using imu2 and radtan. 3 sigma bounds (dotted lines) and estimation errors (solid lines) for four different runs (different
+colors) with different realization of the measurement noise and initial perturbations are drawn. The tum room1 estimation errors and
+3σ bounds converge nicely, while due to lack of motion excitation, the convergence of Da, especially da4, da5 and da6, for the
+EuRoc V1 02 is poor.
+Figure 21. Simulation results for I
+aR of the proposed system
+evaluated with groundtruth tum room1 and EuRoc V1 02
+trajectories using imu2 and radtan. With tum room1 trajectory,
+the estimation errors and 3σ bounds of I
+aR converge nicely,
+while the convergence is poor on the EuRoc V1 02.
+the tum room1 trajectory) and might not be a good option for
+under-actuated motions such as the EuRoc V1 02 trajectory.
+12.2
+KAIST Complex Urban: Planar Motion
+Next we evaluate on the KAIST Complex Urban dataset
+(Jeong et al. 2019), which provides stereo grayscale images
+at 10 Hz, 200 Hz inertial readings, and a pseudo-groundtruth
+from an ofﬂine optimization method with the RTK GPS. As
+in the Table 2 and 3, this dataset contains planar motion
+and, in the case of imu2, 6 parameters are unobservable. We
+use the stereo camera pair along with the IMU to remove
+the scale ambiguity for monocular VINS caused by constant
+local acceleration (Wu et al. 2017b; Yang and Huang 2019).
+Figure 22. Trajectory plots for the KAIST Urban 39 dataset
+10km in total length. Figure is best seen in color.
+We plot Urban 39 trajectory estimates of the proposed
+system with and without IMU intrinsics in Figure 22. It can
+be seen that the system with IMU intrinsic calibration has
+larger drift compared to the one without. When looking at
+the absolute trajectory error (ATE) in respect to the dataset’s
+groundtruth, the error of the standard VIO, is 1.58 degrees
+with 13.03 meters (0.12%), while with imu2 online IMU
+intrinsic calibration it is 1.41 degrees with 23.13 meters
+(0.22%). We propose that this larger error is due to the
+Prepared using xxxxxxxxxxx
+
+===== PAGE 23 =====
+Yulin Yang et al.
+23
+Figure 23. Calibration results (colored solid lines) for CpI, td, tr and Dw of the proposed system evaluated with four VI-Rig planar
+motion datasets using imu2 and equi-dist. Red and blue dotted lines denote the reference value from Kalibr and initial (perturbed)
+values, respectively. Colored solid line represents the estimated calibration parameters during online calibration for each dataset.
+All the temporal calibration, dw4, dw5 and dw6 can converge well to the reference values, while the y component of CpI, dw1, dw2
+and dw3 diverges.
+Figure 24. Calibration results (colored solid lines) for CpI, td, tr and Dw of the proposed system evaluated with four 3D-motion
+datasets from Section 11 using imu2 and equidist. Red and blue dotted lines denote the reference value from Kalibr and initial
+(perturbed) values, respectively. Colored solid line represents the estimated calibration parameters during online calibration for
+each dataset. All the temporal calibration, CpI, and Dw can converge well to the reference values.
+introduced unobservable directions in online IMU intrinsic
+calibration when experiencing planar motion.
+12.3
+VI-Rig Planar Motion Datasets
+Lastly, we evaluate on 4 datasets collected with VI-Rig
+(shown in Figure 14) under planar motion. In this evaluation,
+Microstrain GX5-25 and the left camera of T265 are used.
+When collecting data, we put the VI-Vig on a chair and
+only move the chairs in the ground plane to make sure VI-
+Vig is performing planar motion with global yaw as rotation
+axis, which is also the y-axis (pointing downward) of the
+camera. We calibrate all calibration parameters using imu2
+and equidist when running the system. Since T265 is a global
+shutter camera, the readout time is 0.00s.
+The calibration results for the translation parameters CpI,
+time offset td, readout time tr and the Dw are shown in
+Figure 23. All the temporal calibration can converge well to
+the reference values based on ofﬂine calibration results of
+Kalibr. Note that tr converges to almost 0s as expected and
+td converges from 0.015s to 0.005s with reference values
+as 0.007s. The ﬁnal estimation errors are around 0.002s,
+which is pretty small. While the x and z components of CpI
+can also converge well to the reference values with small
+standard deviations (smaller than 0.4cm), the y component
+diverges with estimation errors more than 5cm and the
+standard deviation reach 3cm since it is along the rotation
+axis of the camera and hence, unobservable. Since the system
+has only yaw rotation for the IMU sensor, the dw1, dw2 and
+dw3 are also unobservable (see Table 2), and their calibration
+results diverge a lot compared to those of dw4, dw5 and dw6.
+This result veriﬁes our degenerate motion analysis for IMU-
+camera and IMU intrinsic calibration. As comparison, we
+also plot the online calibration results of the proposed system
+running on another four datasets from Section 11 with fully
+excited motions in Figure 24. We use the same scale to plot
+the results for both Figure 23 and 24. It is clear that all these
+calibration parameters (tr, td, CpI and Dw) can converge
+better in fully excited motions than planar motion.
+13
+Discussion: Online Self-Calibration?
+As learnt from the preceding extensive Monte-Carlo simu-
+lations and real world experiments, we highly recommend
+online self-calibration for VINS especially in the following
+scenarios:
+• Poor calibration priors are provided.
+• Low-end IMUs or cameras are used.
+• RS cameras are used.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 24 =====
+24
+Journal Title XX(X)
+• The system undergoes fully-excited motions.
+Speciﬁcally, as shown in Table 5 (simulation) and Figures
+11 and 12 (TUM RS VIO Datasets), if the system starts
+with imperfect calibration, the system without online self-
+calibration is highly likely to fail, clearly demonstrated by
+Figure 5. But online calibration can greatly improve the
+system robustness and accuracy. From Figure 12, we see
+that online calibration for the low-end IMU (Bosch BMI160)
+and RS readout time is necessary, which can improve the
+system performance greatly. Based on the results from the
+EuRoC MAV dataset (Table 8) and KAIST datasets (Figure
+22), online calibration, especially IMU intrinsic calibration,
+can hurt the system performance when the system undergoes
+underactuated motions.
+Based on our analysis on the degenerate motions for these
+calibration parameters, we can recommend what calibration
+parameters should be calibrated with different motion types:
+• Fully excited 3D motion: all calibration parameters.
+• Mildly excited 3D motion: IMU-camera spatial-
+temporal
+calibration,
+readout
+time,
+and
+camera
+intrinsics.
+• Under-actuated motions: readout time and camera
+intrinsics.
+As shown in our degenerate motion analysis, there are
+a large number of motion types that prohibit accurate
+calibration of the IMU intrinsics and IMU-camera spatial
+calibration, while the camera intrinsics and IMU-camera
+temporal calibration are more robust to different motions.
+More importantly, in the most commonly-seen motion cases
+of aerial and ground vehicles, there is usually at least one
+unobservable direction due to these robots traveling with
+either underactuated 3D or planar motion. The impact on
+performance was shown with the EuRoC MAV and KAIST
+Urban datasets (Table 8 and Figure 22) where the use of
+online IMU calibration may hurt the estimator.
+Due to the high likelihood of experiencing degenerate
+motions for some periods of time, solely based on our
+analysis and results, we do not recommend performing
+online IMU intrinsic and IMU-camera spatial calibration
+during real-time operations for most underactuated motions
+(e.g., planar motion and one-axis rotation for most ground
+vehicles). The exception to this is the handheld cases (e.g.,
+mobile AR/VR), which often exhibit full 6DoF motions
+and thus is recommended to perform online calibration to
+improve estimation accuracy, especially when low-end IMUs
+or RS cameras are used. For both of these applications, we
+do recommend using an ofﬂine batch optimization to obtain
+an accurate initial calibration guess for the ﬁlter and/or treat
+the calibration parameters (especially intrinsics) as “true” if
+one knows they are going to experience degenerate motions.
+For online IMU intrinsic calibration, it is not necessary to
+calibrate the full IMU model and instead one may calibrate
+only the dominating parameters in the inertial models (e.g.,
+Dw for BMI160 IMU or Da for MicroStrain, Xsens and
+T265 IMUs).
+14
+Conclusions and Future Work
+In this paper, we address the problem of online full-
+parameter self-calibration for visual-inertial navigation
+to achieve accurate and robust performance. We ﬁrst
+investigate different IMU intrinsic model variants which
+contain scale correction, axis misalignment and gravity
+sensitivity. These model variants can cover most used
+inertial models in practice. We also introduce the full
+visual measurement model which contains IMU-camera
+spatial-temporal parameters including rolling shutter readout
+time. After computing the state transition matrix and
+measurements Jacobian regarding the state containing full
+calibration parameters, we perform observability analysis
+based on the linearized VINS system and show that with
+full-parameter calibration it still has only 4 unobservable
+directions, which relate to global yaw and global translation.
+All the calibration parameters of VINS are observable given
+fully excited motions.
+Based on the observability analysis, we, for the ﬁrst
+time, have identiﬁed basic degenerate motion patterns
+for IMU/camera intrinsics, and any combination of these
+degenerate motions will still be unobservable directions.
+Extensive validation on simulated and real-world datasets are
+performed to verify both the observability and degenerate
+motion analysis. We also show that online self-calibration
+can improve the robustness and accuracy of VINS. As shown
+through our experiments, online IMU intrinsic calibration is
+risky due to its dependence on the motion proﬁle to ensure
+observability. In the case of autonomous (ground) vehicles,
+most trajectories have degenerate motions, thus resulting in
+not recommending online calibration of IMU intrinsics for
+robots with underactuated motions. In the case of handheld
+motion, however we found that the estimation of calibration
+parameters improved performance as expected.
+In the future, we will investigate a complete degenerate
+motion analysis for multi-visual-inertial system. In addition,
+robust algorithms to perform online calibration under
+degenerate motions will also be studied.
+References
+Agudo A (2021) Total estimation from rgb video: On-line camera
+self-calibration, non-rigid shape and motion.
+In: 2020 25th
+International Conference on Pattern Recognition (ICPR). pp.
+8140–8147. DOI:10.1109/ICPR48806.2021.9412923.
+Barfoot TD (2017) State estimation for robotics.
+Cambridge
+University Press.
+Bristeau PJ, Callou F, Vissi`ere D and Petit N (2011) The navigation
+and control technology inside the ar.drone micro uav. IFAC
+Proceedings Volumes 44(1): 1477–1484.
+DOI:https://doi.
+org/10.3182/20110828-6-IT-1002.02327.
+18th IFAC World
+Congress.
+Burri M, Nikolic J, Gohl P, Schneider T, Rehder J, Omari S,
+Achtelik MW and Siegwart R (2016) The euroc micro aerial
+vehicle datasets.
+The International Journal of Robotics
+Research 35(10): 1157–1163.
+Campos C, Elvira R, Rodr´ıguez JJG, M Montiel JM and D Tard´os J
+(2021) Orb-slam3: An accurate open-source library for visual,
+visual–inertial, and multimap slam.
+IEEE Transactions on
+Robotics : 1–17DOI:10.1109/TRO.2021.3075644.
+Chatﬁeld AB (1997) Fundamentals of High Accuracy Inertial Nav-
+igation. American Institute of Aeronautics and Astronautics.
+Chirikjian G (2011) Stochastic Models, Information Theory,
+and Lie Groups, Volume 2: Analytic Methods and Modern
+Prepared using xxxxxxxxxxx
+
+===== PAGE 25 =====
+Yulin Yang et al.
+25
+Applications, volume 2. Springer Science & Business Media.
+Civera J, Bueno DR, Davison AJ and Montiel JMM (2009)
+Camera self-calibration for sequential bayesian structure from
+motion. In: 2009 IEEE International Conference on Robotics
+and Automation. pp. 403–408.
+DOI:10.1109/ROBOT.2009.
+5152719.
+Eckenhoff K, Geneva P, Bloecker J and Huang G (2019) Multi-
+camera visual-inertial navigation with online intrinsic and
+extrinsic calibration.
+In: Proc. International Conference on
+Robotics and Automation. Montreal, Canada.
+Eckenhoff K, Geneva P and Huang G (2021) Mimc-vins: A versatile
+and resilient multi-imu multi-camera visual-inertial navigation
+system.
+IEEE Transactions on Robotics 37(5): 1360–1380.
+DOI:10.1109/TRO.2021.3049445.
+Faugeras OD, Luong QT and Maybank SJ (1992) Camera self-
+calibration: Theory and experiments.
+In: Sandini G (ed.)
+Computer Vision — ECCV’92. Berlin, Heidelberg: Springer
+Berlin Heidelberg. ISBN 978-3-540-47069-4, pp. 321–334.
+Forster C, Carlone L, Dellaert F and Scaramuzza D (2017) On-
+manifold preintegration for real-time visual-inertial odometry.
+IEEE Transactions on Robotics 33(1): 1–21.
+Furgale P, Rehder J and Siegwart R (2013) Uniﬁed temporal and
+spatial calibration for multi-sensor systems. In: Proc. of the
+IEEE/RSJ International Conference on Intelligent Robots and
+Systems. pp. 1280–1286.
+Geneva P, Eckenhoff K, Lee W, Yang Y and Huang G (2020)
+Openvins: A research platform for visual-inertial estimation.
+In: Proc. of the IEEE International Conference on Robotics and
+Automation. Paris, France. URL https://github.com/
+rpng/open_vins.
+Guo C, Kottas D, DuToit R, Ahmed A, Li R and Roumeliotis
+S (2014) Efﬁcient visual-inertial navigation using a rolling-
+shutter camera with inaccurate timestamps. In: Proc. of the
+Robotics: Science and Systems Conference. Berkeley, CA.
+Guo C and Roumeliotis S (2013) IMU-RGBD camera 3D pose
+estimation and extrinsic calibration: Observability analysis and
+consistency improvement. In: Proc. of the IEEE International
+Conference on Robotics and Automation. Karlsruhe, Germany.
+Hartley R and Zisserman A (2004) Multiple View Geometry in
+Computer Vision. Cambridge University Press.
+Heng L, Choi B, Cui Z, Geppert M, Hu S, Kuan B, Liu P, Nguyen R,
+Yeo YC, Geiger A et al. (2019) Project autovision: Localization
+and 3d scene perception for an autonomous vehicle with a
+multi-camera system.
+In: 2019 International Conference on
+Robotics and Automation (ICRA). IEEE, pp. 4695–4702.
+Hesch J, Kottas D, Bowman S and Roumeliotis S (2013)
+Consistency analysis and improvement of vision-aided inertial
+navigation. IEEE Transactions on Robotics 30(1): 158–176.
+Hesch JA, Kottas DG, Bowman SL and Roumeliotis SI (2014)
+Consistency analysis and improvement of vision-aided inertial
+navigation. IEEE Transactions on Robotics 30(1): 158–176.
+DOI:10.1109/TRO.2013.2277549.
+Huai J, Zhuang Y, Yuan Q and Lin Y (2021) Continuous-time
+spatiotemporal calibration of a rolling shutter camera-imu
+system. CoRR abs/2108.07200.
+Huang
+G
+(2012)
+Improving
+the
+Consistency
+of
+Nonlinear
+Estimators: Analysis, Algorithms, and Applications.
+PhD
+Thesis, Department of Computer Science and Engineering,
+University of Minnesota. URL https://conservancy.
+umn.edu/handle/11299/146717.
+Huang G (2019) Visual-inertial navigation: A concise review. In:
+Proc. International Conference on Robotics and Automation.
+Montreal, Canada.
+Huang G, Mourikis AI and Roumeliotis SI (2010) Observability-
+based rules for designing consistent EKF SLAM estimators.
+International Journal of Robotics Research 29(5): 502–528.
+DOI:10.1177/0278364909353640.
+Jeong J, Cho Y, Shin YS, Roh H and Kim A (2019) Complex urban
+dataset with multi-level sensors from highly diverse urban
+environments. The International Journal of Robotics Research
+38(6): 642–657.
+Jones ES and Soatto S (2011) Visual-inertial navigation, mapping
+and localization: A scalable real-time causal approach.
+International Journal of Robotics Research 30(4): 407–430.
+Jung JH, Heo S and Park CG (2020) Observability analysis of imu
+intrinsic parameters in stereo visual–inertial odometry. IEEE
+Transactions on Instrumentation and Measurement 69(10):
+7530–7541. DOI:10.1109/TIM.2020.2985174.
+Karpenko A, Jacobs D, Baek J and Levoy M (2011) Digital video
+stabilization and rolling shutter correction using gyroscopes.
+Stanford University Computer Science Tech Report CSTR
+2011-03 1(2): 13.
+Kelly J and Sukhatme GS (2011) Visual-inertial sensor fusion:
+Localization, mapping and sensor-to-sensor self-calibration.
+International Journal of Robotics Research 30(1): 56–79.
+Kukelova Z, Albl C, Sugimoto A, Schindler K and Pajdla T (2020)
+Minimal rolling shutter absolute pose with unknown focal
+length and radial distortion. In: Vedaldi A, Bischof H, Brox
+T and Frahm JM (eds.) Computer Vision – ECCV 2020. Cham:
+Springer International Publishing. ISBN 978-3-030-58558-7,
+pp. 698–714.
+Lee W, Eckenhoff K, Yang Y, Geneva P and Huang G (2020) Visual-
+inertial-wheel odometry with online calibration. In: IEEE/RSJ
+International Conference on Intelligent Robots and Systems
+(IROS).
+Leutenegger S, Lynen S, Bosse M, Siegwart R and Furgale
+P (2015) Keyframe-based visual-inertial odometry using
+nonlinear optimization.
+International Journal of Robotics
+Research 34(3): 314–334.
+Li M and Mourikis A (2013a) High-precision, consistent EKF-
+based visual-inertial odometry.
+International Journal of
+Robotics Research 32(6): 690–711.
+Li M and Mourikis AI (2013b) Optimization-based estimator
+design for vision-aided inertial navigation.
+In: Robotics:
+Science and Systems. Berlin, Germany, pp. 241–248.
+Li M and Mourikis AI (2014) Online temporal calibration for
+Camera-IMU systems: Theory and algorithms. International
+Journal of Robotics Research 33(7): 947–964.
+Li M, Yu H, Zheng X and Mourikis AI (2014) High-ﬁdelity
+sensor modeling and self-calibration in vision-aided inertial
+navigation. In: IEEE International Conference on Robotics and
+Automation (ICRA). pp. 409–416.
+Martinelli A (2011) State estimation based on the concept of
+continuous symmetry and observability analysis: The case of
+calibration. IEEE Transactions on Robotics 27(2): 239–255.
+Martinelli A (2012) Vision and IMU data fusion: Closed-
+form solutions for attitude, speed, absolute scale, and bias
+determination. IEEE Transactions on Robotics 28(1): 44–60.
+Martinelli A (2014) Observability properties and deterministic
+algorithms in visual-inertial structure from motion.
+Found.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 26 =====
+26
+Journal Title XX(X)
+Trends Robot 3(3): 139–209. DOI:10.1561/2300000030.
+Maybeck PS (1979) Stochastic Models, Estimation, and Control,
+volume 1. London: Academic Press.
+Meingast M, Geyer C and Sastry SS (2005) Geometric models of
+rolling-shutter cameras. The 6th Workshop on Omnidirectional
+Vision abs/cs/0503076: 4.
+Mirzaei FM and Roumeliotis SI (2008) A Kalman ﬁlter-based
+algorithm for IMU-camera calibration: Observability analysis
+and performance evaluation. IEEE Transactions on Robotics
+24(5): 1143–1156.
+Mourikis AI and Roumeliotis SI (2007) A multi-state constraint
+Kalman ﬁlter for vision-aided inertial navigation.
+In:
+Proceedings of the IEEE International Conference on Robotics
+and Automation. Rome, Italy, pp. 3565–3572.
+Nguyen TT and Lhuillier M (2017) Self-calibration of omnidi-
+rectional multi-cameras including synchronization and rolling
+shutter. Computer Vision and Image Understanding 162: 166–
+184. DOI:10.1016/j.cviu.2017.08.010.
+Nikolic J, Burri M, Gilitschenski I, Nieto J and Siegwart R (2016)
+Non-parametric extrinsic and intrinsic calibration of visual-
+inertial sensor systems. IEEE Sensors Journal 16(13): 5433–
+5443. DOI:10.1109/JSEN.2016.2556662.
+Olson E (2011) Apriltag: A robust and ﬂexible visual ﬁducial
+system.
+In: Proc. of the IEEE International Conference on
+Robotics and Automation. Shanghai, China, pp. 3400–3407.
+OpenCV Developers Team (2021) Open source computer vision
+(OpenCV) library. Available: http://opencv.org.
+Oth L, Furgale P, Kneip L and Siegwart R (2013) Rolling shutter
+camera calibration. In: 2013 IEEE Conference on Computer
+Vision and Pattern Recognition. pp. 1360–1367. DOI:10.1109/
+CVPR.2013.179.
+Qian G and Chellappa R (2004) Bayesian self-calibration of a
+moving camera. Computer Vision Image Understanding 95(3):
+287–316. DOI:10.1016/j.cviu.2004.03.009.
+Qin T, Li P and Shen S (2018) VINS-Mono: A robust and versatile
+monocular visual-inertial state estimator. IEEE Transactions
+on Robotics 34(4): 1004–1020.
+Qin T and Shen S (2018) Online temporal calibration for monocular
+visual-inertial systems.
+In: 2018 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS). pp.
+3662–3669. DOI:10.1109/IROS.2018.8593603.
+Rehder J, Nikolic J, Schneider T, Hinzmann T and Siegwart R
+(2016) Extending kalibr: Calibrating the extrinsics of multiple
+imus and of individual axes. In: IEEE International Conference
+on Robotics and Automation (ICRA). pp. 4304–4311.
+DOI:
+10.1109/ICRA.2016.7487628.
+Rehder J and Siegwart R (2017) Camera/imu calibration revisited.
+IEEE Sensors Journal 17(11): 3257–3268.
+DOI:10.1109/
+JSEN.2017.2674307.
+Schneider T, Li M, Cadena C, Nieto J and Siegwart R (2019)
+Observability-aware self-calibration of visual and inertial
+sensors for ego-motion estimation.
+IEEE Sensors Journal
+19(10): 3846–3860.
+Schneider T, Li M, Cadena C, Nieto J and Siegwart R (2019)
+Observability-aware self-calibration of visual and inertial
+sensors for ego-motion estimation.
+IEEE Sensors Journal
+19(10): 3846–3860. DOI:10.1109/JSEN.2019.2893809.
+Schubert D, Demmel N, von Stumberg L, Usenko V and Cremers D
+(2019) Rolling-shutter modelling for visual-inertial odometry.
+In: International Conference on Intelligent Robots and Systems
+(IROS).
+Schubert D, Goll T, Demmel N, Usenko V, St¨uckler J and Cremers
+D (2018) The tum vi benchmark for evaluating visual-inertial
+odometry.
+In: 2018 IEEE/RSJ International Conference on
+Intelligent Robots and Systems (IROS). IEEE, pp. 1680–1687.
+Shen S, Mulgaonkar Y, Michael N and Kumar V (2014) Multi-
+sensor fusion for robust autonomous ﬂight in indoor and
+outdoor environments with a rotorcraft MAV. In: Proc. of the
+IEEE International Conference on Robotics and Automation.
+Hong Kong, China, pp. 4974–4981.
+Trawny N and Roumeliotis SI (2005) Indirect Kalman ﬁlter for 3D
+attitude estimation. Technical report, University of Minnesota,
+Dept. of Comp. Sci. & Eng. URL http://mars.cs.umn.
+edu/tr/reports/Trawny05b.pdf.
+Tsao SH and Jan SS (2019) Observability analysis and performance
+evaluation of ekf-based visual-inertial odometry with online
+intrinsic camera parameter calibration. IEEE Sensors Journal
+19(7): 2695–2703. DOI:10.1109/JSEN.2018.2886764.
+Usenko VC, Demmel N, Schubert D, St¨uckler J and Cremers D
+(2020) Visual-inertial mapping with non-linear factor recovery.
+IEEE Robotics and Automation Letters 5: 422–429.
+Wu K, Zhang T, Su D, Huang S and Dissanayake G (2017a) An
+invariant-ekf vins algorithm for improving consistency.
+In:
+Proc. of the IEEE/RSJ International Conference on Intelligent
+Robots and Systems. pp. 1578–1585.
+Wu KJ, Ahmed AM, Georgiou GA and Roumeliotis SI (2015)
+A square root inverse ﬁlter for efﬁcient vision-aided inertial
+navigation on mobile devices.
+In: Robotics: Science and
+Systems Conference (RSS).
+Wu KJ, Guo CX, Georgiou G and Roumeliotis SI (2017b) VINS
+on wheels. In: Proc. of the IEEE International Conference on
+Robotics and Automation. pp. 5155–5162.
+Xiao Y, Ruan X, Chai J, Zhang X and Zhu X (2019) Online imu
+self-calibration for visual-inertial systems. Sensors 19(7). DOI:
+10.3390/s19071624.
+Yang Y, Babu BPW, Chen C, Huang G and Ren L (2020a) Analytic
+combined imu integration for visual-inertial navigation.
+In:
+Proc. of the IEEE International Conference on Robotics and
+Automation. Paris, France.
+Yang Y, Geneva P, Eckenhoff K and Huang G (2019) Degenerate
+motion analysis for aided INS with online spatial and temporal
+calibration.
+IEEE Robotics and Automation Letters (RA-L)
+4(2): 2070–2077.
+Yang Y, Geneva P, Zuo X and Huang G (2020b) Online imu intrinsic
+calibration: Is it necessary? In: Proc. of Robotics: Science and
+Systems (RSS). Corvallis, Or.
+Yang Y and Huang G (2019) Observability analysis of aided ins
+with heterogeneous features of points, lines and planes. IEEE
+Transactions on Robotics 35(6): 399–1418.
+Yang
+Y,
+Maley
+J
+and
+Huang
+G
+(2017)
+Null-space-based
+marginalization: Analysis and algorithm. In: Proc. IEEE/RSJ
+International Conference on Intelligent Robots and Systems.
+Vancouver, Canada, pp. 6749–6755.
+Zachariah D and Jansson M (2010) Joint calibration of an inertial
+measurement unit and coordinate transformation parameters
+using a monocular camera. In: 2010 International Conference
+on Indoor Positioning and Indoor Navigation. pp. 1–7. DOI:
+10.1109/IPIN.2010.5646840.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 27 =====
+Yulin Yang et al.
+27
+Zhang M, Zuo X, Chen Y, Liu Y and Li M (2021) Pose estimation
+for ground robots: On manifold representation, integration,
+reparameterization, and optimization.
+IEEE Transactions
+on Robotics 37(4): 1081–1099.
+DOI:10.1109/TRO.2020.
+3043970.
+15
+Appendix A: IMU Intrinsic Jacobians
+In the following derivations, we will compute the Jacobians
+for all the variables that might appear in the IMU
+models, including scale/axis correction for gyroscope Dw
+(6 parameters), scale/axis correction for accelerometer Da
+(6 parameters), rotation from gyroscope to IMU frame I
+wR,
+rotation from accelerometer to IMU frame I
+aR and gravitiy
+sensitivity Tg (9 parameters). We repeat the corrected IMU
+readings for easier derivation:
+Iω = I
+wRDw
+ wωm −Tg
+Ia −bg −ng
+
+(98)
+Ia = I
+aRDa (aam −ba −na)
+(99)
+To simplify the derivations, we deﬁne Iˆa and I˜a as:
+Ia ≃I
+a ˆR ˆDa
+
+aam −ˆba
+
++ I
+a ˆRHDa˜xDa
++ ⌊I
+a ˆR ˆDa
+
+aam −ˆba
+
+⌋δθIa −I
+a ˆR ˆDa˜ba −I
+a ˆR ˆDana
+Iˆa = I
+a ˆR ˆDa
+
+aam −ˆba
+
+I˜a = I
+a ˆRHDa˜xDa + ⌊Iˆa⌋δθIa −I
+a ˆR ˆDa˜ba −I
+a ˆR ˆDana
+We deﬁne I ˆω and I ˜ω as:
+Iω = I
+w ˆR ˆDw
+
+wωm −ˆTg
+Iˆa −ˆbg
+
++ ⌊I
+w ˆR ˆDw
+
+wωm −ˆTg
+Iˆa −ˆbg
+
+⌋δθIw
++ I
+w ˆRHDw˜xDw −I
+w ˆR ˆDw
+
+ˆTg
+I˜a + HT g˜xT g
+
+−I
+w ˆR ˆDw
+
+˜bg + ng
+
+I ˆω = I
+w ˆR ˆDw
+
+wωm −ˆTg
+Iˆa −ˆbg
+
+I ˜ω = −I
+w ˆR ˆDw˜bg + I
+w ˆR ˆDw ˆTg
+I
+a ˆR ˆDa˜ba
++ I
+w ˆRHDw˜xDw −I
+w ˆR ˆDw ˆTg
+I
+a ˆRHDa˜xDa
++ ⌊I ˆω⌋δθIw −I
+w ˆR ˆDw ˆTg⌊Iˆa⌋δθIa
+−I
+w ˆR ˆDwHT g˜xT g −I
+w ˆR ˆDwng
++ I
+w ˆR ˆDw ˆTg
+I
+a ˆR ˆDana
+where we have:
+HDw =
+w ˆw1e1
+w ˆw2e1
+w ˆw2e2
+w ˆw3I3
+
+(100)
+HDa =
+aˆa1e1
+aˆa2e1
+aˆa2e2
+aˆa3I3
+
+(101)
+HT g =
+Iˆa1I3
+Iˆa2I3
+Iˆa3I3
+
+(102)
+By summarizing the above equations, we have:
+Ik ˜ω
+Ik˜a
+
+=
+Hb
+Hin
+  ˜xb
+˜xin
+
++ Hn
+ng
+na
+
+(103)
+where we have deﬁned:
+Hb = Hn =
+−I
+w ˆR ˆDw
+I
+w ˆR ˆDw ˆTgI
+a ˆR ˆDa
+03
+−I
+a ˆR ˆDa
+
+(104)
+Hin =
+Hw
+Ha
+HIw
+HIa
+Hg
+
+(105)
+with:
+Hw =
+I
+w ˆRHDw
+03
+
+(106)
+Ha =
+−I
+w ˆR ˆDw ˆTgI
+a ˆRHDa
+I
+a ˆRHDa
+
+(107)
+HIw =
+
+⌊I ˆω⌋
+03
+
+(108)
+HIa =
+
+−I
+a ˆR ˆDw ˆT⌊Iˆa⌋
+⌊Iˆa⌋
+
+(109)
+Hg =
+
+−I
+w ˆR ˆDwHT g
+03
+
+(110)
+Hence, ∆Rk from Eq. (43), can be written as:
+∆Rk ≃exp
+ Ikωδtk
+
+= exp
+ (Ik ˆω + Ik ˜ω)δtk
+
+(111)
+= exp
+
+∆ˆθk
+
+exp
+
+Jr(∆ˆθk)Ik ˜ωδtk
+
+(112)
+where ∆ˆθk = Ik ˆωδtk.
+∆pk from Eq. (44) can be written as:
+∆pk =
+Z tk+1
+tk
+Z s
+tk
+Ik
+Iτ RIτ adτds
+≃
+Z tk+1
+tk
+Z s
+tk
+exp
+ Ikωδτ
+ Ikadτds
+=
+Z tk+1
+tk
+Z s
+tk
+exp
+  Ik ˆω + Ik ˜ω
+
+δτ
+  Ikˆa + Ik˜a
+
+dτds
+≃
+Z tk+1
+tk
+Z s
+tk
+exp
+ Ik ˆωδτ
+ Ikˆadτds
+|
+{z
+}
+∆ˆpk
+−
+Z tk+1
+tk
+Z s
+tk
+exp
+ Ik ˆωδτ
+
+⌊Ikˆa⌋Jr(Ikωδτ)δτdτds
+|
+{z
+}
+Ξ4
+Ik ˜ω
++
+Z tk+1
+tk
+Z s
+tk
+exp
+ Ik ˆωδτ
+
+dτds
+|
+{z
+}
+Ξ2
+Ik˜a
+∆vk from Eq. (45) can be written as:
+∆vk =
+Z tk+1
+tk
+Ik
+Iτ RIτ adτ
+≃
+Z tk+1
+tk
+exp
+ Ikωδτ
+ Ikadτ
+=
+Z tk+1
+tk
+exp
+  Ik ˆω + Ik ˜ω
+
+δτ
+  Ikˆa + Ik˜a
+
+dτ
+≃
+Z tk+1
+tk
+exp
+ Ik ˆωδτ
+ Ikˆadτ
+|
+{z
+}
+∆ˆvk
+−
+Z tk+1
+tk
+exp
+ Ik ˆωδτ
+
+⌊Ikˆa⌋Jr(Ikωδτ)δτdτ
+|
+{z
+}
+Ξ3
+Ik ˜ω
++
+Z tk+1
+tk
+exp
+ Ik ˆωδτ
+
+dτ
+|
+{z
+}
+Ξ1
+Ik˜a
+Prepared using xxxxxxxxxxx
+
+===== PAGE 28 =====
+28
+Journal Title XX(X)
+By summarizing the above derivations, we have:
+∆Rk = ∆ˆRk exp
+
+Jr(∆ˆθk)Ik ˜ωδtk
+
+(113)
+∆pk = ∆ˆpk −Ξ4
+Ik ˜ω + Ξ2
+Ik˜a
+(114)
+∆vk = ∆ˆvk −Ξ3
+Ik ˜ω + Ξ1
+Ik˜a
+(115)
+The linearized model for IMU dynamics can be written as:
+˜xnk+1 = Φnn˜xnk + Φwa
+Ik ˜ω
+Ik˜a
+
+(116)
+where:
+Φnn =
+
+
+∆ˆR⊤
+k
+03
+03
+−G
+Ik ˆR⌊∆ˆpk⌋
+I3
+I3δtk
+−G
+Ik ˆR⌊∆ˆvk⌋
+03
+I3
+
+
+(117)
+Φwa =
+
+
+Jr(∆ˆθk)δtk
+03
+−G
+Ik ˆRΞ4
+G
+Ik ˆRΞ2
+−G
+Ik ˆRΞ3
+G
+Ik ˆRΞ1
+
+
+(118)
+By plugging Eq. (103) into Eq. (116) and adding biases, the
+overall linearized system for IMU state can be written as:
+˜xIk+1 = ΦI(k+1,k)˜xIk + GkndI
+(119)
+where
+ndI =
+n⊤
+dg n⊤
+da n⊤
+dwg n⊤
+dwa
+⊤
+denotes
+the
+dis-
+cretized IMU noises; ΦI(k+1,k) and Gk are computed as:
+ΦI(k+1,k) =
+
+
+Φnn
+ΦwaHb
+ΦwaHin
+06×9
+I6
+06×m
+0m×9
+0m×6
+Im
+
+
+(120)
+Gk =
+
+
+ΦwaHn
+09×6
+06
+I6δtk
+0m×6
+0m×6
+
+
+(121)
+Note that nd∗∼N(0, σ2
+∗I3
+δtk ) and hence the covariance for
+ndI can be written as:
+QdI =
+
+
+σ2
+g
+δtk I3
+03
+03
+03
+03
+σ2
+a
+δtk I3
+03
+03
+03
+03
+σ2
+wg
+δtk I3
+03
+03
+03
+03
+σ2
+wa
+δtk I3
+
+
+(122)
+16
+Appendix B: Camera Jacobians
+We will show the detailed derivations for the Jacobians
+shown in Eq. (76). The camera intrinsic Jacobians HCin can
+be written as:
+HCin =
+
+∂˜zC
+∂
+h ˜fu ˜fv ˜cu ˜cv
+i⊤
+∂˜zC
+∂
+h ˜k1 ˜k2 ˜p1 ˜p2
+i⊤
+
+(123)
+∂˜zC
+∂
+ ˜fu ˜fv ˜cu ˜cv
+⊤=
+ud
+0
+1
+0
+0
+vd
+0
+1
+
+(124)
+∂˜zC
+∂
+ ˜k1 ˜k2
+⊤=
+
+fuunr2
+fuunr4
+fvvnr2
+fvvnr4
+
+(125)
+∂˜zC
+∂
+ ˜p1 ˜p2
+⊤=
+
+2fuunvn
+fu(r2 + 2u2
+n)
+fv(r2 + 2v2
+n)
+2fvunvn
+
+(126)
+We continue to compute ∂˜zC
+∂˜zn and
+∂˜zn
+∂C ˜pf for Hpf within Eq.
+(76) as:
+∂˜zC
+∂˜zn
+=
+h11
+h12
+h21
+h22
+
+(127)
+∂˜zC
+∂C ˜pf
+=
+1
+Cz2
+f
+Czf
+0
+−Cxf
+0
+Czf
+−Cyf
+
+(128)
+with h11, h12, h21 and h22 deﬁned as:
+h11 = fu(d + 2k1u2
+n + 4k2u2
+nr2 + 2p1vn + 6p2un)
+h12 = fu(2k1unvn + 4k2unvnr2 + 2p1un + 2p2vn)
+h21 = fv(2k1unvn + 4k2unvnr2 + 2p1un + 2p2vn)
+h22 = fv(d + 2k1v2
+n + 4k2v2
+nr2 + 6p1vn + 2p2un)
+The Jacobians of Cpf regarding to the IMU state xI are
+written as:
+∂C ˜pf
+∂˜xI
+=
+h
+∂C ˜pf
+∂˜xn
+∂C ˜pf
+∂˜xb
+∂C ˜pf
+∂˜xin
+i
+(129)
+∂C ˜pf
+∂˜xn
+= C
+I ˆRI
+G ˆR
+
+⌊Gˆpf −GˆpI⌋G
+I ˆR
+−I3
+03
+
+(130)
+∂C ˜pf
+∂˜xb
+= 03×6, ∂C ˜pf
+∂˜xin
+= 03×24
+(131)
+The Jacobians of Cpf regarding to the IMU-camera spatial-
+temporal calibration state xIC are written as:
+∂C ˜pf
+∂˜xIC
+=
+h
+∂C ˜pf
+∂δθIC
+∂C ˜pf
+∂C ˜pI
+∂C ˜pf
+∂˜td
+∂C ˜pf
+∂˜tr
+i
+(132)
+∂C ˜pf
+∂δθIC
+= ⌊C
+I ˆRI
+G ˆR
+ Gˆpf −GˆpI
+
+⌋
+(133)
+∂C ˜pf
+∂C ˜pI
+= I3
+(134)
+∂C ˜pf
+∂˜td
+= C
+I ˆRI
+G ˆR
+
+⌊
+ Gˆpf −GˆpI
+
+⌋G
+I ˆRI ˆω −GˆvI
+
+(135)
+∂C ˜pf
+∂˜tr
+= m
+M
+∂C ˜pf
+∂˜td
+(136)
+Note that when computing the Jacobians for td and tr, we
+are using the following linearization:
+G
+I(t)R ≃G
+I(ˆt) ˆR exp(δθI) exp(I ˆω˜td + m
+M
+I ˆω˜tr)
+(137)
+GpI(t) ≃GˆpI(ˆt) + G˜pI + GˆvI˜td + m
+M
+GˆvI˜tr
+(138)
+The Jacobians of Cpf regarding to the feature state xf is
+written as:
+∂C ˜pf
+∂˜xf
+= ∂C ˜pf
+∂δG˜pf
+= C
+I ˆRI
+G ˆR
+(139)
+17
+Appendix C: Observability Matrix
+We show the detailed derivations for Mn, Mb, Min, MIC,
+MCin and Mf. The Mn is computed as:
+Mn =Hpf
+C
+I ˆRIk
+G ˆR
+Γ1
+Γ2
+Γ3
+
+(140)
+with:
+Γ1 = ⌊Gˆpf −GˆpI1 −GˆvI1δtk + 1
+2
+Ggδt2
+k⌋G
+I1 ˆR
+Prepared using xxxxxxxxxxx
+
+===== PAGE 29 =====
+Yulin Yang et al.
+29
+Γ2 = −I3
+Γ3 = −I3δtk
+The Mb is computed as:
+Mb =Hpf
+C
+I ˆRIk
+G ˆR
+
+Γ4
+Γ5
+
+(141)
+with:
+Γ4 = −
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+δtk
++ G
+Ik ˆRΞ4
+
+I
+w ˆR ˆDw
+Γ5 =
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+
+Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+ 
+I
+a ˆR ˆDa
+The Min can be computed as:
+Min =Hpf
+C
+I ˆRIk
+G ˆR
+Γ6
+Γ7
+Γ8
+Γ9
+
+(142)
+with:
+Γ6 =
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+δtk + G
+Ik ˆRΞ4
+
+HDw
+Γ7 = −
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+
+Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+ 
+I
+a ˆRHDa
+Γ8 = −
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+ Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+
+⌊Ikˆa⌋
+Γ9 = −
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr
+
+∆ˆθk
+
+δtk + G
+Ik ˆRΞ4
+
+×
+I
+w ˆR ˆDwHT g
+The MIC can be computed as:
+MIC = Hpf
+C
+I ˆRIk
+G ˆR
+Γ10
+Γ11
+Γ12
+Γ13
+
+(143)
+Γ10 = ⌊
+ Gˆpf −GˆpIk
+
+⌋G
+Ik ˆRI
+C ˆR
+(144)
+Γ11 = G
+Ik ˆRI
+C ˆR
+(145)
+Γ12 = ⌊
+ Gˆpf −GˆpIk
+
+⌋G
+Ik ˆRIk ˆω −GˆvIk
+(146)
+Γ13 = m
+M Γ12
+(147)
+The MCin and Mf can be written as:
+MCin = HCin
+(148)
+Mf = Hpf
+C
+I ˆRIk
+G ˆR
+(149)
+18
+Appendix D: Proof of Lemma 1
+For Eq. (79), we ﬁrst verify ON = 0 as:
+⇔OkN = 0
+⇔
+
+Γ1
+I1
+G ˆR −Γ2⌊GˆpI1⌋−Γ3⌊GˆvI1⌋−⌊Gˆpf⌋
+
+Gg = 0
+⇔
+
+⌊Gˆpf −GˆpI1 −GˆvI1δtk + 1
+2
+Ggδt2
+k⌋
+
+Gg
++
+ ⌊GˆpI1⌋+ ⌊GˆvI1⌋δtk −⌊Gˆpf⌋
+ Gg = 0
+Hence, we can conclude that the observability matrix O
+has at least 4 unobservable directions.
+In the following, we will try to show that there are only
+4 unobservable directions under general situations. With
+abusing of notion, we can rewrite the observability matrix
+as:
+O =
+
+O⊤
+1
+. . .
+O⊤
+k
+⊤
+=
+
+
+Mn,1
+Mb,1
+Min,1
+MIC,1
+MCin,1
+Mf,1
+...
+...
+...
+...
+...
+...
+Mn,k
+Mb,k
+Min,k
+MIC,k
+MCin,k
+Mf,k
+
+
+By adjusting the column of Mf in O, we can get O′:
+O′ ≜
+ OI
+Oin
+OIC
+Of
+
+≜
+
+
+Mn,1
+Mb,1
+Mf,1
+Min,1
+MIC,1
+MCin,1
+...
+...
+...
+...
+...
+...
+Mn,k
+Mb,k
+Mf,k
+Min,k
+MIC,k
+MCin,k
+
+
+It is clear that the column rank of O′ is the same as O.
+OI corresponds to the IMU navigation state, IMU bias
+state and feature state. OI is equivalent to the standard VINS
+observability matrix in (Hesch et al. 2013) and it has null
+space of 4DoF.
+Oin corresponds to the IMU intrinsic parameters. By
+checking the Eq. (142), it is clearly that Oin will be affected
+by time-varying wω(t) (in HDw), aa(t) (in HDa) and Ia(t)
+(in ⌊Ia⌋and HT g). Under generate motions, Oin can be of
+full column rank.
+OIC corresponds to the IMU-camera spatial and temporal
+calibration parameters. By checking the Eq. (143), we can
+see that the OIC is affected by the time-varying IMU pose
+{I
+GR(t), GpI(t)} and the IMU kinematics {Iω(t), Iv(t)}.
+In addition, Γ13 in MIC are also affected by the point feature
+measurement through
+m
+M , of which m will change under
+general measurement assumptions. Hence, OIC can be of
+full column rank with random motions.
+OCin corresponds to the camera intrinsic parameters. It is
+clear that OCin is only affected the environmental structure
+and is of full column rank as long as {un, vn} varies in
+different image tracks.
+Since Oin, OIC and OCin are affected by different
+system parameters, and under general motion conditions,
+[Oin OIC OCin] is also of full column rank. Therefore,
+the column rank of O′ is determined by OI. Since OI has
+4 DoF null space, the O′ also has 4 DoF. Hence, we can
+conclude that O only has 4 DoF null space. We also verify
+this conclusion through simulation results shown in Fig 4.
+19
+Appendix E: Null Space Proofs
+In this section, we provide the veriﬁcation for the null spaces
+listed in this paper.
+19.1
+Veriﬁcation of Lemma 2
+For Nw1, we have:
+⇔OkNw1 = 0
+Prepared using xxxxxxxxxxx
+
+===== PAGE 30 =====
+30
+Journal Title XX(X)
+⇔Γ4 ˆD−1
+w
+I
+w ˆR⊤e1
+wω1 + Γ6 ×
+1 0 0 0 0 0⊤= 0
+⇔(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+(−e1
+wω1 + e1
+wω1) = 0
+For Nw2, we have:
+⇔OkNw2 = 0
+⇔Γ4 ˆD−1
+w
+I
+w ˆR⊤[e1 e2] wω2 + Γ6 ×
+0 1 0 0 0 0
+0 0 1 0 0 0
+⊤
+= 0
+⇔(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+(−[e1 e2] wω2 + [e1 e2] wω2) = 0
+For Nw3, we have:
+⇔OkNw3 = 0
+⇔Γ4 ˆD−1
+w
+I
+w ˆR⊤I3
+wω3 + Γ6 ×
+03 I3
+⊤= 0
+⇔(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+(−I3
+wω3 + I3
+wω3) = 0
+19.2
+Veriﬁcation of Lemma 3
+We ﬁrst verify the ﬁrst column of Na1:
+⇔OkNa1e1 = 0
+⇔Γ5 ˆD−1
+a e1
+aa1 + Γ7 × [1 0 0 0 0 0]⊤= 0
+⇔
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+
+Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+ 
+I
+a ˆR×
+(e1
+aa1 −e1
+aa1) = 0
+We then verify the second column of Na1:
+⇔OkNa1e2 = 0
+⇔Γ5 ˆD−1
+a e2da1
+aa1 + Γ7 × [0 da3 −da2 da5 −da4 0]⊤
+−Γ8
+I
+a ˆRe3 = 0
+⇔
+
+
+0
+da1aa1
+0
+
+−
+
+
+da3aa2 + da5aa3
+−da2aa2 −da4aa3
+0
+
+
++
+
+
+da3aa2 + da5aa3
+−(da1aa1 + da2aa2 + da4aa3)
+0
+
+= 0
+The third column of Na1 can be veriﬁed as:
+⇔OkNa1e3 = 0
+⇔Γ5 ˆD−1
+a e3da1da3
+aa1 + Γ8
+I
+aR(e1da2 + e2da3)+
+Γ7 × [0 0 0 da6da3 −da2da6 da2da5 −da4da3] = 0
+⇔
+
+
+0
+0
+da1da3aa1
+
+−
+
+
+da6da3aa3
+−da2da6aa3
+da2da5aa3 −da4da3aa3
+
+
+−
+
+
+−da6da3aa3
+da2da6aa3
+da1da3aa1 −da5da2aa3 + da4da3aa3
+
+= 0
+The ﬁrst two columns of Na2 can be veriﬁed as:
+⇔OkNa2[e1 e2] = 0
+⇔Γ5 ˆD−1
+a [e1 e2]aa2 + Γ7 ×
+0 1 0 0 0 0
+0 0 1 0 0 0
+⊤
+= 0
+⇔
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+
+Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+ 
+I
+a ˆR×
+([e1 e2]aa2 −[e1 e2]aa2) = 0
+The third column of Na3 can be veriﬁed as:
+⇔OkNa2e1da3
+aa2 = 0
+⇔Γ5 ˆD−1
+a e1da3
+aa2 + Γ7 × [0 0 0 0 da6 −da5]⊤
+−Γ8
+I
+aRe1 = 0
+⇔
+
+
+0
+0
+da3aa2
+
+−
+
+
+0
+da6aa3
+−da5aa3
+
++
+
+
+0
+da6aa3
+−(da3aa2 + da5aa3)
+
+= 0
+The veriﬁcation of Na3 can be described as:
+⇔OkNa3 = 0
+⇔Γ5 ˆD−1
+a I3
+aa3 + Γ7 × [03 I3]⊤= 0
+⇔
+
+⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) I
+w ˆR ˆDw ˆTgδtk
++ G
+Ik ˆR
+
+Ξ4
+I
+w ˆR ˆDw ˆTg + Ξ2
+ 
+I
+a ˆR×
+(I3
+aa3 −I3
+aa3) = 0
+19.3
+Veriﬁcation of Lemma 4
+The Ng1 can be veriﬁed as:
+⇔OkNg1 = 0
+⇔Γ4I3
+Ia1 −Γ9 × [I3 03 03]⊤= 0
+⇔−(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+I
+w ˆR ˆDw
+ I3
+Ia1 −I3
+Ia1
+
+= 0
+The Ng2 can be veriﬁed as:
+⇔OkNg2 = 0
+⇔Γ4I3
+Ia2 −Γ9 × [03 I3 03]⊤= 0
+⇔−(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+I
+w ˆR ˆDw
+ I3
+Ia2 −I3
+Ia2
+
+= 0
+The Ng3 can be veriﬁed as:
+⇔OkNg3 = 0
+⇔Γ4I3
+Ia3 −Γ9 × [03 03 I3]⊤= 0
+⇔−(⌊Gˆpf −GˆpIk⌋G
+Ik ˆRJr (∆θk) δtk + G
+Ik ˆRΞ4)×
+I
+w ˆR ˆDw
+ I3
+Ia3 −I3
+Ia3
+
+= 0
+19.4
+Veriﬁcation of Lemma 6
+Note that:
+MCin × [fu fv 0 0 2k1 4k2 p1 p2]⊤
+=
+fu
+ ud + 2k1unr2 + 4k2unr4 + 2p1unvn + p2(r2 + 2u2
+n)
+
+fv
+ vd + 2k1vnr2 + 4k2vnr4 + p1(r2 + 2u2
+n) + 2p2unvn
+
+
+Prepared using xxxxxxxxxxx
+
+===== PAGE 31 =====
+Yulin Yang et al.
+31
+=
+fu
+ un + 3k1unr2 + 5k2unr4 + 4p1unvn + 2p2(r2 + 2u2
+n)
+
+fv
+ vn + 3k1vnr2 + 5k2vnr4 + 2p1(r2 + 2u2
+n) + 4p2unvn
+
+
+At the same time, with one-axis rotation assumption, we
+have:
+Mf
+Gk = Hpf
+C
+I ˆRIk
+G ˆR · G
+I1 ˆRI
+C ˆRCkCzf
+= Hpf e3
+Czf
+= ∂˜zC
+∂˜zn
+1
+0
+−un
+0
+1
+−vn
+
+e3
+= −∂˜zC
+∂˜zn
+un
+vn
+
+Note that Ik
+G ˆR = Ik
+I1 ˆRI1
+G ˆR and Ik
+I1 ˆRIk = Ik (due to one-axis
+rotation). We can easily verify that:
+∂˜zC
+∂˜zn
+un
+vn
+
+=
+fu
+ un + 3k1unr2 + 5k2unr4 + 4p1unvn + 2p2(r2 + 2u2
+n)
+
+fv
+ vn + 3k1vnr2 + 5k2vnr4 + 2p1(r2 + 2u2
+n) + 4p2unvn
+
+
+Therefore, the veriﬁcation of NCin can be written as:
+⇔OkNCin = 0
+⇔MCin × [fu fv 0 0 2k1 4k2 p1 p2]⊤+ Mf
+Gk = 0
+20
+Appendix F: Interpolation Jacobians
+We perturb G
+Ici−1R and G
+IciR as:
+G
+Ici−1R = G
+Ici−1 ˆR exp
+ δθIci−1
+
+(150)
+G
+IciR = G
+Ici ˆR exp (δθIci)
+(151)
+By representing θi−1,i = log
+
+G
+Ici−1R⊤G
+IciR
+
+, we have the
+linearization for the interpolation as:
+δθI(t) ≃
+
+exp(−ˆλˆθi−1,i) −Jr(ˆλˆθi−1,i)J−1
+l
+(ˆθi−1,i)
+
+δθIci−1
++ Jr(ˆλˆθi−1,i)J−1
+r (ˆθi−1,i)δθIci + m
+M ωi−1,i˜tr
+G˜pI(t) ≃(1 −ˆλ)G˜pIci−1 + ˆλG˜pIci + m
+M vi−1,i˜tr
+where:
+ˆωi−1,i =
+ˆθi−1,i
+tci −tci−1
+(152)
+ˆvi−1,i =
+GˆpIci −GˆpIci−1
+tci −tci−1
+(153)
+21
+Appendix G: Degenerate Motion
+Simulation Results
+The complete calibration plots for IMU/camera intrinsic
+and IMU-camera spatial calibration under one-axis rotation,
+constant ax acceleration and planar motion are shown in
+Figure 25, 26 and 27. All the temporal calibration results for
+IMU-camera time offset and rolling shutter readout time on
+the four simulated trajectories are shown in Figure 9.
+Acknowledgements
+This work was partially supported by the University of Delaware
+(UD) College of Engineering, the NSF (IIS-1924897), and Google
+ARCore. Geneva was partially supported by the University Doctoral
+Fellowship. Thanks Dr. Kun Fu for 3D printing of the VI-Rig.
+Thanks Dr. Kevin Eckenhoff for the rolling shutter implementation
+from MIMC-VINS project (Eckenhoff et al. 2021). Thanks David
+Schubert and Nikolaus Demmel from TUM for the helpful
+discussion on rolling-shutter visual-inertial datasets (Schubert et al.
+2019).
+Prepared using xxxxxxxxxxx
+
+===== PAGE 32 =====
+32
+Journal Title XX(X)
+Figure 25. Calibration results for the proposed system evaluated on tum room with one-axis rotation using imu22 and radtan. 3
+sigma bounds (dotted lines) and estimation errors (solid lines) for six different runs (different colors) with different realization of the
+measurement noise and initial perturbations. Note that the estimation errors and 3 σ bounds for dw1, dw2, dw3 and the IMU-CAM
+position calibration along the rotation axis can not converge.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 33 =====
+Yulin Yang et al.
+33
+Figure 26. Calibration results for the proposed system evaluated the sine 3d with constant acceleration along x direction using
+imu22 and radtan. 3 sigma bounds (dotted lines) and estimation errors (solid lines) for six different runs (different colors) with
+different realization of the measurement noise and initial perturbations. The estimation errors and 3σ bounds for da1, pitch and yaw
+of I
+aR cannot converge. Note that tg1, tg2 and tg3 are also unobservable.
+Prepared using xxxxxxxxxxx
+
+===== PAGE 34 =====
+34
+Journal Title XX(X)
+Figure 27. Calibration results of the proposed system evaluated on udel gore with planar motion using imu22 and radtan. 3 sigma
+bounds (dotted lines) and estimation errors (solid lines) for six different runs (different colors) with different realization of the
+measurement noise and initial perturbations. With planar motion, the estimation errors and 3 σ bounds of dw1, dw2, dw3, tg7, tg8,
+tg9 and the IMU-CAM position cannot converge. Due to lack of motion excitation, the parameters of Da and I
+aR converge much
+slower than the other motion cases.
+Prepared using xxxxxxxxxxx

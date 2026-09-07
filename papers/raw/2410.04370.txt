@@ -1,0 +1,688 @@
+
+===== PAGE 1 =====
+DABI: Evaluation of Data Augmentation Methods Using Downsampling
+in Bilateral Control-Based Imitation Learning with Images
+Masato Kobayashi†1,2∗,Thanpimon Buamanee†2, Yuki Uranishi1,2
+Abstract— Autonomous robot manipulation is a complex and
+continuously evolving robotics field. This paper focuses on data
+augmentation methods in imitation learning. Imitation learning
+consists of three stages: data collection from experts, learning
+model, and execution. However, collecting expert data requires
+manual effort and is time-consuming. Additionally, as sensors
+have different data acquisition intervals, preprocessing such
+as downsampling to match the lowest frequency is necessary.
+Downsampling enables data augmentation and also contributes
+to the stabilization of robot operations. In light of this back-
+ground, this paper proposes the Data Augmentation Method
+for Bilateral Control-Based Imitation Learning with Images,
+called ”DABI”. DABI collects robot joint angles, velocities,
+and torques at 1000 Hz, and uses images from gripper and
+environmental cameras captured at 100 Hz as the basis for
+data augmentation. This enables a tenfold increase in data. In
+this paper, we collected just 5 expert demonstration datasets.
+We trained the bilateral control Bi-ACT model with the unal-
+tered dataset and two augmentation methods for comparative
+experiments and conducted real-world experiments. The results
+confirmed a significant improvement in success rates, thereby
+proving the effectiveness of DABI. For additional material,
+please check: https://mertcookimg.github.io/dabi
+I. INTRODUCTION
+The paradigm of robot control has undergone significant
+changes, with a particular focus on learning from human
+demonstrations, known as imitation learning (IL) [1]–[4].
+This methodology encompasses three primary steps: data
+collection by experts, the learning model, and execution [5],
+[6]. This paper focuses on the data collection phase.
+In IL, data acquisition commonly employs teleoperated
+systems including joysticks, VR controllers, motion cap-
+ture, and leader-follower systems [7]–[12]. Systems such
+as ALOHA [10], Mobile ALOHA [11], and GELLO [12]
+effectively gather joint angles and images of robots by
+utilizing a leader and follower setup. However, these systems
+do not handle force information, thus limiting their ability to
+discern the hardness of objects. Additionally, data collection
+in these systems is capped at 50Hz, not meeting the needs
+for higher sampling rates. This has led to increased interest
+in methods that handle both positional and force information
+through bilateral control [13].
+In bilateral control-based imitation learning, the operator
+controls the leader robot, and the follower robot moves in
+synchronization with its movements. This control is realized
+through position tracking and the principle of action-reaction,
+allowing the operator to directly feel the force and tactile
+†Equal Contribution
+1Cybermedia Center, Osaka University, Osaka, 560-0043 Japan
+2Graduate School of Information Science and Technology, Osaka Uni-
+versity, Osaka 560-0043, Japan,
+Fig. 1.
+Overview of Data Augmentation Method for Bilateral Control-
+Based Imitation Learning with Images (DABI)
+information from the follower robot. This approach has
+been implemented by Sakaino et al. with data collection at
+500Hz and inference periods between 25-50Hz using Long
+Short-Term Memory (LSTM) networks, which has proven
+effective in learning and predicting time-series data [13]–
+[16]. Meanwhile, Kobayashi et al. proposed ILBiT utilizing
+transformer encoder and data collection at 1000Hz to over-
+come the limitations of LSTM in handling long-term time-
+series data and generalization [17]. However, the absence
+of image information in ILBiT reduced its adaptability to
+environmental changes.
+To address these challenges, Buamanee and Kobayashi et
+al. developed Bi-ACT by adapting the Action Chunking with
+Transformers (ACT) approach used in ALOHA and Mobile
+ALOHA to bilateral control-based imitation learning [18].
+Bi-ACT collects robot joint angles, velocities, and torques
+at 1000Hz and downsamples the robot data and images to
+100Hz to match the model inference period of Bi-ACT. This
+method has demonstrated its capability to adapt to diverse
+objects and handle complex tasks, although it requires the
+arXiv:2410.04370v1  [cs.RO]  6 Oct 2024
+
+===== PAGE 2 =====
+Fig. 2.
+Block Diagram of Bilateral Control-Based Imitation Learning
+collection of 50 demonstrations to learn a single task, similar
+to the 20-50 demonstrations collected in ALOHA’s ACT.
+Additionally, image data collection with cameras involves
+different data acquisition intervals (sampling times) for each
+robot or camera, necessitating preprocessing such as down-
+sampling to match the lowest frequency.
+This paper proposes the data augmentation method for bi-
+lateral control-based imitation learning with images (DABI),
+showcasing the approach in Fig. 1. The main contributions
+are highlighted in two key areas:
+• We collected 5 demonstration datasets using bilateral
+control and trained the Bi-ACT model with three dif-
+ferent variations: with and without data augmenta-
+tion methods. We conducted real-world experiments on
+putting items in a drawer, where DABI achieved the
+highest success rate, demonstrating the effectiveness of
+the DABI approach.
+• We discovered that differences in data augmentation
+methods following downsampling lead to variations in
+task success rates in bilateral control-based imitation
+learning.
+This paper consists of six sections. Sections II and III explain
+Related Works and Control System. Section IV proposes
+DABI, while Section V confirms the method’s efficiency
+based on the experimental results. Section VI concludes this
+paper.
+II. RELATED WORKS
+A. Bilateral Control-Based Imitation Learning
+As showin Fig. 2, bilateral control-based imitation learn-
+ing, capable of collecting position and force information
+[15] - [17]. Bilateral control involves the remote operation of
+a follower robot in the environment, guided by a leader robot
+controlled by a human. This is achieved through position
+tracking and the use of action-reaction principles. Bilateral
+Control-Based Imitation Learning methods using LSTM have
+successfully completed various tasks [13], [14]. Additionally,
+Kobayashi et. al. have proposed imitation learning with
+bilateral control utilizing Transformers [17], [19]. Buamanee
+and Kobayashi et al. developed Bi-ACT by adapting the
+Action Chunking with Transformers (ACT) approach used
+in ALOHA and Mobile ALOHA to bilateral control-based
+imitation learning [18]. Bi-ACT collects robot joint angles,
+velocities, and torques at 1000Hz and downsamples the robot
+Fig. 3.
+Block Diagram of Robot Control System
+data and images to 100Hz to match the model inference
+period of Bi-ACT. This method has demonstrated its capa-
+bility to adapt to diverse objects and handle complex tasks,
+although it requires the collection of 50 demonstrations to
+learn a single task, similar to the 20-50 demonstrations col-
+lected in ALOHA’s ACT. Additionally, image data collection
+with cameras involves different data acquisition intervals for
+each robot or camera, necessitating preprocessing such as
+downsampling to match the lowest frequency. Addressing
+this gap, our study introduces DABI, the data augmentation
+for bilateral control-based imitation learning with images.
+B. Data Augmentation Method for Robot Learning
+Data augmentation methods can generalize robotic skills,
+enhance success rates, and improve the efficiency of data
+collection. Yu et. al have proposed ”Robot Learning with
+Semantically Imagined Experience (ROSIE),” which utilizes
+a text-to-image diffusion model [20]. By using text guidance,
+this method performs data augmentation on existing robotic
+manipulation datasets by inpainting various unseen objects
+related to manipulations, backgrounds, and obstacles. In
+training neural networks with time-series data, learning effi-
+ciency can be improved by reducing the sampling frequency
+to a certain extent [21]. In bilateral control-based imitation
+learning, our approach closely aligns with that of Yamane et
+al., who collected robot data at 500 Hz and images at 50 Hz,
+expanding the data tenfold through downsampling and data
+augmentation [22]. Methods for data augmentation following
+downsampling include utilizing data close to timestamps or
+using the data available from the acquisition of one image
+until the next image arrives.
+A key feature of our DABI approach is focusing on the
+amount of robot data before and after image acquisition
+without relying on timestamps, using the data evenly, and
+performing data augmentation based on the images. This pa-
+per also focuses on the evaluation during data augmentation.
+In this paper, images are collected at 100 Hz and robot data
+at 1000 Hz, enabling a tenfold data augmentation.
+III. CONTROL SYSTEM
+A. Controller
+The controller design adopts a control of position and force
+for each axis, as shown in Fig. 3. Angle information was
+obtained from encoders, and angular velocity was calculated
+
+===== PAGE 3 =====
+Fig. 4.
+DABI: Data Augmentation Method for Bilateral Control-Based Imitation Learning with Images
+by differentiating this information. The disturbance torque
+ˆτ dis was calculated using a disturbance observer (DOB) [23],
+and the torque response value τ res was estimated using a
+force reaction observer (RFOB) [24].
+B. Bilateral Control
+Bilateral control, characterized by its two-way commu-
+nication and feedback loop, allows for a more nuanced
+and synchronized interaction between the leader (human
+operator) and the follower (robot), essential for delicate
+manipulation or operation in dynamic environments. The
+core principle of bilateral control involves sharing position,
+force, or other relevant information between the operator and
+the control target. The goals include:
+θl −θf = 0
+(1)
+τl + τf = 0
+(2)
+where θ and τ represents the joint angle and torque. The
+subscript ⃝l represents the leader system, and ⃝f represents
+the follower system. This allows the operator to perform
+intuitive control over the control target. Bilateral control
+is achieved by satisfying (1) for position tracking between
+systems and (2) for the action-reaction relationship of forces.
+IV. DABI: DATA AUGMENTATION METHOD FOR
+BILATERAL CONTROL-BASED IMITATION LEARNING
+WITH IMAGES
+A. Overview
+Our proposed research is a data augmentation method
+for the Bi-ACT learning data. Bi-ACT is inspired by the
+groundbreaking methodology presented in the ACT study.
+ACT operates solely on position control using input data of
+joint angles and images. In contrast, Bi-ACT uses input data
+of joint angles, velocities, torques, and images to operate
+with bilateral control that incorporates both position and
+force control.
+Fig. 4 illustrates the overview of the proposed DABI. First,
+we collect data at 1000 Hz for joint angles, angular velocities,
+and torques of the leader and follower robots using bilateral
+control, and images from the gripper and overhead cameras
+at 100 Hz. Next, the collected data is usually downsampled
+to match the lower frequency for imitation learning. In this
+Fig. 5.
+Image Diagram of Data Augmentation in DABI
+case, it is matched to the 100 Hz of the collected camera
+images. A feature of DABI is that it uses equidistant robot
+data before and after the image as a starting point for data
+augmentation. The augmented data is then used for learning
+in Bi-ACT. The trained model of Bi-ACT operates the robot.
+B. Data Collection
+Data collection was conducted using Bilateral Control,
+allowing the user to sense the environment of the follower
+robot while controlling the leader robot, thereby enhancing
+the quality of the demonstration data. The joint angles, an-
+gular velocities, and torques of both the leader and follower
+robot arms were collected at 1000 Hz, while images from
+the overhead and gripper cameras were collected at 100 Hz.
+C. Data Augmentation
+Robot operation data and image data are usually recorded
+at different acquisition cycles, so it is common in imitation
+learning to downsample other data to match the lower
+frequency. In this study, we propose a new data augmenta-
+tion method called DABI (Data Augmentation for Bilateral
+Control Imitation Learning) and apply it to an imitation
+learning system based on bilateral control, named ”Bi-ACT.”
+This method assumes that the robot data and image data are
+synchronized and acquired at a fixed interval.
+
+===== PAGE 4 =====
+Fig. 6.
+Definition of Robot and Camera View
+Fig. 7.
+Experimental Environments Setup
+As shown in Fig. 5, DABI defines a set of robot data
+collected between the cycles of image acquisition as N.
+Using this N, DABI forms pairs of robot data symmetrically
+around the image and can expand the data by N + 1 times.
+Ceiling and floor functions are used to properly adjust the
+amount of data in DABI.
+This method allows for the creation of a richer learning
+dataset while maintaining synchronization between data ac-
+quired at different cycles.
+V. EXPERIMENTS
+A. Hardware
+As shown in Fig. 6, experiments were conducted using
+the OpenMANIPULATOR-X robotic arm by ROBOTIS,
+featuring 4 Degrees of Freedom (DOF), enabling movement
+in multiple directions, and an additional DOF for the gripper.
+The control cycle was set to 1000Hz for precise movement.
+Moreover, RGB cameras were placed in the overhead and on
+the gripper area of the follower robot to record observations.
+B. Environment Setting
+In the environment setup, two robotic units, the leader
+and the follower, were positioned adjacent to each other as
+shown in Fig. 7. The experimental environment was arranged
+on the side of the follower robot. We evaluated DABI’s
+performance on the manipulation task: Put-in-Drawer. The
+task was performed to test the performance of long-duration
+tasks. In the Put-in-Drawer task, the first step is to open the
+drawer. Next, the robot arm grabs an object and carries it to
+Fig. 8.
+Model Architecture of Bi-ACT
+Fig. 9.
+Image of Trained and Untrained Objects
+the drawer. The task then involves placing the object inside
+the drawer and closing it.
+C. Learning Architecture
+As shown in Fig. 8, the Bi-ACT [18] model architecture
+incorporates two RGB images at a 360 x 640 resolution,
+one from the follower’s gripper and the other from an
+overhead view. In addition, the model processes the current
+follower’s 5 joints, which consist of three types of data (an-
+gle, angular velocity, and torque) forming a 15-dimensional
+vector. Utilizing action chunking, the policy outputs a k
+x 15 tensor, representing the leader’s next actions over k
+time steps. These actions are then relayed to the controller,
+which calculates the current needed for the follower’s joints
+to execute the specified movements.
+D. Training Dataset
+Joint angles, angular velocities, and torques for a Leader-
+Follower robot’s demonstration are collected using a bilateral
+control system. The robot was controlled at a frequency of
+1000Hz. Additionally, both gripper and overhead cameras
+were operating at approximately 100Hz. To synchronize with
+the system’s operating cycle, the data was adjusted to 100Hz,
+matching the model’s inference cycle.
+For the Put-in-Drawer task, we collected one demonstra-
+tion for each of the 5 types of training objects as shown
+in Fig. 9 and Table I. Using this collected data, we created
+three types of learning dataset methods as shown in Fig. 1.
+The first dataset Method1, involved downsampling the robot
+data to match the frequency of the camera images at 100Hz
+and consists only of data from these 5 demonstrations. The
+
+===== PAGE 5 =====
+TABLE I
+DETAIL OF TRAINED AND UNTRAINED OBJECTS
+Training Data
+Size [mm]
+Weight [g]
+Foam ball
+✔
+40
+3
+Red Bouncy
+✔
+30
+14
+Pink Bouncy
+✔
+30
+14
+Black Bouncy
+✔
+30
+14
+Table tennis
+✔
+40
+2
+Bottle Cap
+✖
+29
+1
+Eye cream
+✖
+40
+24
+Glue Jar
+✖
+45
+63
+Fig. 10.
+Snapshot of Data Collection in Put-in-Drawer
+second dataset Method2, expanded the 5 demonstrations
+from Method1 into 50 demonstrations through data aug-
+mentation. This method uses robot joint data starting at the
+same time as the captured image and continues until the
+next image is captured. The third dataset, proposed Method3,
+also expands the 5 demonstrations from Method1 into 50
+demonstrations using data augmentation. This method differs
+by using the DABI technique, which starts with the image
+and uses equidistant data before and after the image capture
+to expand the dataset.
+All learning datasets were trained using the Bi-ACT
+model.
+E. Experimental Results
+The results of our experimental evaluations performed
+on the Put-in-Drawer task using three different methodolo-
+gies: downsampling(Method1), downsampling with augmen-
+tation(Method2), and DABI(Method3). The task performance
+was assessed across various stages: Open, Pick, Move, Place,
+and Close, with results compiled in Table II. Each object was
+evaluated five times.
+As shown in TableII, the Method1 showed limited ef-
+fectiveness, particularly with untrained objects where most
+failed to proceed beyond the opening stage. Notably, trained
+objects like the Foam Ball showed mediocre performance,
+while others like the Pink and Black bouncy balls failed to
+perform any task successfully.
+The introduction of data augmentation in the Method2
+marked a significant improvement, especially for trained
+objects such as the Foam ball, which achieved a perfect
+success rate across all tasks. However, while performance
+increased for untrained objects like the Eye Cream, they still
+showed inconsistency in handling different stages of the task.
+The DABI method demonstrated superior performance
+with a consistent 100% success rate across all objects and
+stages. This method proved highly effective not only for
+Fig. 11.
+Experiment Result: Put-in-Drawer (Proposed Method)
+trained but also for untrained objects, showcasing the robot’s
+improved adaptability and robust handling capabilities.
+The results confirmed a significant improvement in success
+rates, thereby proving the effectiveness of DABI.
+VI. CONCLUSION
+This paper proposed the data augmentation method for
+imitation learning called ”DABI: Data Augmentation Method
+for Bilateral Control-Based Imitation Learning with Images”.
+DABI collected robot joint angles, velocities, and torques
+at 1000 Hz, and used images from gripper and environ-
+mental cameras captured at 100 Hz as the basis for data
+augmentation. This allowed for a tenfold increase in data
+augmentation compared to downsampling methods. Using
+DABI, we collected 5 demonstration datasets, trained using
+the Bi-ACT model with bilateral control, and conducted
+real-world experiments. The results confirmed a significant
+improvement in success rates. The effectiveness of this
+approach was confirmed through real-world experiments.
+The limitations and future challenges of this paper are as
+follows. Even though the experiments used different objects,
+they were only tested on the Put-in-Drawer task. In the
+future, we will run experiments on a wider range of tasks.
+For data augmentation, we used floor and ceiling functions.
+However, we plan to compare this method with one that
+matches the closest timestamps between image and robot
+data.
+
+===== PAGE 6 =====
+TABLE II
+EXPERIMENTAL RESULTS: PUT-IN-DRAWER
+Method
+Objects
+Put-in-Drawer
+Open
+Pick
+Move
+Place
+Close
+Total
+Method 1
+Trained
+Foam ball
+60
+40
+40
+40
+40
+40
+Downsampling without Augmentation
+Red bouncy
+20
+20
+20
+20
+20
+20
+Pink bouncy
+0
+0
+0
+0
+0
+0
+Black bouncy
+0
+0
+0
+0
+0
+0
+Table Tennis
+40
+0
+0
+0
+0
+0
+Untrained
+Bottle cap
+40
+0
+0
+0
+0
+0
+Eye Cream
+0
+0
+0
+0
+0
+0
+Glue Jar
+40
+40
+40
+40
+40
+40
+Method 2
+Trained
+Foam ball
+100
+100
+100
+100
+100
+100
+Downsampling and Augmentation
+Red bouncy
+60
+60
+60
+60
+60
+60
+Pink bouncy
+80
+80
+80
+80
+80
+80
+Black bouncy
+100
+80
+80
+80
+80
+80
+Table Tennis
+80
+80
+80
+80
+80
+80
+Untrained
+Bottle cap
+40
+40
+40
+40
+40
+40
+Eye Cream
+80
+80
+80
+80
+80
+80
+Glue Jar
+40
+40
+40
+40
+40
+40
+Method 3
+Trained
+Foam ball
+100
+100
+100
+100
+100
+100
+DABI
+Red bouncy
+80
+80
+80
+80
+80
+80
+Pink bouncy
+100
+100
+100
+100
+100
+100
+Black bouncy
+80
+80
+80
+80
+80
+80
+Table Tennis
+100
+100
+100
+100
+100
+100
+Untrained
+Bottle cap
+100
+100
+100
+100
+100
+100
+Eye Cream
+100
+100
+100
+100
+100
+100
+Glue Jar
+100
+100
+100
+100
+100
+100
+REFERENCES
+[1] J. Sun, Q. Zhang, Y. Duan, X. Jiang, C. Cheng and R. Xu, ”Prompt,
+Plan, Perform: LLM-based Humanoid Control via Quantized Imitation
+Learning,” IEEE International Conference on Robotics and Automation,
+pp. 16236-16242, 2024.
+[2] W. Wan, Y. Zhu, R. Shah and Y. Zhu, ”LOTUS: Continual Imitation
+Learning for Robot Manipulation Through Unsupervised Skill Discov-
+ery,” IEEE International Conference on Robotics and Automation, pp.
+537-544, 2024.
+[3] Z. Lin, Y. Chen and Z. Liu, ”Hierarchical Human-to-Robot Imitation
+Learning for Long-Horizon Tasks via Cross-Domain Skill Alignment,”
+IEEE International Conference on Robotics and Automation, pp. 2783-
+2790 2024.
+[4] H. Liu, S. Dass, R. Mart´ın-Mart´ın and Y. Zhu, ”Model-Based Runtime
+Monitoring with Interactive Imitation Learning,” IEEE International
+Conference on Robotics and Automation, pp. 4154-4161, 2024.
+[5] P. Zhou, X. Zhao, B. Tao and H. Ding, ”Combination of Dynamical
+Movement Primitives With Trajectory Segmentation and Node Mapping
+for Robot Machining Motion Learning,” in IEEE/ASME Transactions
+on Mechatronics, vol. 28, no. 1, pp. 175-185, 2023.
+[6] G. Franzese, L. d. S. Rosa, T. Verburg, L. Peternel and J. Kober,
+”Interactive Imitation Learning of Bimanual Movement Primitives,” in
+IEEE/ASME Transactions on Mechatronics, 2023.
+[7] T. Zhang, Z. McCarthy, O. Jow, D. Lee, X. Chen, K. Goldberg, and
+P. Abbeel, “Deep Imitation Learning for Complex Manipulation Tasks
+from Virtual Reality Teleoperation,” Proceedings of IEEE International
+Conference on Robotics and Automation, pp. 5628-5635, 2018.
+[8] A. Tung, J. Wong, A. Mandlekar, R. Mart´ın-Mart´ın, Y. Zhu, L. Fei-
+Fei, and S. Savarese, “Learning multi-arm manipulation through collab-
+orative teleoperation,” Proceedings of IEEE International Conference
+on Robotics and Automation, pp. 9212-9219, 2021.
+[9] L. Fan, Y. Zhu, J. Zhu, Z. Liu, O. Zeng, A. Gupta, J. Creus-Costa,
+S. Savarese, and L. Fei-Fei, “SURREAL: Open-source reinforcement
+learning framework and robot manipulation benchmark,” Proceedings
+of Conference on Robot Learning, pp. 767-782, 2018.
+[10] T. Z. Zhao, V. Kumar, S. Levine and C. Finn, “ Learning Fine-Grained
+Bimanual Manipulation with Low-Cost Hardware,” arXiv, 2304.13705,
+2023.
+[11] Z. Fu, T. Z. Zhao, and C. Finn, “Mobile ALOHA: Learning Biman-
+ual Mobile Manipulation with Low-Cost Whole-Body Teleoperation,”
+arXiv, 2401.02117, 2024.
+[12] P. Wu, Y. Shentu, Z. Yi, X. Lin, and P. Abbeel, ”GELLO: A
+General, Low-Cost, and Intuitive Teleoperation Framework for Robot
+Manipulators” arXiv, 2309.13037, 2023.
+[13] S. Sakaino, K. Fujimoto, Y. Saigusa and T. Tsuji, “Imitation Learning
+for Variable Speed Contact Motion for Operation up to Control Band-
+width,” IEEE Open Journal of the Industrial Electronics Society, Vol.
+3, pp. 116-127, 2022.
+[14] S. Hochreiter and J. Schmidhuber, “Long short-term memory”, Neural
+Comput., vol. 9, no. 8, pp.1735-1780, 1997.
+[15] K. Hayashi, S. Sakaino and T. Tsuji, “An Independently Learnable
+Hierarchical Model for Bilateral Control-Based Imitation Learning
+Applications,” IEEE Access, vol. 10, pp. 32766-32781, 2022.
+[16] K. Fujimoto, S. Sakaino and T. Tsuji, “Time Series Motion Genera-
+tion Considering Long Short-Term Motion,” Proceedings of IEEE/RSJ
+International Conference on Intelligent Robots and Systems, pp. 6842-
+6848,2019.
+[17] M. Kobayashi, T. Buamanee, Y. Uranishi, and H. Takemura, “ ILBiT:
+Imitation Learning for Robot Using Position and Torque Information
+based on Bilateral Control with Transformer,” arXiv, 2401.1665, 2024.
+[18] T. Buamanee, M. Kobayashi, Y. Uranishi and H. Takemura, ”Bi-ACT:
+Bilateral Control-Based Imitation Learning via Action Chunking with
+Transformer,” IEEE International Conference on Advanced Intelligent
+Mechatronics, pp. 410-415, 2024.
+[19] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N.
+Gomez, L. Kaiser, and I. Polosukhin, “Attention is All you Need,”
+Advances in Neural Information Processing Systems, Vol. 30, 2017.
+[20] T. Yu, T. Xiao, A. Stone, J. Tompson, A. Brohan, S. Wang, J. Singh,
+C. Tan, D. M, Jodilyn Peralta, B. Ichter, K. Hausman and F. Xia,
+“ Scaling Robot Learning with Semantically Imagined Experience,”
+arXiv, 2302.11550, 2023.
+[21] R. Rahmatizadeh, P. Abolghasemi, L. Boloni, and S. Levine, “Vision-
+based multi-task manipulation for inexpensive robots using end-to-
+end learning from demonstration,” IEEE international conference on
+robotics and automation, pp. 3758–3765, IEEE, 2018.
+[22] K. Yamane, S. Sakaino and T. Tsuji, ”Imitation Learning Inputting
+Image Feature to Each Layer of Neural Network,” IEEE International
+Conference on Advanced Motion Control, pp. 1-6, 2024.
+[23] K.Ohnishi, M. Shibata, T. Murakami, “Motion Control for Ad-
+vanced Mechatronics”, IEEE/ASME Transactions on Mechatronics,
+Vol.1, No.1, pp.56–67, 1996.
+[24] T. Murakami, F. Yu, K. Ohnishi, “Torque Sensorless Control in
+Multidegree-of-freedom Manipulator”, IEEE Transactions on Industrial
+Electronics, Vol.40, No.2, pp.259–265, 1993.
