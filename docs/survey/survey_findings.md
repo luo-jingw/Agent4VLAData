@@ -82,7 +82,7 @@
   子任务边界（+1.78±0.82%，无下游验证）[paper_035](https://arxiv.org/abs/2309.00743)。
 
 **agent 是什么**（30 秒版）：以 LLM/VLM 为决策核心 + 工具调用 + "思考→行动→
-观察"循环 [paper_006](https://arxiv.org/abs/2309.07864), [paper_007](https://arxiv.org/abs/2210.03629)。教学版见 `agent_basics_tutorial.md`。
+观测"循环 [paper_006](https://arxiv.org/abs/2309.07864), [paper_007](https://arxiv.org/abs/2210.03629)。教学版见 `agent_basics_tutorial.md`。
 
 **agentic 数据管线的现有形态：**
 

@@ -26,7 +26,7 @@
 
 - **LLM / VLM**：大语言模型 / 视觉语言模型。
 - **agent**：以 LLM/VLM 为决策核心、可调用工具、按任务自主规划与执行的系统。
-- **ReAct**：Reasoning + Acting 交替（思考→行动→观察→再思考）的 agent 范式。
+- **ReAct**：Reasoning + Acting 交替（思考→行动→观测→再思考）的 agent 范式。
 - **tool use / function calling**：模型生成结构化调用外部函数的请求。
 - **planning**：任务分解与步骤生成。
 - **memory**：跨步/跨会话保存的信息。
