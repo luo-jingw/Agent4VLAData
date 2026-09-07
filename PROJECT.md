@@ -24,7 +24,7 @@ Do not duplicate:
 调研与设计用于机器人数据处理管线（遥操数据 → 训练标签）的 agent 方案，
 使数据处理具备语义级理解，去除几何方法（曲率重采样）无法处理的次优解。
 当前阶段产出：机器人数据预处理范式综述、agent 基础教学、agentic 数据策展
-综述（2026-09 完成，定稿见 `docs/survey/`，讨论材料见 `docs/reports/`，
+综述（2026-09 完成，定稿见 `docs/survey/`，报告见 `docs/reports/`，
 证据链在 `synthesis/`）。
 
 ## Environment
@@ -72,7 +72,7 @@ Do not record token values or other secrets here.
 - 调研产物遵循 research_skill 的目录约定：`papers/`（文献）、`notes/extractions/`
   （抽取）、`synthesis/`（证据矩阵与综述）、`logs/`、`scripts/`。
   `docs/` 按用途分层：`docs/survey/`（调研定义与综述定稿）、
-  `docs/reports/`（讨论材料）、`docs/design/`（设计框架与草稿）。
+  `docs/reports/`（报告）、`docs/design/`（设计框架与草稿）。
 - 文献检查脚本只做观测型输出，不写 pass/fail。
 - 版本控制：GitHub remote 见 Credentials。`g2-orion05-resample-training.zip`
   与 `papers/raw/*.pdf` 不入库——zip 是协作分发物（解压参照在 `reference/`）；
@@ -88,7 +88,7 @@ Do not record token values or other secrets here.
 
 1. 读 `AGENTS.md`（规范）。
 2. 读 `docs/reports/top_level_view.md`（五面思维地图，先建立整体框架）。
-3. 读 `docs/reports/discussion_report.md`（综合报告，讨论用入口；含全文论证主线）。
+3. 读 `docs/reports/main_report.md`（综合报告；含全文论证主线）。
 4. 读 `docs/survey/research_questions.md`（调研范围）与定稿：
    `docs/survey/survey_findings.md`（综述）、
    `docs/survey/agent_basics_tutorial.md`（agent 教学）、

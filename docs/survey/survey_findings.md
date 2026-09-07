@@ -1,6 +1,5 @@
 # 调研发现综述
 
-> 单文件版，由原三份综述（数据处理范式 / agentic 数据策展 / 管线模块）合并。
 > 证据链：本文件 → `../../synthesis/evidence_matrix.md` → `../../notes/extractions/*.md`
 > → `../../papers/`。引用 `[paper_NNN]` 链接 arXiv；无引用处为调研者推理并标记（推理）。
 > 缺口与未决见 `../../synthesis/gap_list.md`。

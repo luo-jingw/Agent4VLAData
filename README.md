@@ -12,7 +12,7 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 | 目录 | 职责 |
 |---|---|
 | `docs/survey/` | 调研定义与综述定稿 |
-| `docs/reports/` | 讨论材料（顶层视角、综合报告） |
+| `docs/reports/` | 报告（顶层视角、综合报告） |
 | `docs/design/` | 设计框架与草稿 |
 | `synthesis/` | 证据矩阵、缺口清单、评审记录 |
 | `papers/` | 文献库：候选/元数据/bibtex/raw 文本 |
@@ -27,7 +27,7 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 **从哪开始读**
 
 - [顶层视角（五面思维地图）](docs/reports/top_level_view.md)——先建立整体框架
-- [综合报告（讨论用）](docs/reports/discussion_report.md)——完整论证，与 PI/合作者讨论的主材料
+- [综合报告](docs/reports/main_report.md)——完整论证与结论
 - [agent 入门教程](docs/survey/agent_basics_tutorial.md)——面向零基础读者
 
 **调研成果**

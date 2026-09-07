@@ -418,7 +418,7 @@ indirect 3 / weak 1；检查脚本全部通过。
 ### Goal
 
 "agent 是否存在"定向检索追加 3 篇（paper_033–035），矩阵补行、GAP-11 新增、
-讨论报告 §5.2 补 GAP-11。
+综合报告 §5.2 补 GAP-11。
 
 ### Files
 
@@ -426,7 +426,7 @@ indirect 3 / weak 1；检查脚本全部通过。
 - `notes/extractions/paper_033.md` … `paper_035.md`
 - `synthesis/evidence_matrix.md`、`synthesis/gap_list.md`
 - `docs/survey/survey_findings.md`（§2 质量过滤、§3 语义先例补行）
-- `docs/reports/discussion_report.md`（§5.2 补 GAP-11）
+- `docs/reports/main_report.md`（§5.2 补 GAP-11）
 
 ### Observation
 
