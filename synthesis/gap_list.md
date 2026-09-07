@@ -9,7 +9,7 @@ blocking 状态。
 
 - 状态：open
 - blocking: false
-- 证据现状：[paper_012](https://arxiv.org/abs/1907.03146) 仅在跨域/跨视角对应旁及，无 DTW 专节；23 篇中无 direct 证据。
+- 证据现状：[paper_012](https://arxiv.org/abs/1907.03146) 仅在跨域/跨视角对应旁及，无 DTW 专节；35 篇中无 direct 证据。
 - 补证建议：搜 "time alignment trajectory demonstration robot" / DTW survey；
   或接受"时间对齐是旧 LfD 概念，现代管线用 chunk/重采样替代"这一 hypothesis 并
   显式标记为未验证推理。

@@ -53,15 +53,15 @@ Data Scaling Laws 未找到，替换为 LLM Trainer（更贴近调研主题）�
 
 | arXiv ID | 论文 | 用途 |
 |---|---|---|
-| 2310.17596 | MimicGen | RQ3.3 轨迹级增强+执行验证 |
-| 2410.04370 | DABI | RQ3.3 增强评测（下采样对齐） |
-| 2412.03252 | Variable-Speed Teaching-Playback | RQ3.3 速度增强的接触边界 |
-| 2411.16959 | RoCoDA | RQ3.3 反事实增强 |
-| 2503.18738 | RoboEngine | RQ3.3 语义视觉增强 |
-| 2512.24638 | Resolving State Ambiguity (PAM) | RQ3.4 状态歧义五类+模型侧方案 |
-| 2412.13877 | RoboMIND | RQ3.1/3.5 QA 标准+覆盖分析 |
-| 2606.16826 | ATOM-Bench | RQ3.1 held-out 组合划分 |
-| 2201.09170 | VINS Online Self-Calibration | RQ3.2 时间偏移估计（weak） |
+| [2310.17596](https://arxiv.org/abs/2310.17596) | MimicGen | RQ3.3 轨迹级增强+执行验证 |
+| [2410.04370](https://arxiv.org/abs/2410.04370) | DABI | RQ3.3 增强评测（下采样对齐） |
+| [2412.03252](https://arxiv.org/abs/2412.03252) | Variable-Speed Teaching-Playback | RQ3.3 速度增强的接触边界 |
+| [2411.16959](https://arxiv.org/abs/2411.16959) | RoCoDA | RQ3.3 反事实增强 |
+| [2503.18738](https://arxiv.org/abs/2503.18738) | RoboEngine | RQ3.3 语义视觉增强 |
+| [2512.24638](https://arxiv.org/abs/2512.24638) | Resolving State Ambiguity (PAM) | RQ3.4 状态歧义五类+模型侧方案 |
+| [2412.13877](https://arxiv.org/abs/2412.13877) | RoboMIND | RQ3.1/3.5 QA 标准+覆盖分析 |
+| [2606.16826](https://arxiv.org/abs/2606.16826) | ATOM-Bench | RQ3.1 held-out 组合划分 |
+| [2201.09170](https://arxiv.org/abs/2201.09170) | VINS Online Self-Calibration | RQ3.2 时间偏移估计（weak） |
 
 未命中的检索方向（记录为 gap）：train/val 泄漏专文（GAP-09）、遥操数据集
 多相机同步专文（GAP-10）、"data coverage"检索被路径规划语义污染。
@@ -72,9 +72,9 @@ Data Scaling Laws 未找到，替换为 LLM Trainer（更贴近调研主题）�
 
 | arXiv ID | 论文 | 用途 |
 |---|---|---|
-| 2505.22626 | SCIZOR | RQ1.3 无 LLM 自监督策展 |
-| 2606.16208 | ATHENA | RQ1.3 影响力函数策展+下游验证 |
-| 2309.00743 | Language-Conditioned Change-point Detection | 旋钮 1 组件先例 |
+| [2505.22626](https://arxiv.org/abs/2505.22626) | SCIZOR | RQ1.3 无 LLM 自监督策展 |
+| [2606.16208](https://arxiv.org/abs/2606.16208) | ATHENA | RQ1.3 影响力函数策展+下游验证 |
+| [2309.00743](https://arxiv.org/abs/2309.00743) | Language-Conditioned Change-point Detection | 旋钮 1 组件先例 |
 
 结论记录：'agent 运营 VLA 数据处理管线'严格口径不存在 → GAP-11。
 检索词：data curation+agent / agentic / data pipeline+LLM / VLA+curation（均 cs.RO）。
