@@ -20,7 +20,7 @@
 发现关键证据缺失时，在 gap_list 中输出：
 
 ```yaml
-research_status: search_required
+research_status: search_required（blocking gap 存在时）
 gap_id:
 rq_id:
 missing_evidence_type:
@@ -49,5 +49,5 @@ coordinator 唯一允许的后续动作是回到 literature-scout 执行新检�
 ## 工作原则
 - 每条 evidence 可追踪到 extraction 和 paper
 - 必须包含负证据（不支持、反驳、替代解释）
-- 证据等级标注：direct/indirect/weak/irrelevant
+- 证据等级标注（（论文, 研究问题）关系，仅此处生效）：direct/indirect/weak/irrelevant
 - gap_list 记录没有证据覆盖的研究子问题

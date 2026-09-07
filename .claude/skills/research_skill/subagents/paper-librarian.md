@@ -17,6 +17,6 @@
 
 ## 工作原则
 - PDF 文件命名格式：`paper_{id}.pdf`
-- metadata 字段：id、title、authors、year、venue、source_id、pdf_path、bibtex、status、evidence_level
+- metadata 字段：id、title、authors、year、venue、source_id、pdf_path、bibtex、status、screening_relevance
 - status 取值：downloaded、pending、failed
 - 下载失败显式标记，不静默跳过

@@ -23,8 +23,8 @@ ATOM-Bench: A Real-World Benchmark for Atomic Skills and Compositional Generaliz
 - 失败模式：motor failure、reference failure、timeout 合计超 90%（Section 4.4）；扰动测试（Appendix C）：原子任务对背景/措辞扰动稳健（SR 保持 90–100%），组合任务明显变脆（dx1 60%→40%，dx12 50%→40%/20%）。
 - 与数据缺口的关系：原子微调数据每任务固定 100 条；held-out 组合任务按构造无演示（即被控制的数据缺口）；Limitations 指出未覆盖可变形物体、工具使用、移动操作、长时程等长尾技能。
 
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 原子技能定义、held-out 划分协议与组合泛化指标是论文核心内容，且以 3,000 条演示、2,700 次实机 rollout 的观测结果直接支撑 RQ3.1 的"技能覆盖—评估协议—数据缺口"问题。
 
 ## 引用

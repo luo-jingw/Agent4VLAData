@@ -34,8 +34,8 @@
 
 ## 关键发现
 
-## 证据等级
-- 等级: direct/indirect/weak/irrelevant
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high/medium/low（抽取后回填 metadata 的 screening_relevance）
 - 理由:
 
 ## 引用
@@ -46,5 +46,5 @@
 ## 工作原则
 - 不确定判断必须显式标记（标注「不确定」或「待验证」）
 - 每条发现标注来源（页码或段落）
-- 证据等级严格按 direct/indirect/weak/irrelevant 归类
+- 证据等级不由抽取判定；由 evidence-mapper 依（论文, 研究问题）关系在矩阵中标注
 - 缺失信息显式留空或标记 unknown

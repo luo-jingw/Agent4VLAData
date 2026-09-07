@@ -18,8 +18,8 @@
 - 生成率与训练后性能不必然相关：Factory Gear Assembly D1 生成率 8.2% 但 agent 76.0%；Object Cleanup D0 生成率 29.5%→agent 82.0%（Sec 6.3）。
 - 跨臂：Square D0 生成率 38%–74%，4 臂策略性能 80%–91% 相似；真机 Stack 生成率 82.3%（243 次尝试）、Coffee 52.1%（192 次尝试），训练后 agent 成功率 Stack 36%、Coffee 14%（50 次评测）。
 - 安全相关：只按任务成功过滤→数据集有偏（Square D2 覆盖 66.4%、Three Piece Assembly D1 43.5%，Appendix R）；线性插值不保证无碰撞（Sec 7/Appendix D.5）；真机为硬件安全把插值步从 5 增至 50，但更长插值段对策略学习有害（Sec 6.4、Appendix H）。
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 轨迹级增强（变换-重放-成功过滤）机制、失败处置与全部实验数字直接来自论文正文与附录，是与 RQ3.3 增强安全性讨论的直接一手证据。
 ## 引用
 - 机制：Sec 4.1–4.2（第 3–4 页）；问题定义与成功过滤：Sec 3（第 3 页）。

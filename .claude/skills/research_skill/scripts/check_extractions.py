@@ -39,7 +39,7 @@ for fpath in extraction_files:
     has_title = "## 基本信息" in content
     has_method = "## 方法" in content
     has_findings = "## 关键发现" in content
-    has_evidence = "## 证据等级" in content
+    has_evidence = "## 全文相关性" in content
     if not has_title:
         missing_fields["基本信息"] += 1
     if not has_method:
@@ -47,7 +47,7 @@ for fpath in extraction_files:
     if not has_findings:
         missing_fields["关键发现"] += 1
     if not has_evidence:
-        missing_fields["证据等级"] += 1
+        missing_fields["全文相关性"] += 1
 
 print(f"\npaper_id 缺失: {missing_paper_id}")
 print(f"\n## 字段缺失统计")

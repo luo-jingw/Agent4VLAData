@@ -18,8 +18,8 @@
 - Table IV（数据规模，%）：Three Block Stack w/ causal：10→0，50→0，100→0，200→30，1000→70；w/o causal：0/0/1/10/63。Coffee w/ causal：0/4/12/23/50；w/o：0/9/9/21/47。
 - 涌现行为（Sec V-C）：Three Block Stack 中出现数据集里没有的 re-grasping 恢复行为（Fig. 4），归因于因果结构理解。
 - 局限/负面观察：视觉增强在需精密动作的任务（如 Coffee）可能因鲁棒性-精度权衡而降低保真度（引 [27]）；Coffee 上各方法大致持平；color jitter 在颜色相关任务有害（Table II 旁注）。
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 反事实数据增强（RQ3.3 核心）的一手方法论文；机制形式化定义与全部实验数字直接取自正文表格。
 ## 引用
 - 不变性/等变性/因果性统一框架、策略作为群作用：Sec III（第 2–3 页）。

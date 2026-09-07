@@ -26,8 +26,8 @@ RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for Robot Ma
 - 实验结果：ACT 平均成功率 Franka 30.7%、UR5e 38.0%、Tien Kung 34.0%、AgileX 55.3%（Section V-B）；RDT-1B 微调整体优于 OpenVLA/CrossFormer（Table III）；全量预训练显著提升成功率（CrossFormer 双任务从 0/10 到近全对，Table IV）；含 humanoid 数据预训练带来 13.3% 相对提升（0.68 vs 0.6，Section V-D）。
 - sim-real：100 真实 + 500 模拟共训，仿真内成功率 90%，纯模拟实机仅 10%（FR-UprightBlueCup）；sim/real 结果 Pearson 相关 ACT 0.83、DP 0.91（Section V-G）。
 
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 对 RQ3.1（数据质量标准），论文直接给出完整操作机制（8 条 QA 标准 + 三步检查 + 过滤标准 + 失败数据）；对 RQ3.5（训练/验证划分协议）仅部分覆盖，无显式划分描述，已在不确定项标注。
 
 ## 引用

@@ -24,8 +24,8 @@
 - 任务生成质量（Table 3，75 任务）：可行性 templated 52% vs AutoRT 83%；引导相关性 27%/28% → 引导后 61%。
 - 安全性（Table 4，对抗性场景）：同时用 constitutional 生成+过滤时 %Safe 最高（67%/83%）；64 场景 259 任务中基础可接受率 88%（228/259），过滤后 93%（200/214）；对 31 个应拒任务召回 55%（17/31），漏网 14 个全在 teleop 采样中被人类拒绝。
 - 下游训练（Table 5）：RT-1 用 AutoRT 数据 co-finetune 后，不同高度抓取 0%→12.5%（0/24→3/24），擦拭 10%→30%（1/10→3/10）；仅用 teleop 子集则高度抓取回到 0%。
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 直接研究 VLM/LLM 驱动的机器人数据采集管线；给出 7 个月真实部署的产量、成功率、多样性量化指标与下游训练验证，且有安全消融实验。
 ## 引用
 - Abstract/§1: 77k episode、20+ 机器人；§4.1 探索、§4.2 Robot Constitution、§4.3 任务生成、§4.4 Affordance、§4.5 数据采集（采样概率）；§5.1 Diversity Scoring（Table 1/2）；§5.2 Task Generation（Table 3）；§5.3 Affordance 与安全性（Table 4，55% 召回）；§5.4 Model Training（Table 5）；Appendix C Guardrails、Appendix D Prompts。

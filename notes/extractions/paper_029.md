@@ -22,8 +22,8 @@
 - Libero-Long 10 任务（窗口设为 50）：PAM 0.847 vs π0 0.852、MDT 0.653、DP-T 0.582、OpenVLA 0.544；每任务 5 seeds × 20 次 = 100 次试验。
 - 消融（Table III，平均成功率）：视觉编码器 ViT-Base 0.91 / ViT-Small 0.72；注入方式 后注入上下文 0.91、并行 0.89、先注入上下文 0.72、拼接 0.69；context router 平均池化 0.59、1 query 0.75、3 queries 0.91、5 queries 0.80、3 queries+avg 0.71；采样间隔 5→0.81、10→0.81、15→0.91、20→0.86、25→0.83。
 - 可解释性（Fig. 4，定性）：context router 注意力图显示 PAM 在 Wipe Twice 中准确引用前一任务阶段的关键帧；extractor 注意力图显示 Guessing Game 中上下文 query 提取方块位置视觉线索、动作原语关注关节状态。
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 状态歧义（RQ3.4 状态别名）定义与解法的一手方法论文；真机消融与对比数字直接来自正文。
 ## 引用
 - 状态歧义定义与五类场景：Sec I、Fig. 1（第 1–2 页）。

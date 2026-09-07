@@ -13,7 +13,8 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 |---|---|
 | `docs/survey/` | 调研定义与综述定稿 |
 | `docs/reports/` | 报告（顶层视角、综合报告） |
-| `docs/design/` | 设计框架与草稿 |
+| `docs/design/` | 设计框架 |
+| `design/` | 设计草稿（未验证） |
 | `synthesis/` | 证据矩阵、缺口清单、评审记录 |
 | `papers/` | 文献库：候选/元数据/bibtex/raw 文本 |
 | `notes/extractions/` | 35 篇论文的逐篇抽取笔记 |
@@ -51,7 +52,7 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 
 ## 文献库使用
 
-- 元数据：`papers/metadata.yaml`（35 篇，含 arXiv ID、证据等级）；
+- 元数据：`papers/metadata.yaml`（35 篇，含 arXiv ID、screening_relevance）；
 - 抽取笔记：`notes/extractions/paper_NNN.md`（每篇 ≤80 行）；
 - PDF 不入库：`python scripts/arxiv_fetch.py <arxiv_id> --pdf` 按需重现；
 - 一致性检查（观测型输出，clone 后 PDF 缺失属预期）：

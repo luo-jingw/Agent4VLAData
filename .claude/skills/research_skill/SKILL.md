@@ -22,7 +22,9 @@ description: Use when the user asks for systematic literature survey and review 
 8. **读写权限分离。** 搜索 agent 不写综述，下载 agent 不判断结论，抽取 agent 不扩展问题，综述 agent 不重新搜索，审稿 agent 不修改正文。
 9. **任务最小可验证。** 每个任务只改变一种文件或一个状态，必须有明确输出文件，必须能通过文件存在、字段完整性、引用完整性进行检查。
 10. **先 seed 后扩展。** 第一轮只收集少量 seed papers，先验证关键词、schema 和证据等级是否有效，再扩大搜索范围。
-11. **证据等级固定。** 所有论文标注 direct、indirect、weak、irrelevant。
+11. **证据等级是（论文, 研究问题）关系。** 唯一生效位置是 evidence matrix；
+    candidates/metadata/extraction 均不持有 evidence_level，只记录相关性
+    （search_relevance → screening_relevance → fulltext_relevance 三阶段）。
 12. **保留负证据。** 必须记录不支持、反驳、替代解释和不可验证点。
 13. **文件映射明确。** 每个 subagent 对应配置文件，每个输出对应具体路径，每个阶段声明修改文件。
 14. **不过度设计。** 只实现当前阶段必要结构，不做回退设计、冗余设计和多套并行格式。
@@ -96,10 +98,14 @@ project/
 ## 缺口驱动的再检索（回边）
 
 调研不是单向 DAG。evidence-mapper 或 critic-reviewer 发现关键证据缺失时，
-只输出显式状态 `research_status: {sufficient, search_required}`；
+只输出显式状态 `research_status: {sufficient_with_known_gaps, search_required}`；
+gap 条目必须携带 `blocking: bool`。判别规则：
+- 存在**阻止当前 claim 达到证据阈值**的 blocking gap → `search_required`；
+- 当前 scope 内足以形成有边界的结论，仅剩 non-blocking open gaps →
+  `sufficient_with_known_gaps`。
 `search_required` 必须附 gap_id / rq_id / missing_evidence_type /
-suggested_query。唯一允许的后续动作是由 coordinator 决定回到
-literature-scout（新一轮搜索），再走 download → extract → map。
+suggested_query 与 blocking 原因。唯一允许的后续动作是由 coordinator 决定
+回到 literature-scout（新一轮搜索），再走 download → extract → map。
 职能隔离保持不变：mapper/critic 只声明缺口，不亲自搜索。
 
 ## 8 个 subagent
@@ -192,7 +198,7 @@ papers:
     url: ""
     abstract: ""
     keywords: []
-    relevance: ""        # high/medium/low
+    search_search_relevance: ""    # high/medium/low（搜索阶段粗筛）
     notes: ""
 ```
 
@@ -208,7 +214,7 @@ papers:
     pdf_path: ""         # papers/raw/paper_001.pdf
     bibtex: ""
     status: ""           # downloaded/pending/failed
-    evidence_level: ""   # direct/indirect/weak/irrelevant
+    screening_search_relevance: ""   # high/medium/low（corpus 级总体相关性，非证据等级）
 ```
 
 ### extraction (per-paper, notes/extractions/paper_001.md)
@@ -228,7 +234,7 @@ papers:
 ## 关键发现
 
 ## 候选相关性（总体）
-- 总体相关性: high/medium/low（筛选记录，非证据等级）
+- 全文相关性: high/medium/low（全文阅读后复核；全文相关性是筛选记录，非证据等级）
 - 关联 RQ: RQ1.1 / RQ3.2（按需列出）
 - 理由:
 
@@ -264,7 +270,7 @@ papers:
 运行 `scripts/check_metadata.py`、`scripts/check_extractions.py`、`scripts/check_evidence_matrix.py` 进行观测型检查：
 
 1. **文件数量：** 候选论文数量、已下载 PDF 数量、metadata 条目数量、extraction 文件数量
-2. **字段缺失：** title/year/url/pdf_path/evidence_level 缺失数量
+2. **字段缺失：** title/year/url/pdf_path/screening_relevance 缺失数量
 3. **重复项：** 重复 title、重复 DOI、重复 arXiv id、重复 PDF 文件名
 4. **证据分布：** direct/indirect/weak/irrelevant 数量
 5. **引用覆盖：** 综述段落引用数量、无引用段落数量、未被引用论文数量

@@ -31,14 +31,14 @@ for p in papers:
     paper_id = p.get("id", "")
     if paper_id:
         duplicate_ids[paper_id] += 1
-    for field in ["title", "year", "source_id", "pdf_path", "evidence_level"]:
+    for field in ["title", "year", "source_id", "pdf_path", "screening_relevance"]:
         if not p.get(field):
             missing_fields[field] += 1
     title = p.get("title", "")
     if title:
         duplicate_titles[title] += 1
     status_count[p.get("status", "unknown")] += 1
-    evidence_count[p.get("evidence_level", "unknown")] += 1
+    evidence_count[p.get("screening_relevance", "unknown")] += 1
     pdf_path = p.get("pdf_path", "")
     if pdf_path and os.path.exists(pdf_path):
         pdf_path_count += 1
@@ -56,7 +56,7 @@ print(f"\n## 状态分布")
 for status, count in status_count.items():
     print(f"  {status}: {count}")
 
-print(f"\n## 证据等级分布")
+print(f"\n## 总体相关性分布（screening_relevance）")
 for level, count in evidence_count.items():
     print(f"  {level}: {count}")
 

@@ -69,9 +69,9 @@
 ## Interfaces
 
 - `candidates.yaml`：每篇 `id/title/authors/year/source/source_id/url/abstract/keywords/relevance/notes`。
-- `metadata.yaml`：每篇 `id/title/authors/year/venue/source_id/pdf_path/bibtex/status/evidence_level`。
+- `metadata.yaml`：每篇 `id/title/authors/year/venue/source_id/pdf_path/bibtex/status/screening_relevance`。
 - extraction 文件：每篇一个 `notes/extractions/paper_NNN.md`，≤80 行，
-  含基本信息/研究问题/方法/关键发现/证据等级/引用/不确定项。
+  含基本信息/研究问题/方法/关键发现/全文相关性/引用/不确定项（证据等级由矩阵标注）。
 - evidence matrix：每问题一张表 + 负证据汇总 + 缺口列表。
 - 定稿交付（`docs/survey/`）：
   - `docs/survey/survey_findings.md`（综述定稿，RQ1–RQ3）
@@ -370,7 +370,8 @@ M5、持久状态。
 
 ### Structures
 
-沿用既有 schema；新论文 evidence_level 由抽取后回填。
+沿用既有 schema；新论文的 screening_relevance / 全文相关性由抽取后回填，
+证据等级由 evidence-mapper 在矩阵中标注。
 
 ### Affected Modules
 

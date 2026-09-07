@@ -25,8 +25,8 @@
 - 真机（AgileX Piper，20 trials/task，SR/CR%）：ours 平均 48.75/75.3；DP 3.8/32.6；GR00T 6.3/43.1。
 - 局限（作者自述）：存储原始视觉 keyframe 有像素级冗余且线性扩展；未来方向为 latent 压缩/离散语义 token、动态 memory 更新。
 
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 论文本身提出并系统验证了 keyframe 定义、自动选取（KSM）与链式历史注入机制，直接回答"keyframe 如何支撑长时程任务"这一调研问题，含仿真+真机定量结果。
 
 ## 引用

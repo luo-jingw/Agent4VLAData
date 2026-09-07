@@ -18,7 +18,7 @@ papers:
   - pipeline
   - teleoperation
   - filtering
-  relevance: high
+  search_relevance: high
   notes: RQ1.1 数据管线标准做法的直接证据。
 - id: paper_002
   title: 'Open X-Embodiment: Robotic Learning Datasets and RT-X Models'
@@ -35,7 +35,7 @@ papers:
   - standardization
   - curation
   - RT-X
-  relevance: high
+  search_relevance: high
   notes: RQ1.1 跨数据集标准化/范式化是否存在的直接证据。
 - id: paper_003
   title: Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ALOHA/ACT)
@@ -53,7 +53,7 @@ papers:
   - teleoperation
   - action chunking
   - temporal ensembling
-  relevance: high
+  search_relevance: high
   notes: RQ1.1 遥操管线与 action chunk 起源；与现有方法的对照。
 - id: paper_004
   title: 'LeRobot: An Open-Source Library for End-to-End Robot Learning'
@@ -73,7 +73,7 @@ papers:
   - pipeline
   - data format
   - dataset ops
-  relevance: high
+  search_relevance: high
   notes: RQ1.1 社区标准工具链的直接证据。
 - id: paper_005
   title: What Demonstration Curation Metrics Do to Your Policy
@@ -90,7 +90,7 @@ papers:
   - filtering
   - quality metric
   - behavior cloning
-  relevance: high
+  search_relevance: high
   notes: RQ1.3 核心证据：过滤指标与策略收益可能脱钩（含负面结论）。
 - id: paper_006
   title: 'The Rise and Potential of Large Language Model Based Agents: A Survey'
@@ -110,7 +110,7 @@ papers:
   - agent
   - survey
   - LLM
-  relevance: high
+  search_relevance: high
   notes: RQ2.1 教学部分的权威综述之一。
 - id: paper_007
   title: 'ReAct: Synergizing Reasoning and Acting in Language Models'
@@ -131,7 +131,7 @@ papers:
   - reasoning
   - acting
   - agent
-  relevance: high
+  search_relevance: high
   notes: RQ2.1 agent 运行方式的起源工作。
 - id: paper_008
   title: Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
@@ -150,7 +150,7 @@ papers:
   - LLM-as-judge
   - evaluation
   - bias
-  relevance: high
+  search_relevance: high
   notes: RQ2.2 质量评分的核心机制与偏差证据。
 - id: paper_009
   title: 'AgentInstruct: Toward Generative Teaching with Agentic Flows'
@@ -169,7 +169,7 @@ papers:
   - agentic
   - synthetic data
   - instruction
-  relevance: high
+  search_relevance: high
   notes: RQ2.2 agent 用于数据生成的直接证据。
 - id: paper_010
   title: OpenGVL -- Benchmarking Visual Temporal Progress for Data Curation
@@ -189,7 +189,7 @@ papers:
   - curation
   - temporal progress
   - annotation
-  relevance: high
+  search_relevance: high
   notes: RQ1.4/RQ2.3 语义级数据策展的直接证据（最接近 agent 方案）。
 - id: paper_011
   title: Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining
@@ -208,7 +208,7 @@ papers:
   - keyframe
   - long-horizon
   - chaining
-  relevance: high
+  search_relevance: high
   notes: RQ1.2 关键帧方法的现代形态。
 - id: paper_012
   title: 'A Review of Robot Learning for Manipulation: Challenges, Representations,
@@ -228,7 +228,7 @@ papers:
   - manipulation
   - representations
   - LfD
-  relevance: high
+  search_relevance: high
   notes: RQ1.2 经典 LfD/表征综述。
 - id: paper_013
   title: Curating Demonstrations using Online Experience
@@ -246,7 +246,7 @@ papers:
   - curation
   - online experience
   - filtering
-  relevance: high
+  search_relevance: high
   notes: RQ1.3 真实机器人数据过滤。
 - id: paper_014
   title: 'Phase-Localized Curation Does Not Help: A Negative Result on Per-Phase Metric
@@ -263,7 +263,7 @@ papers:
   - curation
   - negative result
   - phase
-  relevance: high
+  search_relevance: high
   notes: RQ1.3 负面证据（保留负证据原则）。
 - id: paper_015
   title: 'AgiBot World Colosseo: A Large-scale Manipulation Platform for Scalable
@@ -283,7 +283,7 @@ papers:
   - dataset
   - platform
   - quality control
-  relevance: high
+  search_relevance: high
   notes: RQ1.1 大规模数据的质量控制管线。
 - id: paper_016
   title: 'Robo-DM: Data Management For Large Robot Datasets'
@@ -302,7 +302,7 @@ papers:
   - data management
   - pipeline
   - tooling
-  relevance: high
+  search_relevance: high
   notes: RQ1.1/RQ2.4 数据管理工程形态。
 - id: paper_017
   title: A Survey on Large Language Model based Autonomous Agents
@@ -322,7 +322,7 @@ papers:
   - agent
   - survey
   - framework
-  relevance: high
+  search_relevance: high
   notes: RQ2.1 第二篇权威综述。
 - id: paper_018
   title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
@@ -341,7 +341,7 @@ papers:
   - tool use
   - API calls
   - self-supervised
-  relevance: high
+  search_relevance: high
   notes: RQ2.1 工具使用的起源工作。
 - id: paper_019
   title: 'AutoRT: Embodied Foundation Models for Large Scale Orchestration of Robotic
@@ -361,7 +361,7 @@ papers:
   - orchestration
   - data collection
   - VLM
-  relevance: high
+  search_relevance: high
   notes: RQ2.3/RQ2.4 机器人 agent 批量数据采集与安全约束。
 - id: paper_020
   title: 'MUTEX: Learning Unified Policies from Multimodal Task Specifications'
@@ -379,7 +379,7 @@ papers:
   - multimodal
   - task specification
   - policy
-  relevance: medium
+  search_relevance: medium
   notes: RQ2.3 多模态语义任务理解。
 - id: paper_021
   title: 'LLM Trainer: Automated Robotic Data Generation via Demonstration Augmentation
@@ -396,7 +396,7 @@ papers:
   - LLM
   - augmentation
   - data generation
-  relevance: high
+  search_relevance: high
   notes: RQ2.3 LLM 直接改造机器人训练数据。
 - id: paper_022
   title: 'DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines'
@@ -415,7 +415,7 @@ papers:
   - pipeline
   - optimization
   - programming model
-  relevance: medium
+  search_relevance: medium
   notes: RQ2.4 可验证优化的管线工程模式。
 - id: paper_023
   title: 'TextGrad: Automatic "Differentiation" via Text'
@@ -433,7 +433,7 @@ papers:
   - optimization
   - textual gradient
   - compound AI
-  relevance: medium
+  search_relevance: medium
   notes: RQ2.4 自动优化机制。
 - id: paper_024
   title: 'MimicGen: A Data Generation System for Scalable Robot Learning using Human
@@ -451,7 +451,7 @@ papers:
   - augmentation
   - trajectory
   - verification
-  relevance: high
+  search_relevance: high
   notes: RQ3.3 轨迹级增强的验证范式。
 - id: paper_025
   title: 'DABI: Evaluation of Data Augmentation Methods Using Downsampling in Bilateral
@@ -468,7 +468,7 @@ papers:
   - augmentation
   - evaluation
   - downsampling
-  relevance: high
+  search_relevance: high
   notes: RQ3.3 增强方法评测。
 - id: paper_026
   title: Variable-Speed Teaching-Playback as Real-World Data Augmentation for Imitation
@@ -485,7 +485,7 @@ papers:
   - augmentation
   - speed
   - playback
-  relevance: high
+  search_relevance: high
   notes: RQ3.3 与稳态约束（速度无关）直接对话。
 - id: paper_027
   title: 'RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning
@@ -502,7 +502,7 @@ papers:
   - augmentation
   - counterfactual
   - causality
-  relevance: high
+  search_relevance: high
   notes: RQ3.3。
 - id: paper_028
   title: 'RoboEngine: Plug-and-Play Robot Data Augmentation with Semantic Robot Segmentation
@@ -519,7 +519,7 @@ papers:
   - augmentation
   - segmentation
   - background
-  relevance: high
+  search_relevance: high
   notes: RQ3.3 语义驱动的视觉增强。
 - id: paper_029
   title: Resolving State Ambiguity in Robot Manipulation via Adaptive Working Memory
@@ -537,7 +537,7 @@ papers:
   - state ambiguity
   - memory
   - aliasing
-  relevance: high
+  search_relevance: high
   notes: RQ3.4/GAP-08 状态别名的直接研究。
 - id: paper_030
   title: 'RoboMIND: Benchmark on Multi-embodiment Intelligence Normative Data for
@@ -554,7 +554,7 @@ papers:
   - benchmark
   - dataset
   - splits
-  relevance: high
+  search_relevance: high
   notes: RQ3.1/RQ3.5 划分与质量基准。
 - id: paper_031
   title: 'ATOM-Bench: A Real-World Benchmark for Atomic Skills and Compositional Generalization
@@ -571,7 +571,7 @@ papers:
   - benchmark
   - atomic skills
   - compositional
-  relevance: high
+  search_relevance: high
   notes: RQ3.1 评估协议与技能覆盖。
 - id: paper_032
   title: 'Online Self-Calibration for Visual-Inertial Navigation Systems: Models,
@@ -589,7 +589,7 @@ papers:
   - calibration
   - time offset
   - VINS
-  relevance: medium
+  search_relevance: medium
   notes: RQ3.2 时间偏移估计方法（弱证据，SLAM 域）。
 - id: paper_033
   title: 'SCIZOR: A Self-Supervised Approach to Data Curation for Large-Scale Imitation
@@ -607,7 +607,7 @@ papers:
   - curation
   - self-supervised
   - progress
-  relevance: high
+  search_relevance: high
   notes: RQ1.3 无 LLM 的自监督策展（现行策展的典型形态）。
 - id: paper_034
   title: 'ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot
@@ -625,7 +625,7 @@ papers:
   - curation
   - influence function
   - multi-task
-  relevance: high
+  search_relevance: high
   notes: RQ1.3 影响力函数策展+下游验证。
 - id: paper_035
   title: Language-Conditioned Change-point Detection to Identify Sub-Tasks in Robotics
@@ -643,5 +643,5 @@ papers:
   - change-point
   - subtask
   - language
-  relevance: medium
+  search_relevance: medium
   notes: 旋钮 1（事件/子任务边界检测）的组件级先例。

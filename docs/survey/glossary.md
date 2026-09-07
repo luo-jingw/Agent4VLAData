@@ -38,7 +38,10 @@
 ## 证据等级
 
 等级是（论文, 研究问题）的二元关系，唯一归属 `synthesis/evidence_matrix.md`。
-metadata 的 `screening_relevance` 是筛选用总体相关性，不是证据等级。
+相关性与证据等级分离：`search_relevance`（candidates，搜索阶段粗筛）→
+`screening_relevance`（metadata，纳入 corpus 后的总体相关性）→
+`fulltext_relevance`（extraction，全文阅读后复核）；三个阶段各有 owner，
+均不是证据等级。
 
 | 等级 | 定义 |
 |---|---|

@@ -20,8 +20,8 @@
 - 训练消融：去掉 masked modeling 掉点最多（43.8/46.0/63.2 中的部分模态）；joint training、无 cross-modal matching 均差于两阶段顺序训练。
 - 多模态组合推理：TG+SG 50.1、TG+IG 59.2、SI+VD 59.6，全模态 60.1——组合未带来额外增益（甚至低于单用 IG/VD）。
 - 表示对比（Table 3）：MUTEX 50.1/53.0/61.6/63.2/59.2 优于 T5（40.0/44.0）、R3M（59.5/44.7）、VIMA（47.0）。
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 直接研究多模态任务规范的标注与策略学习；自建带六模态标注的数据集（含 LLM 生成文本、TTS 生成语音的标注管线），在模拟与真实机器人上给出六模态量化对比与消融。
 ## 引用
 - §3.3 Multimodal Task Specification Dataset（数据集与标注管线，ChatGPT/Polly）；§3.1 训练两阶段；§4 Experimental Evaluation（Table 1/2/3，错误归因 35.4%→16.7%）；§5 局限（配对全模态、合成语音、同工作区视觉规范）；Appendix 6.4（GPT-4 prompt、Polly 说话人列表、11 规范/模态）。

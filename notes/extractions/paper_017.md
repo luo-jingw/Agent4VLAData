@@ -26,8 +26,8 @@
 - 六大挑战（Section 6）：role-playing capability、generalized human alignment（模拟需允许"错误价值观"角色）、prompt robustness、hallucination、knowledge boundary（需约束 LLM 不用用户未知的知识）、efficiency（每次动作多次查询 LLM 导致推理慢）。
 - 与 Xi 等综述（arXiv:2309.07864）框架的关系：文中未提及该综述；Section 5 Related Surveys 仅列 LLM 通用综述 [175]–[181]，无 Xi 等。其 profile/memory/planning/action 划分与 Xi 等 brain/perception/action 式划分的异同，本文未讨论。
 
-## 候选相关性（总体）
-- 总体相关性: high
+## 全文相关性（fulltext_relevance）
+- 全文相关性: high
 - 理由: 本综述是 profile/memory/planning/action 统一框架的一手来源，四模块子组件、能力获取策略、多 agent 相关散述均可直接引用作教学素材；"与 Xi 框架异同"文中未讨论，已显式标注为未提及。
 
 ## 引用
