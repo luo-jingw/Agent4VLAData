@@ -52,6 +52,7 @@ agent4data/
 
 **现状与约束**（先读）
 
+- [问题、方案与需求](design/problems_and_requirements.md) — ★ 现状综述：问题 → 解法局限 → 必需功能与接口 → RL 可缓解性边界 → 最小化纲领 → 证据分级
 - [未决问题登记](issues.md) — ISSUE-001 次优解 / ISSUE-002 观测 gap / ISSUE-003 终态歧义
 - [项目约束与事实承诺](PROJECT.md) — 稳态假设及包络、文档内容边界、环境与凭据
 
@@ -85,6 +86,8 @@ issues.md（登记新问题，如 ISSUE-003）
 
 - 日常主要阅读点以本文档导航为准；`logs/`、`plan.md`、`main_report.md`、
   `review_record.md` 为历史档案。
+- 证据分级（[社区一致] / [单篇受控] / [本项目实测] / [引用未核验]）见
+  `problems_and_requirements.md` §4。
 
 ## 文献库使用
 
