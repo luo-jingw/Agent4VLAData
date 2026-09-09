@@ -1,11 +1,13 @@
 # Agent4VLAData
 
-VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
+VLA（Vision-Language-Action）动作模态数据增强框架的调研与设计仓库。
 
 - 现有方法：纯几何曲率重采样管线（`reference/g2-orion05-resample-training/`，
   已训练部署）；
-- 目标：agent 做语义级数据处理——识别并去除遥操数据的次优解；
-- 当前状态：调研完结（35 篇文献）、设计框架与草稿就绪，实验未启动。
+- 目标：通用 VLA 遥操动作模态**数据增强框架**——对齐约束下重构/强化 action
+  序列，数据效率与执行效率双目标；
+- 当前状态：方向调研中（48 篇文献；RQ4 动作模态对齐为主轴），框架部分定稿，
+  实验未启动。
 
 ## 目录分工
 
@@ -17,7 +19,7 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 | `design/` | 设计草稿（未验证） |
 | `synthesis/` | 证据矩阵、缺口清单、评审记录 |
 | `papers/` | 文献库：候选/元数据/bibtex/raw 文本 |
-| `notes/extractions/` | 35 篇论文的逐篇抽取笔记 |
+| `notes/extractions/` | 48 篇论文的逐篇抽取笔记 |
 | `scripts/` | 文献检索/下载/检查脚本（观测型，无 pass/fail） |
 | `logs/` | 搜索、下载、决策记录 |
 | `reference/` | 现有方法包（只读参照，勿改） |
@@ -46,27 +48,27 @@ agent4data/
 
 **地图**
 
-- [顶层视角：五个面](docs/reports/top_level_view.md) — 概念归属：管线/旋钮/决策/验证/过程
+- [顶层视角：五个面](docs/reports/top_level_view.md) — 概念归属：管线/旋钮/语义判据/验证/过程
 
 **现状与约束**（先读）
 
-- [问题、方案与需求](design/problems_and_requirements.md) — ★ 现状综述：四类问题 → 解法局限 → 必需功能与接口 → 证据分级
+- [问题、方案与需求](design/problems_and_requirements.md) — ★ 现状综述：问题 → 解法局限 → 必需功能与接口 → RL 可缓解性边界 → 最小化纲领 → 证据分级
 - [未决问题登记](issues.md) — ISSUE-001 次优解 / ISSUE-002 观测 gap / ISSUE-003 终态歧义
 - [项目约束与事实承诺](PROJECT.md) — 稳态假设及包络、文档内容边界、环境与凭据
 
 **证据链**（查证用）
 
-- [综述定稿](docs/survey/survey_findings.md) — 全部文献结论与引用
+- [综述定稿](docs/survey/survey_findings.md) — 全部文献结论与引用（含 RQ4 动作模态对齐）
 - [证据矩阵](synthesis/evidence_matrix.md) / [缺口清单](synthesis/gap_list.md) — (论文, 研究问题) 证据等级；11 缺口含 blocking
-- [调研范围与证据标准](docs/survey/research_questions.md) · [术语表](docs/survey/glossary.md)
+- [调研范围与证据标准](docs/survey/research_questions.md) · [术语表](docs/survey/glossary.md) · [RQ4 动作模态对齐](docs/survey/research_questions.md)（主动研究方向）
 - [agent 入门教学](docs/survey/agent_basics_tutorial.md) · [社区共性问题综述](docs/survey/community_issue_survey.md) — 零基础教学；GitHub issues 社区证据
-- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 35 篇
+- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 48 篇
 
 **设计与机会**
 
-- [设计框架](docs/design/design_framework.md) — L0 十模块流程 / L1 benchmark / L2 旋钮体系 / L3 agent 设计 / L4 输入输出
-- [设计草稿](design/design_draft.md) — 十模块接口、指标工具、agent 工具（TBD 未验证）
-- [机会候选](opportunities.md) — OPT-001 agent 语义旋钮 / OPT-002 real2sim 捷径
+- [设计框架](docs/design/design_framework.md) — L0 十模块流程 / L1 benchmark / L2 旋钮体系 / L3 语义判据接口（原 agent 层，已边缘化）
+- [设计草稿](design/design_draft.md) — 十模块接口、指标工具、语义判据接口（TBD 未验证）
+- [机会候选](opportunities.md) — OPT-002 sim/跨本体 action 对齐迁移（OPT-001 已删）
 
 **过程资产**（溯源）
 
@@ -97,7 +99,7 @@ issues.md（登记新问题，如 ISSUE-003）
 
 ## 文献库使用
 
-- 元数据：`papers/metadata.yaml`（35 篇，含 arXiv ID、screening_relevance）；
+- 元数据：`papers/metadata.yaml`（48 篇，含 arXiv ID、screening_relevance）；
 - 抽取笔记：`notes/extractions/paper_NNN.md`（每篇 ≤80 行）；
 - PDF 不入库：`python scripts/arxiv_fetch.py <arxiv_id> --pdf` 按需重现；
 - 一致性检查（观测型输出，clone 后 PDF 缺失属预期）：

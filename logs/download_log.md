@@ -50,3 +50,5 @@
 | 2026-09-09 16:27 | 2603.19131 | From Inference Efficiency to Embodied Efficiency: Revisiting Efficiency Metrics  | 2485794 B |
 | 2026-09-09 16:27 | 2205.02886 | Data Augmentation for Manipulation | 6263678 B |
 | 2026-09-09 16:27 | 2310.14196 | Learning to Discern: Imitating Heterogeneous Human Demonstrations with Preferenc | 1016894 B |
+| 2026-09-09 16:32 | 2505.21851 | Streaming Flow Policy: Simplifying diffusion/flow-matching policies by treating  | 16433948 B |
+| 2026-09-09 16:32 | 2607.13017 | FlowWAM: Optical Flow as a Unified Action Representation for World Action Models | 18557983 B |
