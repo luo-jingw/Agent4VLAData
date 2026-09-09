@@ -45,3 +45,5 @@
 | 2026-09-09 16:01 | 2602.13764 | MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer | 16679647 B |
 | 2026-09-09 16:01 | 2501.10105 | Universal Actions for Enhanced Embodied Foundation Models | 12053877 B |
 | 2026-09-09 16:01 | 2505.04999 | CLAM: Continuous Latent Action Models for Robot Learning from Unlabeled Demonstr | 4757979 B |
+| 2026-09-09 16:15 | 2508.01600 | CLASS: Contrastive Learning via Action Sequence Supervision for Robot Manipulati | 38533691 B |
+| 2026-09-09 16:15 | 2604.09824 | ProGAL-VLA: Grounded Alignment through Prospective Reasoning in Vision-Language- | 5561942 B |

@@ -690,3 +690,34 @@ papers:
     year={2025}, eprint={2505.04999}}'
   status: downloaded
   screening_relevance: high
+- id: paper_044
+  title: 'CLASS: Contrastive Learning via Action Sequence Supervision for Robot Manipulation'
+  authors:
+  - Sung-Wook Lee
+  - Xuhui Kang
+  - Brandon Yang
+  - Yen-Ling Kuo
+  year: 2025
+  venue: arXiv
+  source_id: '2508.01600'
+  pdf_path: papers/raw/2508.01600.pdf
+  bibtex: '@article{lee2025class, title={CLASS: Contrastive Learning via Action Sequence
+    Supervision for Robot Manipulation}, author={Lee, Sung-Wook and others}, year={2025},
+    eprint={2508.01600}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_045
+  title: 'ProGAL-VLA: Grounded Alignment through Prospective Reasoning in Vision-Language-Action
+    Models'
+  authors:
+  - Nastaran Darabi
+  - Amit Ranjan Trivedi
+  year: 2026
+  venue: arXiv
+  source_id: '2604.09824'
+  pdf_path: papers/raw/2604.09824.pdf
+  bibtex: '@article{darabi2026progal, title={ProGAL-VLA: Grounded Alignment through
+    Prospective Reasoning in Vision-Language-Action Models}, author={Darabi, Nastaran
+    and Trivedi, Amit Ranjan}, year={2026}, eprint={2604.09824}}'
+  status: downloaded
+  screening_relevance: high

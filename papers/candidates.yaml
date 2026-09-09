@@ -750,3 +750,30 @@ papers:
   keywords: []
   relevance: high
   notes: RQ4.2
+- id: paper_044
+  title: 'CLASS: Contrastive Learning via Action Sequence Supervision for Robot Manipulation'
+  authors:
+  - Sung-Wook Lee
+  - Xuhui Kang
+  year: 2025
+  source: arxiv
+  source_id: '2508.01600'
+  url: http://arxiv.org/abs/2508.01600
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.1/4.4
+- id: paper_045
+  title: 'ProGAL-VLA: Grounded Alignment through Prospective Reasoning in Vision-Language-Action
+    Models'
+  authors:
+  - Nastaran Darabi
+  - Amit Ranjan Trivedi
+  year: 2026
+  source: arxiv
+  source_id: '2604.09824'
+  url: http://arxiv.org/abs/2604.09824
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.1/4.4

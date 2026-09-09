@@ -117,3 +117,18 @@ blocking 状态。
   成功过滤、自监督策展、事件检测）均已有先例；正式新颖性判断仍需扩展
   prior-art 检索，专利/论文的立足点只能是系统组合与协同效应。
 - 补证建议：若推进系统级工作，定期复检该 GAP（每季度检索一次）。
+
+## GAP-12 动作模态对齐度量与时序保真（RQ4.4 / RQ4.6）
+
+- 状态：open
+- blocking: false
+- 证据现状：对齐度量（RQ4.4）无专门工作，可借形态为对比/条件互信息
+  （[paper_044](https://arxiv.org/abs/2508.01600) 的 DTW-InfoNCE、
+  [paper_045](https://arxiv.org/abs/2604.09824) 的 GAC InfoNCE）；
+  时序保真（RQ4.6，驻留/停顿的对齐语义、时间规整）第二轮多组检索无命中。
+- 含义：这两个子问题是收束路线的核心空白——"如何度量 action 与
+  prompt/vision 对齐"是第一个设计任务（prompt↔action 互信息基线）；
+  "时序保真"支撑"必要停顿是对齐证据"这一立场（衔接 PROJECT.md 稳态假设）。
+- 补证建议：检索方向 = representation alignment metrics、temporal warping
+  in imitation learning、video-action contrastive loss；或接受可借形态并
+  在本项目自行定义（第一条可测步骤）。
