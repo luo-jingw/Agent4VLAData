@@ -92,6 +92,7 @@
 - 输入：样本 + 标签配置（A 类旋钮：span_frames/action_horizon/event_points/
   key_weight/approach_frames）+ 语义标注（B 类旋钮输出：事件窗定义注入）。
 - 输出：action_chunk 列 + action_loss_weight 列 + **消费契约声明**。
+- 目标（2026-09-08 收束）：action 模态与 vision/text 对齐，而非纯几何重建。
 - 接口：`build_labels(states, actions, config, annotations) -> {chunk, weight, contract}`。
 - 文件：吸收 progress_resample.py（核心算法不动）；事件窗定义从"命令沿+
   真空反馈"改为**判据注入**（agent 输出的事件区间直接作为 dwell/approach
