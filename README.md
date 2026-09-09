@@ -52,7 +52,6 @@ agent4data/
 
 **现状与约束**（先读）
 
-- [问题、方案与需求](design/problems_and_requirements.md) — ★ 现状综述：问题 → 解法局限 → 必需功能与接口 → RL 可缓解性边界 → 最小化纲领 → 证据分级
 - [未决问题登记](issues.md) — ISSUE-001 次优解 / ISSUE-002 观测 gap / ISSUE-003 终态歧义
 - [项目约束与事实承诺](PROJECT.md) — 稳态假设及包络、文档内容边界、环境与凭据
 
@@ -66,36 +65,26 @@ agent4data/
 
 **设计与机会**
 
-- [设计框架](docs/design/design_framework.md) — L0 十模块流程 / L1 benchmark / L2 旋钮体系 / L3 语义判据接口（原 agent 层，已边缘化）
-- [设计草稿](design/design_draft.md) — 十模块接口、指标工具、语义判据接口（TBD 未验证）
 - [机会候选](opportunities.md) — OPT-002 sim/跨本体 action 对齐迁移（OPT-001 已删）
 
 **过程资产**（溯源）
 
 - [完整论证存档](docs/reports/main_report.md) · [评审与修订记录](synthesis/review_record.md) · [调研计划](plan.md) · [搜索/下载/决策日志](logs/)
 
-逻辑流转（沿 ★ 文件展开）：
+逻辑流转：
 
 ```
 issues.md + PROJECT.md（问题与约束，事实登记）
-        ↓ 引用
-★ problems_and_requirements.md（现状综述：问题→局限→需求→证据分级）
-        ↓ 骨架                    ↓ 证据侧翼
-top_level_view.md（五面定位）   survey_findings.md + evidence_matrix.md
-        ↓ 被应对
-design_framework.md → design_draft.md（方案，TBD 未验证）
-        ↑ 候选方向
-opportunities.md（OPT-001 / OPT-002）
+        ↓
+top_level_view.md（五面定位）   survey_findings.md + evidence_matrix.md（证据侧翼）
+        ↓
+opportunities.md（候选方向）
         ↓ 新发现回流
 issues.md（登记新问题，如 ISSUE-003）
 ```
 
-- ★ = 日常主要阅读点；其余文件按需查证（`logs/`、`plan.md`、`main_report.md`、
-  `review_record.md` 为历史档案）。
-- 逻辑链 = 地图定归属 → 现状与约束 → 证据侧翼 → 设计应对 → 未决回流现状；
-  过程资产只做溯源。
-- 证据分级（[社区一致] / [单篇受控] / [本项目实测] / [引用未核验]）见
-  `problems_and_requirements.md` §4。
+- 日常主要阅读点以本文档导航为准；`logs/`、`plan.md`、`main_report.md`、
+  `review_record.md` 为历史档案。
 
 ## 文献库使用
 
