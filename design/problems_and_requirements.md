@@ -7,7 +7,7 @@
 
 ## 0 收束后的总路线（与协作方确认，2026-09-08）
 
-**北星：vision / language / action 三模态对齐**——把 action 序列视作一种模态，
+**总目标：vision / language / action 三模态对齐**——把 action 序列视作一种模态，
 其增强方式必须以"与 vision、文本 prompt 对齐"为目标。
 
 **立场转变**：

@@ -144,7 +144,7 @@ GAP-04）[paper_019](https://arxiv.org/abs/2401.12963), [paper_021](https://arxi
 
 ## 7 动作模态对齐首轮发现（RQ4，2026-09-08 收束后）
 
-> 收束决策见 design/problems_and_requirements.md §0：北星 = 三模态对齐，
+> 收束决策见 design/problems_and_requirements.md §0：总目标 = 三模态对齐，
 > action 序列视作一种模态。本组为一手实验证据（8 篇）。
 
 **动作编码为可对齐模态的两条路线：**

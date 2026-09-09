@@ -65,7 +65,7 @@ agentic synthetic data、LLM-as-judge、DSPy/TextGrad 类自动优化、
 
 ## RQ4 动作模态对齐（2026-09-08 收束后的主动研究方向）
 
-**背景（收束决策，见 `logs/decision_log.md` 2026-09-08）**：北星 = vision /
+**背景（收束决策，见 `logs/decision_log.md` 2026-09-08）**：总目标 = vision /
 language / action 三模态对齐，action 序列视作一种模态。纯几何重采样会破坏
 对齐（跳帧、压低必要停顿）；研究方向转为"找到与 vision / 文本 prompt 对齐
 的 action 模态增强方式"。本组问题取代 RQ2（agent 方向，标记为 superseded）。

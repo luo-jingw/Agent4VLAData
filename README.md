@@ -48,7 +48,7 @@ agent4data/
 
 **地图**
 
-- [顶层视角：五个面](docs/reports/top_level_view.md) — 概念归属：管线/旋钮/语义判据/验证/过程
+- [顶层视角：五个面](docs/reports/top_level_view.md) — 当前调研期地图：多模态对齐/调研进度/证据/方向空缺/未决
 
 **现状与约束**（先读）
 
