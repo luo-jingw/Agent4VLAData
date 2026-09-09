@@ -1,0 +1,1022 @@
+
+===== PAGE 1 =====
+Data Augmentation for Manipulation
+Peter Mitrano
+University of Michigan
+Email: pmitrano@umich.edu
+Dmitry Berenson
+University of Michigan
+Email: dmitryb@umich.edu
+Abstract—The success of deep learning depends heavily on
+the availability of large datasets, but in robotic manipulation
+there are many learning problems for which such datasets do not
+exist. Collecting these datasets is time-consuming and expensive,
+and therefore learning from small datasets is an important open
+problem. Within computer vision, a common approach to a lack
+of data is data augmentation. Data augmentation is the process of
+creating additional training examples by modifying existing ones.
+However, because the types of tasks and data differ, the methods
+used in computer vision cannot be easily adapted to manipulation.
+Therefore, we propose a data augmentation method for robotic
+manipulation. We argue that augmentations should be valid,
+relevant, and diverse. We use these principles to formalize
+augmentation as an optimization problem, with the objective
+function derived from physics and knowledge of the manipulation
+domain. This method applies rigid body transformations to
+trajectories of geometric state and action data. We test our
+method in two scenarios: 1) learning the dynamics of planar
+pushing of rigid cylinders, and 2) learning a constraint checker
+for rope manipulation. These two scenarios have different data
+and label types, yet in both scenarios, training on our augmented
+data signiﬁcantly improves performance on downstream tasks.
+We also show how our augmentation method can be used on
+real-robot data to enable more data-efﬁcient online learning.
+I. INTRODUCTION
+In recent years, interest in applying deep learning to robotic
+manipulation has increased. However, the lack of cheap data
+has proven to be a signiﬁcant limitation [24]. To enable ap-
+plications such as smart and ﬂexible manufacturing, logistics,
+and care-giving robots [22], we must develop methods that
+learn from smaller datasets, especially if the learning is done
+online on real robots.
+One of the simplest and most effective ways to mitigate the
+problem of small datasets is to use data augmentation. While
+data augmentation has been shown to signiﬁcantly improve
+generalization performance in tasks like image classiﬁcation,
+it is not straightforward to extend existing data augmentation
+methods to the types of data used in robotic manipulation.
+Furthermore, most existing augmentation methods fall into one
+of two categories, and both have severe limitations:
+In the ﬁrst category, augmentations are deﬁned by a set
+of transformations, sampled independently for each example.
+Most image augmentation methods fall into this category,
+where rotations or crops are sampled randomly for each
+example [2, 6, 18]. By making augmentations independent of
+the example being augmented, we are restricted to operations
+which are valid on all examples. In the second category, there
+are methods which learn a generative model (VAE, GAN, etc.)
+of the data, and then sample new training examples from that
+Fig. 1: A mock-up of a car engine bay. The robot must move
+the rope and place it under the engine without snagging it
+to set up for lifting the engine. We use data augmentation to
+improve task success rate during online learning for this task.
+model [20, 16, 3]. This approach assumes a useful generative
+model can be learned from the given dataset, but we found
+these methods did not perform well when the dataset is small.
+It is not trivial to deﬁne a coherent framework for data
+augmentation that encompasses many domains and many types
+of learning problems (e.g. classiﬁcation and regression). Thus,
+the ﬁrst contribution of this paper is a formalization of the data
+augmentation problem. In our problem statement (Section III),
+we formalize data augmentation as an optimization problem
+based on three key criteria: validity, relevance, and diversity.
+We deﬁne an augmented example as valid if it obeys the laws
+of physics and is possible in the real world. Augmentations
+are relevant if they are similar to data that would be seen
+when performing the target task. Diversity encourages the
+augmentations to be as varied as possible, i.e. the transfor-
+mations applied to the data should be uniformly distributed to
+maximize diversity. Producing diverse augmentations for each
+original example is key to improving the generalization of the
+trained network.
+The general deﬁnitions of validity, relevance, and diver-
+sity we propose depend on information that is intractable
+to compute for many manipulation problems, and therefore
+we also present approximations to these deﬁnitions. We do
+not claim that this formulation is useful for all manipulation
+problems, and clearly deﬁne the physical assumptions behind
+arXiv:2205.02886v4  [cs.RO]  20 Jul 2022
+
+===== PAGE 2 =====
+Fig. 2: Examples of augmentations of rope generated by our method. On the left is a picture of the scene in simulation from
+a zoomed out viewpoint. The simpliﬁed engine block model is in the center. The rope start (dark blue) and end (light blue)
+states are shown, with the grippers shown at the start state. The static environment geometry is shown in brown. The ﬁrst
+row shows a transition in free space, where the resulting augmentations are particularly diverse. The ﬁnal augmentation shows
+how our method found a transformation to move the rope underneath the hook while remaining in free space. The second row
+shows a transition which involves contact between the rope and the environment. The augmentations preserve this contact.
+this formulation in Section III.
+Our second contribution is a method for solving this ap-
+proximated optimization problem. Our method operates on
+trajectories of object poses and velocities, and searches for
+rigid-body transformations to apply to the moving objects in
+the scene to produce augmentations. Our method encourages
+validity by preserving contacts and the inﬂuence of grav-
+ity. Additionally, we encourage relevance by initializing the
+augmentations nearby the original examples and preserving
+near-contacts. Finally, we encourage diversity by pushing the
+augmentations towards randomly sampled targets.
+Our results demonstrate that training on our augmenta-
+tions improves downstream task performance for a simulated
+cluttered planar-pushing task and a simulated bimanual rope
+manipulation task. The learning problems in these tasks in-
+clude classiﬁcation and regression, and have high-dimensional
+inputs and outputs. Lastly, we demonstrate our augmentation
+in an online learning scenario on real-robot bimanual rope
+manipulation using noisy real-world perception data (Figure
+1). In this scenario, augmentation increased the success rate
+from 27% to 50% in only 30 trials. Additional materials such
+as code and video can be found on our project website [1].
+II. RELATED WORK
+This paper studies the problem of learning better models
+from limited data, which is important for robotics applications
+and has received signiﬁcant attention as researchers have tried
+to apply deep learning to robotics [24, 9].
+Data augmentation has been applied to many machine
+learning problems, from material science [16] to ﬁnancial
+modeling [3] (see [7, 4, 17] for several surveys). It is especially
+common in computer vision [17, 18, 6, 10, 2], and is also
+popular in natural language processing [4, 12]. In these ﬁelds
+the data is often in standardized data types—images, text, or
+vectors of non-physical features (e.g. prices). Each of the data
+types can be used for a wide variety of tasks, and various
+data augmentations have been developed for various pairings
+of data type and task.
+However, problems in robotic manipulation use other for-
+mats of data, such as point clouds, or object poses, and may
+consist of time-series data mixed with time-invariant data. To
+the best of our knowledge, there are currently no augmentation
+methods designed speciﬁcally for data of the types above. Our
+proposed method is intended to ﬁll this gap.
+In contrast to engineering augmentations based on prior
+knowledge, another body of work uses unsupervised gener-
+ative models to generate augmentations [20, 16, 3]. Typically,
+these methods train a model like an Auto-Encoder or Gen-
+erative Adversarial Network (GAN) [5]) on the data, encode
+the input data into the latent space, perturb the data in the
+latent space, then decode to produce the augmented examples.
+These methods can be applied to any data type, and handle
+both regression and classiﬁcation problems. However, they
+do not incorporate prior knowledge, and only add small but
+sophisticated noise. In contrast, we embed prior knowledge
+about the physical and spatial nature of manipulation, and as
+a result can produce large and meaningful augmentations, at
+the cost of being less generally-applicable.
+Although data augmentation is a popular approach, there
+are many other methods that have been proposed for data-
+
+===== PAGE 3 =====
+Fig. 3: Examples of augmentations generated for learning the dynamics of planar pushing of 9 cylinders. The pink cylinder is
+the robot. Time is indicated by transparency. Augmentation transforms the positions and velocities of the cylinders that moved,
+including the robot. All moved objects are transformed together, rigidly. Despite the clutter, we are able to ﬁnd relatively large
+transformations that still preserve existing contacts but do not create any new ones.
+efﬁcient learning, both in general and speciﬁcally for robotic
+manipulation. We highlight a few important ones here, but
+note that these are all complementary to data augmentation.
+The most common technique is simply to pick a low-capacity
+model class, such as linear models or very small neural
+networks [15, 25]. Alternatively, prior work has also developed
+various sets of priors speciﬁc to robotics [8] which can be
+used as objectives during training. Another extremely useful
+technique is to engineer the state or action representations to
+include certain known invariances. For instance, a standard
+technique in dynamics learning methods is to represent the
+input positions in a local frame as opposed to a world frame,
+to encode translation invariance [11]. There are also methods
+for learning these kinds of invariances [25].
+Finally, there are methods which automatically tune the
+parameters of a space of manually-deﬁned augmentations,
+such as rotations and crops [2, 6]. These techniques are also
+compatible with our proposed method, and could be used to
+tune the hyperparameters of our algorithm.
+III. PROBLEM STATEMENT
+In this section, we formally deﬁne the form of data aug-
+mentation studied in this paper. We deﬁne a dataset D as a
+list of examples x ∈X and, optionally, labels ℓ(x) = w,
+where ℓis a task-speciﬁc labeling function. We assume the
+space X is a metric space with a distance function dist.
+Augmentation is a stochastic function φ : X →X which takes
+in an example x and produces the augmented example ˜x. The
+general form is shown in Algorithm 1. Internally, augmentation
+will call sample to generate a vector of parameters, which
+we call T. We also deﬁne ˜x1:k as a set of k augmented
+examples produced by calling sample then apply k times.
+Algorithm 1: φ(x)
+1 T = sample(x)
+2 ˜x = apply(x, T)
+3 return ˜x
+The parameters T describe the transformation which will be
+applied to the example in the apply procedure. We focus on
+augmentation functions that are stochastic, thus φ will sample
+new augmented examples each time it is called. If the dataset
+contains labels w, we assume that the labels should not change
+when the example is augmented.
+We propose that useful augmentations should be valid,
+relevant, and diverse. Let the valid set Xv be the set of
+examples which are physically possible. Let the relevant set
+Xr be the set of examples likely to occur when collecting data
+for or executing a speciﬁc set of tasks in a speciﬁc domain.
+We deﬁne validity(˜x) = 1 if ˜x ∈Xv and validity(˜x) = 0
+otherwise. We also deﬁne relevance(˜x) := e−dist(˜x,Xr) and
+diversity(˜x1:k) := e−DKL(p˜x1:k (T ) || U[T −,T +]), where DKL is
+the Kullback–Leibler divergence and p˜x1:k(T) is the distribu-
+tion of the parameters for a set of augmented examples ˜x1:k.
+Diversity is maximized when the augmentation transforma-
+tions are uniformly distributed in the range [T −, T +]. With
+these concepts deﬁned, we deﬁne data augmentation as the
+following optimization problem, the solution to which is a set
+of augmentations ˜x1:k:
+max
+˜x1:k
+diversity(˜x1:k) + β P
+˜xi relevance(˜xi)
+subject to
+validity(˜xi)
+∀˜xi ∈˜x1:k
+ℓ(˜x) = ℓ(x)
+(1)
+
+===== PAGE 4 =====
+Fig. 4: (left) The environment for bimanual rope manipulation,
+in simulation. (right) The environment for cluttered planar
+pushing of cylinders, in simulation.
+where β is a positive scalar.
+This optimization problem can be solved directly if Xv, Xr,
+and ℓare known. However, in manipulation tasks, that is rarely
+the case. Instead, we will formulate an approximation to this
+problem using measures of relevance, diversity, and validity
+that are derived from physics and useful for a variety of robotic
+manipulation tasks and domains.
+A. Assumptions
+Most augmentation algorithms rely on some expert knowl-
+edge or heuristics to deﬁne what is a valid augmentation. For
+instance, rotating an image for image classiﬁcation makes an
+assumption that rotation does not change the label, and this
+is not always true. Similarly, the efﬁcacy or correctness of
+our algorithm is also subject to certain assumptions. Here, we
+deﬁne the key assumptions:
+• The geometry of the robot and all objects is known.
+• The scene can be decomposed into objects which can be
+assigned or detected as either moving or stationary.
+• Examples are time-series, consisting of at least two states.
+• All possible contacts between stationary vs. moving ob-
+jects have the same friction coefﬁcient.
+• Contacts between the robot and objects/environment (e.g.
+grasps) can be determined from the data.
+• A rigid-body transformation of an object preserves inter-
+nal forces arising from its material properties.
+• Objects only move due to contact or under the force of
+gravity. We do not handle movement due to magnetism
+or wind, for example.
+Notably, the assumption that a rigid-body transformation
+preserves internal, material forces is what allows us to han-
+dle cluttered scenes with many moving objects, as well as
+deformable or articulated objects. While it could be valuable
+to augment the deformation or relative motion of the objects,
+doing so in a way that is valid would be challenging. Instead,
+we transform them all rigidly (See examples in Figures 2,3).
+The assumption of having a common friction coefﬁcient
+between all moving versus stationary objects is in-line with
+much manipulation research. For example, work on planar
+pushing assumes friction is uniform across the plane [26, 23].
+Note that we make no assumption on the coefﬁcients of
+friction between two moving objects.
+Naturally, there are scenarios where these assumptions do
+not hold and thus where our algorithm may not perform well.
+However, our experiments demonstrate signiﬁcant improve-
+ment on two very different manipulation scenarios, and we
+expect these assumptions extend to other scenarios as well.
+IV. METHODS
+We ﬁrst describe an approximation to the augmentation
+problem (1), which is specialized for manipulation. Next,
+we decompose this problem and describe each component in
+detail.
+A. Algorithm Overview
+Since robotic manipulation is interested speciﬁcally in mov-
+ing objects, we focus on augmenting trajectories of poses and
+velocities of moving objects. A key insight is that objects in
+the scene can be categorized as either robots, moved objects,
+or stationary objects, and that these should be considered
+differently in augmentation. We denote the moved objects
+state as s, the robot state as r, the robot action as a, and the
+stationary objects as e (also called environment). Our method
+augments the moved object states, the robot state, and the
+actions, but not the stationary objects. We do not assume any
+speciﬁc representation for states or actions, and examples of
+possible representations include sets of points, joint angles,
+poses, or joint velocities. Since we operate on trajectories, we
+bold the state (s, r) and action (a) variables to indicate time-
+series (e.g s1:T = s). With this categorization, we can write
+x = {s, r, a, e} and ˜x = {˜s, ˜r, ˜a, e}.
+We choose the parameters T to be rigid body transfor-
+mations, i.e. either SE(2) or SE(3). We parameterize T as
+a vector with translation and rotation components, with the
+rotation component with Euler angles bounded from −π/2
+to π/2, which gives uniqueness and a valid distance metric.
+These rigid body transforms are applied to moved objects in
+the scene, and augmented robot state and action are computed
+to match. We choose rigid body transforms because we can
+reasonably assume that even for articulated or deformable
+objects, augmenting with rigid body transforms preserve the
+internal forces, and therefore the augmentations are likely to
+be valid.
+It may seem that an effective method to generate augmen-
+tations is then to randomly sample transforms independent of
+the data. However, this is not an effective strategy because
+it is highly unlikely to randomly sample valid and relevant
+transformations. We conﬁrm this in our ablations studies (in-
+cluded in the Appendix 1.A). Instead of sampling transforms
+randomly, we formulate an approximation to Problem 1:
+min
+T
+LU(T, T target) + β1Lbbox(˜s) + β2Lvalid(T)+
+β3Locc(˜s, e) + β4L∆d−(˜s, e)+
+Lrobot(˜s, ˜r, ˜a, e)
+subject to
+{˜s, ˜r, ˜a, e} = apply(s, r, a, e, T)
+T target ∼U[T −, T +]
+(2)
+
+===== PAGE 5 =====
+The decision variable is now the parameters T, and the
+validity constraint is moved into the objective. We propose that
+diversity should be maximized by the transforms being uni-
+formly distributed, and therefore LU penalizes the distance to
+a target transform T target sampled uniformly within [T −, T +].
+The relevance and validity terms (which are intractable to
+compute) are replaced with four objective functions, which are
+specialized to manipulation. The magnitudes of different terms
+are balanced by β1, β2, β3, β4, which are deﬁned manually. We
+deﬁne each objective function below:
+1) Bounding Box Objective: First is the bounding-box
+objective Lbbox, which keeps the augmented states ˜s within the
+workspace/scene bounds deﬁned by [s−, s+]. The bounding
+box objective encourages relevance, since states outside the
+workspace are unlikely to be relevant for the task.
+Lbbox =
+|s|
+X
+i=1
+max(0, ˜si −s+
+i ) + max(0, s−
+i −˜si)
+(3)
+2) Transformation Validity Objective: The transformation
+validity objective Lvalid assigns high cost to transformations
+that are always invalid or irrelevant for the particular task or
+domain. It is deﬁned by function fvalid, which takes in only the
+transformation. For example, in our rope manipulation case,
+it is nearly always invalid to rotate the rope so that it ﬂoats
+sideways. In our cluttered pushing task, in contrast, this term
+has no effect. This term can be chosen manually on a per-
+task basis, but we also describe how a transformation validity
+objective can be learned from data in section IV-C.
+Lvalid = fvalid(T)
+(4)
+3) Occupancy Objective: The occupancy objective Locc is
+designed to ensure validity by preventing objects that were
+separate in the original example from penetrating each other
+and ensuring that any existing penetrations are preserved. In
+other words, we ensure that the occupancy O(p) of each
+point ˜ps,i ∈˜ps in the augmented object state matches the
+occupancy of the corresponding original point ps,i ∈ps. For
+this term, we directly deﬁne the gradient, which moves ˜ps,i in
+the correct direction when the occupancies do not match. This
+involves converting the environment e into a signed-distance
+ﬁeld (SDF) and the moved objects states s into points ps. This
+objective assumes that the environment has uniform friction,
+so that a contact/penetration in one region of the environment
+can be moved to another region.
+Locc =
+X
+ps,i∈ps
+˜ps,i∈˜ps
+SDF(˜ps,i)
+ O(ps,i) −O(˜ps,i)
+
+(5)
+4) Delta Minimum Distance Objective: The delta min-
+imum distance objective is designed to increase relevance
+by preserving near-contact events in the data. We preserve
+near-contact events because they may signify important parts
+of the task, such as being near a goal object or avoiding
+an obstacle. We deﬁne the point among the moved object
+Fig. 5: Illustration of aug_state within Algorithm 2. All
+points and sets are in the space of T. The path of T is shown
+in red with black arrows. The pink set, State Valid, is the set
+where state valid is true. T begins at the origin, and alternates
+between moving towards T target and projecting back into the
+set state valid (by solving Equation (8)).
+points ps which has the minimum distance to the environment
+pd−= argminps,iSDF(ps,i). The corresponding point in the
+augmented example we call ˜pd−.
+L∆d−= ||SDF(pd−) −SDF(˜pd−)||2
+2
+(6)
+5) Robot Contact Objective: The robot contact objective
+Lrobot ensures validity of the robot’s state and the action. This
+means that contacts involving the moved objects which existed
+in the original example must also exist in the augmented
+example. Let the contact points on the robot be pc
+r and the
+contact points on the moved objects’ state be pc
+s.
+Lrobot =
+X
+i
+(||pc
+r,i −pc
+s,i||2
+2)
+(7)
+Finally, we note that other objective functions can be added
+for the purpose of preserving task-speciﬁc labels, i.e. so that
+ℓ(x) = ℓ(˜x). However, for our experiments, no additional
+functions were necessary.
+B. Solving the Augmentation Optimization Problem
+This section describes how we solve Problem (2), and
+the procedure is detailed in Algorithm 2. First, we split the
+problem into two parts, aug_state and aug_robot.
+In aug_state, we optimize the transform T to produce
+the moved objects’ state ˜s while considering environment e.
+To achieve diversity, we uniformly sample a target transform
+T target and step towards it iteratively. This stepping alternates
+with optimizing for validity and relevance. We visualize this
+procedure in Figure 5, as well as in the supplementary video.
+The innermost optimization problem is
+argmax
+T
+β1Lbbox + β2Lvalid + β3Locc + β4L∆d−
+(8)
+We solve Problem (8) using gradient descent, terminating
+after either Mp steps or until the gradient is smaller than some
+threshold ϵp.
+Note that we start aug_state in Algorithm 2 with T
+at the identity transformation, rather than initially sampling
+uniformly. This has two beneﬁts. First, the identity transform
+gives the original example, which is always in the relevant set.
+Second, it is unlikely that a uniformly sampled transformation
+
+===== PAGE 6 =====
+Algorithm 2: φ(s, r, a, e)
+// aug_state
+1 T target ∼U[T −, T +]
+2 T = 0 (identity)
+3 for i ∈Np do
+4
+Told = T
+5
+T = step_towards(T, T target)
+6
+T = solve Equation (8)
+7
+if dist(T, Told) < δp then
+8
+break
+// aug_robot
+9 ˜s, state valid = apply_state(s, a, T)
+10 ˜r, ˜a, ik valid ←IK(r, a, ˜s, e)
+11 if !state valid or !ik valid then
+12
+return s, r, a, e
+13 else
+14
+return ˜s, ˜r, ˜a, e
+is valid or relevant, so starting at a random transformation
+would make solving Problem (8) more difﬁcult.
+In aug_robot, we are optimizing Lrobot. This corresponds
+to computing the augmented robot states ˜r and actions ˜a given
+the augmented states ˜s and the environment e. Minimizing
+Lrobot means preserving the contacts the robot makes with
+the scene, which we do with inverse kinematics (Line 10 in
+Algorithm 2).
+C. Learning the Valid Transforms Objective
+As discussed above, we include a term Lvalid based only
+on the transformation T. In some cases, such as our rope
+manipulation example, it may not be obvious how to deﬁne
+this objective manually. Our rope is very ﬂexible, and therefore
+rotating the rope so that it ﬂoats in a sideways arc is invalid,
+but it may be valid for a stiff rope or cable. To address this,
+we offer a simple and data efﬁcient algorithm for learning the
+transformation validity function fvalid.
+Our method for learning fvalid is given in Algorithm 3. This
+algorithm repeatedly samples augmentations of increasing
+magnitude, and tests them on the system (lines 6 and 8). This
+generates ground truth states starting from an input state and
+action. The result is a dataset Dvalid of examples (T, yvalid).
+We then train a small neural network fvalid,θ(T) to predict the
+error yvalid and use the trained model as our transformation
+validity objective. We collect nvalid =
+√
+10d examples, where
+d is the dimensionality of the space of the transformation T.
+This method owes its efﬁciency and simplicity to a few
+key assumptions about the system/data. First, we assume that
+we can collect a few (< 1000) examples from the system
+and test various transformations. This could be performed
+in a simulator, as we do in our experiments. Because the
+transformation validity objective is not a function of state,
+action, or environment, we can make simpliﬁcations to this
+simulation by picking states and environments which are
+easy to simulate. We denote this set of states and actions as
+Algorithm 3: Data Collection for Learning Valid
+Transformations
+Input: Qvalid, nvalid
+Output: Dvalid
+1 y−
+valid = ∞
+2 for i ∈[1, nvalid] do
+3
+for (st, rt, at, e) ∈Qvalid do
+4
+αvalid = i/nvalid
+5
+T ∼U[αvalidT −, αvalidT +]
+6
+st+1, rt+1 = simulate(st, rt, at, e)
+7
+˜st,t+1, ˜rt,t+1, ˜at = apply(st,t+1, rt,t+1, at, T)
+8
+˜s′
+t+1, ˜r′
+t+1 = simulate( ˜st, ˜rt, ˜at, e)
+9
+yvalid = ||˜st+1 −˜s′
+t+1||
+10
+if yvalid < y−
+valid then
+11
+y−
+valid = yvalid, Tmin = T, y−
+valid = yvalid
+12
+add (Tmin, y−
+valid) to Dvalid
+13 return Dvalid
+Qvalid. Second, because the transformation parameters are low-
+dimensional (3 and 6 in our experiments) the trained model
+generalizes well with relatively few examples.
+D. Application to Cluttered Planar Pushing
+In this section, we describe how we apply the proposed
+method to learning the dynamics of pushing of 9 cylinders on
+a table (Figure 4). The moved object state s consists of the
+2D positions and velocities of the cylinders. The robot state
+r is a list of joint positions, and the actions a are desired
+end effector positions in 2D. There is no w in this problem.
+The parameters T used are SE(2) transforms. In this problem,
+any individual trajectory may include some moved cylinders
+and some stationary ones. In our formulation, the stationary
+cylinders are part of e and are not augmented, whereas the
+moved ones are part of s and are augmented. The robot’s end
+effector (also a cylinder) is also augmented, and IK can be used
+to solve for joint conﬁgurations which match the augmented
+cylinders’ state and preserve the contacts between the robot
+and the moved cylinders.
+E. Application to Bimanual Rope Manipulation
+In this section, we describe how we apply the proposed
+method to a bimanual rope manipulation problem (Figure 4).
+In this problem, there is a binary class label, so w ∈{0, 1},
+which is preserved under our augmentation (last constraint
+in Problem (1)). The rope is the moved object, and its state
+s is a set of 25 points in 3D. The robot state r is a list
+of the 18 joint positions, and the actions a are desired end
+effector positions in the robot frame. In this problem, we know
+that the only contacts the robot makes with the objects or
+environment are its grasps on the rope. Therefore, we preserve
+these contacts by solving for a robot state and action that match
+the augmented points on the rope. The parameters T used are
+SE(3) transforms.
+
+===== PAGE 7 =====
+Fig. 6: Mean position error (meters) for learning the dynamics
+of cluttered planar pushing.
+V. RESULTS
+We start by describing the tasks and our experimental
+methodology, then we present our results. These experiments
+are designed to show that training on augmentations generated
+by our method improves performance on a downstream task.
+We perform two simulated experiments, where we run thou-
+sands of evaluations, including several ablations (see Appendix
+1.A). We also perform a real robot experiment (Figure 1)
+where we run 30 iterations of online validity classiﬁer learning,
+with augmentation and without. In all experiments, we train
+until convergence or for a ﬁxed number of training steps. This
+ensures a fair comparison to training without augmentation,
+despite the differing number of unique training examples. In
+all experiments we generate 25 augmentations per original
+example (See Appendix 1.B). We deﬁne key hyperparameters
+of our method in Appendix 1.C. A link to our code is available
+on the project website [1].
+A. Cluttered Planar Pushing
+The cluttered planar pushing environment consists of a
+single robotic arm pushing 9 cylinders around on a table.
+The task is to learn the dynamics, so that the motion of
+the cylinders can be predicted given initial conditions and a
+sequence of robot actions. For this, we use PropNet [11], and
+our task is inspired by the application of PropNet to planar
+pushing in [19]. The inputs to PropNet are an initial state s0
+and a sequence of actions a, and the targets are the future state
+(s1, . . . , sT ). All trajectories are of length 50. We evaluate
+the learned dynamics by computing the mean and maximum
+errors for position and velocity on a held-out test set. Example
+augmentations for this scenario are shown in Figure 3.
+This is an interesting application of our augmentation for
+several reasons. First, it is a regression task, which few aug-
+mentation methods allow. Second, the output of the dynamics
+network is high-dimensional (900 for a prediction of length
+50), which normally means large datasets are needed and
+engineering invariances into the data or network is difﬁcult.
+Finally, the trajectories contain non-negligible velocities and
+are not quasi-static.
+The original dataset contained 60 trajectories of length 50,
+or 3,000 time steps in total. For comparison, previous work on
+the same dynamics learning problem used over 100,000 time
+steps in their datasets [11, 19]. This is similar to the number
+Fig. 7: Predictions (blue) vs. ground truth (red) for planar
+pushing. The robot is in pink. Trajectories are visualized with
+lines. The left column shows predictions from a model trained
+with augmentation, the right column without.
+of training examples we have after augmentation, which is
+75,000 time steps. Finally, we measured the performance of
+our implementation and found that for the planar pushing
+scenario we generate 4.5 augmentations per second on average.
+The primary results are shown in Figure 6. Augmenta-
+tion reduces the average position error from 0.00154 m to
+0.00133 m, a decrease of 14%. Additionally, we include two
+baselines, one which adds Gaussian noise to the state, robot,
+action, and environment data, and one which uses a VAE
+to generate augmentations as in [16]. The magnitude of the
+Gaussian noise was chosen manually to be small but visually
+noticeable. Our proposed augmentation method is statistically
+signiﬁcantly better than the baseline without augmentation
+(p < 0.0362), the Gaussian noise baseline (p < 0.0001),
+and the VAE baseline (p < 0.0002). This difference in error
+may seem small, but note that error is averaged over objects,
+and most objects are stationary. Two roll-outs from with-
+augmentation and from without-augmentation are shown in
+Figure 7. In particular, we found that augmentation reduces
+“drift,” where the model predicts small movements for objects
+that should be stationary. Finally, we note that the Gaussian
+noise and VAE baselines perform worse than no augmentation,
+suggesting that data augmentation can hurt performance if the
+augmentations are done poorly.
+B. Bimanual Rope Manipulation
+In this task, the end points of a rope are held by the robot
+in its grippers in a scene resembling the engine bay of a
+car, similar to [14], and shown in Figure 4. The robot has
+two 7-dof arms attached to a 3-dof torso with parallel-jaw
+grippers. The tasks the robot performs in this scene mimic
+
+===== PAGE 8 =====
+Fig. 8: The success rate on simulated bimanual rope manipu-
+lation, using a moving window average of 10.
+putting on or taking off lifting straps from the car engine,
+installing ﬂuid hoses, or cable harnesses. These tasks require
+moving the strap/hose/cable through narrow passages and
+around protrusions to various speciﬁed goal positions without
+getting caught. One iteration consists of planning to the goal,
+executing open-loop, then repeating planning and execution
+until a timeout or the goal is reached. The goal is deﬁned as a
+spherical region with 4.5 cm radius, and is satisﬁed when any
+of the points on the rope are inside this region.
+The planner is an RRT with a learned constraint checker
+for edge validity (validity classiﬁer), and more details are
+given in [14]. We want to learn a classiﬁer that takes in a
+single transition x = (st, at, st+1, et) and predicts whether the
+transition is valid. Without a good constraint checker, the robot
+will plan trajectories that result in the rope being caught on
+obstacles or not reaching the goal. We apply our augmentation
+algorithm to the data for training this constraint checker. After
+an execution has completed, the newly-collected data along
+with all previously collected data are used to train the classiﬁer
+until convergence. Example augmentations for this scenario
+are shown in Figure 2. The objective is to learn the constraint
+checker in as few iterations as possible, achieving a higher
+success rate with fewer data.
+In this experiment, a total of 3,038 examples were gathered
+(before augmentation, averaged over the 10 repetitions). Since
+the purpose of our augmentations is to improve performance
+using small datasets, it is important that this number is small.
+In contrast, prior work learning a similar classiﬁer used over
+100,000 examples in their datasets [14, 13]. This is similar
+to the number of training examples we have after augmen-
+tation, which is 75,950 on average. Finally, we measured the
+performance of our implementation and found that for the rope
+scenario we generate 27 augmentations per second on average.
+The primary results are shown in Figure 8. Over the course
+of 100 iterations, the success of our method using augmenta-
+tion is higher than the baseline of not using augmentation, as
+well as the Gaussian noise baseline. We omit the VAE baseline,
+since it performed poorly in the planer pushing experiment.
+Furthermore, it is computationally prohibitive to retrain the
+VAE at each iteration, and ﬁne-tuning the VAE online tends
+Fig. 9: The success rate and task error distribution of bimanual
+rope manipulation on the real robot. Task error is the distance
+between the goal and the ﬁnal observed state of the rope.
+to get stuck in bad local minima. The shaded regions show
+the 95th percentile over 10 runs. If we analyze the success
+rates averaged over the ﬁnal 10 iterations, we ﬁnd that without
+augmentation the success rate is 48%, but with augmentation
+the success rate is 70%. The Gaussian noise baseline has a ﬁnal
+success rate of 31%. A one-sided T-test conﬁrms statistical
+signiﬁcance (p < 0.001 for both).
+C. Real Robot Results
+In this section, we perform a similar experiment to the simu-
+lated bimanual rope manipulation experiment, but on real robot
+hardware. This demonstrates that our method is also effective
+on noisy sensor data. More importantly, it demonstrates how
+augmentation enables a robot to quickly learn a task in the
+real world. We use CDCPD2 [21] to track the rope state.
+The geometry of the car scene is approximated with primitive
+geometric shapes, like in the simulated car environment.
+We ran the validity classiﬁer learning procedure with a
+single start conﬁguration and a single goal region, both with
+and without augmentation. After 30 iterations of learning, we
+stop and evaluate the learned classiﬁers several times. With
+augmentation, the robot successfully placed the rope under
+the engine 13/26 times. Without augmentation, it succeeded
+7/26 times. The Gaussian noise and VAE baselines performs
+poorly in simulated experiments, therefore we omit them in
+the real robot experiments.
+VI. LIMITATIONS
+There are problems and applications where the proposed
+objective functions do not ensure validity, relevance, and
+diversity. In these cases, the structure of our augmentation
+and projection procedures can remain, while new objective
+functions are developed. Another limitation is that our method
+is not compatible with image data. Much recent research in
+robotics has moved away from engineered state representations
+like poses with geometric information, and so there are many
+learning methods which operate directly on images. Although
+this is a limitation of the proposed method, many of the
+augmentations developed for images are also not applicable
+to problems in manipulation, even when images are used. For
+
+===== PAGE 9 =====
+instance, pose detection, 3D reconstruction, semantic segmen-
+tation, and many other tasks may not be invariant to operations
+like cropping, ﬂipping, or rotating. Creating an augmentation
+method for manipulation that is applicable to images is an
+open area for future research.
+VII. CONCLUSION
+This paper proposes a novel data augmentation method
+designed for trajectories of geometric state and action robot
+data. We introduce the idea that augmentations should be valid,
+relevant, and diverse, and use these to formalize data augmen-
+tation as an optimization problem. By leveraging optimization,
+our augmentations are not limited to simple operations like
+rotation and jitter. Instead, our method can ﬁnd complex and
+precise transformations to the data that are valid, relevant, and
+diverse. Our results show that this method enables signiﬁcantly
+better downstream task performance when training on small
+datasets. In simulated planar pushing, augmentation decreases
+the prediction error by 14%. In simulated bimanual rope
+manipulation, the success rate with augmentation is 70%
+compared to 47% without augmentation. We also perform
+the bimanual rope manipulation task in the real world, which
+demonstrates the effectiveness of our algorithm despite noisy
+sensor data. In the real world experiment, the success rate
+improves from 27% to 50% with the addition of augmentation.
+ACKNOWLEDGMENTS
+The authors would like to acknowledge Andrea Sipos for
+her ingenious design of a reset mechanism, allowing us to
+run robot experiments unattended. This work was supported
+in part by NSF grants IIS-1750489 and IIS-2113401, ONR
+grant N00014-21-1-2118, and the Toyota Research Institute.
+This article solely reﬂects the opinions and conclusions of its
+authors and not TRI or any other Toyota entity.
+REFERENCES
+[1] https://sites.google.com/view/
+data-augmentation4manipulation.
+[2] Gregory W. Benton, Marc Finzi, Pavel Izmailov, and
+Andrew Gordon Wilson. Learning Invariances in Neural
+Networks from Training Data. NeurIPS, 2020.
+[3] Sumeyra Demir, Krystof Mincev, Koen Kok, and Niko-
+laos G. Paterakis.
+Data augmentation for time series
+regression: Applying transformations, autoencoders and
+adversarial networks to electricity price forecasting. Ap-
+plied Energy, 2021.
+[4] Steven Y. Feng, Varun Gangal, Jason Wei, Sarath Chan-
+dar, Soroush Vosoughi, Teruko Mitamura, and Eduard
+Hovy. A Survey of Data Augmentation Approaches for
+NLP. Association for Computational Linguistics, 2021.
+[5] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing
+Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville,
+and Yoshua Bengio.
+Generative Adversarial Nets.
+NeurIPS, 2014.
+[6] Ekin Dogus Cubuk and Barret Zoph and Dandelion Man´e
+and Vijay Vasudevan and Quoc V. Le.
+Autoaugment:
+Learning augmentation policies from data. ArXiv, 2018.
+[7] Brian Kenji Iwana and Seiichi Uchida. An Empirical Sur-
+vey of Data Augmentation for Time Series Classiﬁcation
+with Neural Networks. PLOS One, 2020.
+[8] Rico Jonschkowski and Oliver Brock.
+Learning state
+representations with robotic priors. Autonomous Robots,
+2015.
+[9] Oliver Kroemer, Scott Niekum, and George Konidaris. A
+Review of Robot Learning for Manipulation: Challenges,
+Representations, and Algorithms. JMLR, 2021.
+[10] Michael Laskin, Kimin Lee, Adam Stooke, Lerrel Pinto,
+Pieter Abbeel, and Aravind Srinivas.
+Reinforcement
+Learning with Augmented Data. NeurIPS, 2020.
+[11] Yunzhu Li, Jiajun Wu, Jun-Yan Zhu, Joshua B. Tenen-
+baum, Antonio Torralba, and Russ Tedrake. Propagation
+Networks for Model-Based Control Under Partial Obser-
+vation. ICRA, 2019.
+[12] Edward Ma. NLP Augmentation, 2019.
+[13] Dale McConachie, Thomas Power, Peter Mitrano, and
+Dmitry Berenson. Learning When to Trust a Dynamics
+Model for Planning in Reduced State Spaces.
+IEEE
+Robotics and Automation Letters, 2020.
+[14] Peter Mitrano, Dale McConachie, and Dmitry Berenson.
+Learning Where to Trust Unreliable Models in an Un-
+structured World for Deformable Object Manipulation.
+Science Robotics, 2021.
+[15] David Navarro-Alarc´on, Yun-Hui Liu, Jos´e Guadalupe
+Romero, and Peng Li.
+Model-Free Visually Servoed
+Deformation Control of Elastic Objects by Robot Ma-
+nipulators. IEEE Transactions on Robotics, 2013.
+[16] Hiroshi Ohno.
+Auto-encoder-based generative models
+for data augmentation on regression problems.
+Soft
+Computing, 2020.
+[17] Connor Shorten and Taghi M. Khoshgoftaar. A survey on
+Image Data Augmentation for Deep Learning. Journal
+of Big Data, 6:60, 2019.
+[18] P.Y. Simard, D. Steinkraus, and J.C. Platt. Best practices
+for convolutional neural networks applied to visual doc-
+ument analysis. International Conference on Document
+Analysis and Recognition, 2003.
+[19] Ahmet E. Tekden, Aykut Erdem, Erkut Erdem, Mert
+Imre, M. Yunus Seker, and Emre Ugur. Belief Regulated
+Dual Propagation Nets for Learning Action Effects on
+Groups of Articulated Objects. ICRA, 2020.
+[20] Toan Tran, Trung Pham, Gustavo Carneiro, Lyle J.
+Palmer, and Ian D. Reid. A Bayesian Data Augmentation
+Approach for Learning Deep Models. NeurIPS, 2017.
+[21] Yixuan Wang, Dale McConachie, and Dmitry Berenson.
+Tracking Partially-Occluded Deformable Objects while
+Enforcing Geometric Constraints. ICRA, 2021.
+[22] Johnny Wood. Robot workers are being hired at record
+rates in US companies - here’s why. World Economic
+Forum, 2021.
+[23] Kuan-Ting Yu, Maria Bauz´a, Nima Fazeli, and Alberto
+Rodriguez. More than a Million Ways to Be Pushed: A
+High-Fidelity Experimental Data Set of Planar Pushing.
+IROS, 2016.
+
+===== PAGE 10 =====
+[24] Wojciech Zaremba. OpenAI Disbands Robotics. Inter-
+view on YouTube, 2021.
+[25] Sheng Zhong, Zhenyuan Zhang, Nima Fazeli, and Dmitry
+Berenson.
+TAMPC: A Controller for Escaping Traps
+in Novel Environments. IEEE Robotics and Automation
+Letters, 2021.
+[26] Gao Ziyan, Armagan Elibol, and Nak Young Chong.
+Planar Pushing of Unknown Objects Using a Large-Scale
+Simulation Dataset and Few-Shot Learning. International
+Conference on Automation Science and Engineering
+(CASE), 2021.
+
+===== PAGE 11 =====
+I. APPENDIX
+A. Ablation of Objective Terms
+The objectives terms we propose are designed to be
+useful in many cases, but to understand this better, we
+ablate several of the objective terms. We evaluate the
+importance of the transformation validity objective, oc-
+cupancy objective, and delta minimum distance objective
+by repeating our experiments. In each ablation, we omit
+one objective term. Each condition was run 10 times
+with different random seeds. The results are shown in
+Table I and Figure 1.
+Fig. 1.
+Success vs Iterations for ablations. Bimanual rope manipula-
+tion, in simulation.
+Method
+Task Success % (↑)
+(rope)
+Position Error (m) (↓)
+(planar pushing)
+Full Method
+0.700 (0.118)
+0.0010 (0.0001)
+No transf. valid.
+0.700 (0.185)
+0.0011 (0.0001)
+No delta min dist
+0.675 (0.185)
+0.0012 (0.0002)
+No occupancy
+0.24 (0.136)
+0.0028 (0.0011)
+TABLE I
+ABLATIONS: METRICS ON BOTH TASKS, WITH VARIOUS OBJECTIVE
+TERMS REMOVED. THE STANDARD DEVIATION IS SHOWN IN
+PARENTHESES.
+We ﬁnd that across both experiments, the most impor-
+tant objective was the occupancy objective. Without this
+objective, our method produced augmentations where
+contacts and penetrations are not preserved. This is
+invalid, and training on these examples produces a worse
+model even than using no augmentations.
+The next most important objective is the delta min-
+imum distance objective. In our simulated rope experi-
+ment, the method without this objective performs slightly
+worse. By visualizing the different examples (Figure 2),
+we found that without this objective, the augmentation
+transforms examples which were near the hooks and
+Fig. 2.
+Augmented rope data generated without the delta minimum
+distance objective. On the left is the original transition, under the hook.
+On the right is the augmented transition, which is far from the hook.
+Without the delta minimum distance objective, data can be augmented
+away from interesting regions, becoming less relevant. This is based
+on the heuristic that contact and near-contact events are relevant for
+manipulation.
+protrusions far into free space. In contrast, with the delta
+minimum distance objective, these examples stay near
+the hooks. Since the planning tasks involve moving in
+narrow passages around these hooks, it’s more relevant to
+produce more examples in this area. Hence, by preserv-
+ing the distance to nearby obstacles, we also tend to keep
+examples in areas of interest. In the planar pushing task,
+however, omitting the delta minimum distance objective
+did not have a notable effect. This could be in part due
+to the cluttered nature of the scene, which means that
+most transformations are small.
+Finally, we ﬁnd that the valid transformation objective
+can be omitted without effecting performance in these
+two tasks. In the planar pushing case this is completely
+expected, because there are no SE(2) transformations
+which are always invalid or irrelevant. However, in the
+rope experiment, this result is less intuitive. We found
+that omitting this objective occasionally produced aug-
+mentations where the rope is ﬂoating sideways in physi-
+cally impossible states. This result suggests that even if a
+few augmentations are invalid or irrelevant, training on
+the augmentations still signiﬁcantly outperforms using
+no augmentations. Even if omitting the objective does
+not degrade performance in these experiments, it is a
+natural term to include and may be beneﬁcial in other
+applications.
+B. Choosing the Number of Augmentations
+Our method produces multiple distinct augmentations
+for each original example. More augmentations should
+improve generalization after training, but at the cost
+of additional computation time. In this experiment, we
+explore how the number of augmentations per-example
+arXiv:2205.02886v4  [cs.RO]  20 Jul 2022
+
+===== PAGE 12 =====
+affects generalization. We tested this in the rope domain
+on the task of learning the constraint checker. The
+original un-augmented dataset came from the ﬁrst three
+iterations of learning. With these examples, we then
+generated varying numbers of augmentations for each
+example and evaluated on a held-out test example drawn
+from the fourth iteration. Figure 3 shows three rope
+transitions labeled 0 from the original three training
+examples, followed by the held-out test example. In-
+tuitively we would expect, with enough augmentations,
+that from these original training examples we would be
+able to generate augmented examples which are very
+similar to the held-out test example.
+Fig. 3.
+(top) These three original training example show rope
+transitions with inaccurate predictions, where the rope is predicted to
+move inside the hook on the engine. (bottom) The test transition is
+similar, but is not identical. The proposed augmentation method can
+move the rope transition while ensuring it still intersects the hook in
+a similar way, which allows it to generate augmentations like the test
+example.
+For each number of augmentations, we generated 3
+augmented datasets (using different random seeds) and
+trained 3 models on each dataset (again using different
+random seeds), for a total of 9 data points for each
+number of augmentations. The results are shown in
+Figure 4. The y-axis is the classiﬁer output on the test
+example, which has a true label of 0 (lower is better).
+Without any augmentations, the classiﬁer has an output
+near 1, which is incorrect. Improvement began around 10
+augmentations, and plateaued by 20. Since computation
+cost was not signiﬁcant, we chose 25 augmentations per-
+example for all experiments in the main text.
+C. Hyperparameters
+The maximum number of iterations for stepping and
+projecting are Np = 5 and Mp = 25, and we stop the
+outer loop if the change in transform is ever less than
+δp = 0.001. When solving Problem 3, we stop if the
+gradient is smaller than ϵp = 0.0003. There are also
+Fig. 4.
+Number of augmentations versus classiﬁer output on a
+test example. Lower is better. Performance plateaus at around 25
+augmentations, in this example.
+learning rate, learning rate decay, and weighting param-
+eters used when solving Problem 3. For the objective
+function weighting terms, we use β1 = 0.05, β2 =
+1, β3 = 1, β4 = 0.1. The weighting terms were tuned
+so that the magnitude of the different weighted losses
+terms were comparable, and learning rate and number
+of iterations were tuned to maximize convergence. All
+values used are documented in our code, which can be
+found on our project website.

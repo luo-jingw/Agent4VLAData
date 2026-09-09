@@ -47,3 +47,6 @@
 | 2026-09-09 16:01 | 2505.04999 | CLAM: Continuous Latent Action Models for Robot Learning from Unlabeled Demonstr | 4757979 B |
 | 2026-09-09 16:15 | 2508.01600 | CLASS: Contrastive Learning via Action Sequence Supervision for Robot Manipulati | 38533691 B |
 | 2026-09-09 16:15 | 2604.09824 | ProGAL-VLA: Grounded Alignment through Prospective Reasoning in Vision-Language- | 5561942 B |
+| 2026-09-09 16:27 | 2603.19131 | From Inference Efficiency to Embodied Efficiency: Revisiting Efficiency Metrics  | 2485794 B |
+| 2026-09-09 16:27 | 2205.02886 | Data Augmentation for Manipulation | 6263678 B |
+| 2026-09-09 16:27 | 2310.14196 | Learning to Discern: Imitating Heterogeneous Human Demonstrations with Preferenc | 1016894 B |

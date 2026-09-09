@@ -181,3 +181,13 @@ GAP-04）[paper_019](https://arxiv.org/abs/2401.12963), [paper_021](https://arxi
 - RQ4.6（时序保真：驻留/停顿的对齐语义、时间规整）**仍为空缺**——多轮
   检索（temporal alignment manipulation / DTW action / time warp action）
   无命中。详见 GAP-12。
+
+
+**第二批网格（框架核心点，3 篇）：**
+
+- Embodied Efficiency 度量框架（把"执行更快"变成可测指标集：能耗代理
+  τ/L/L_joint/J/R + SR）[paper_046](https://arxiv.org/abs/2603.19131)——C7 效率实证的基础。
+- Data Augmentation for Manipulation（valid/relevant/diverse 形式化；增强作用于
+  轨迹层）[paper_047](https://arxiv.org/abs/2205.02886)——C4 增强合法性的定义框架。
+- Learning to Discern（偏好+表示学习处理异构演示）[paper_048](https://arxiv.org/abs/2310.14196)——C6 多样化与
+  数据效率。

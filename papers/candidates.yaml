@@ -777,3 +777,44 @@ papers:
   keywords: []
   relevance: high
   notes: RQ4.1/4.4
+- id: paper_046
+  title: 'From Inference Efficiency to Embodied Efficiency: Revisiting Efficiency
+    Metrics for Vision-Language-Action Models'
+  authors:
+  - Zhuofan Li
+  - Hongkun Yang
+  year: 2026
+  source: arxiv
+  source_id: '2603.19131'
+  url: http://arxiv.org/abs/2603.19131
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: C7 效率度量
+- id: paper_047
+  title: Data Augmentation for Manipulation
+  authors:
+  - Peter Mitrano
+  - Dmitry Berenson
+  year: 2022
+  source: arxiv
+  source_id: '2205.02886'
+  url: http://arxiv.org/abs/2205.02886
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: C4 增强综述
+- id: paper_048
+  title: 'Learning to Discern: Imitating Heterogeneous Human Demonstrations with Preference
+    and Representation Learning'
+  authors:
+  - Sachit Kuhar
+  - Shuo Cheng
+  year: 2023
+  source: arxiv
+  source_id: '2310.14196'
+  url: http://arxiv.org/abs/2310.14196
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: C6/C4 异构演示

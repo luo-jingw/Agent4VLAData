@@ -184,6 +184,11 @@ episode 划分防自相关泄漏"这条规则在数据集论文中几乎从不�
 | [paper_044](https://arxiv.org/abs/2508.01600) | direct | 支持 | CLASS：以 DTW 动作序列相似度监督 Soft InfoNCE 拉近/推开视觉观察表示；动作序列作监督信号不进编码器；静态+动态均值 85%/91% vs 基线 63%/77% | 全文 | 高 |
 | [paper_045](https://arxiv.org/abs/2604.09824) | direct | 支持 | ProGAL-VLA：符号-实体 GAC InfoNCE（tau=0.07, lambda=0.1）作对齐度量；语言漠视条件互信息 0.36-0.57 → 0.08-0.19；检索 Recall@1 0.41→0.71 | 全文 | 高 |
 
+
+| [paper_046](https://arxiv.org/abs/2603.19131) | direct | 支持 | Embodied Efficiency 度量框架（tau/L_ee/L_joint/J/R + SR，能量代理）；把"执行更快"变成可测指标 | 全文 | 高 |
+| [paper_047](https://arxiv.org/abs/2205.02886) | direct | 支持 | Data Augmentation for Manipulation：valid/relevant/diverse 形式化；刚体变换作用于轨迹层（与 action 增强同构） | 全文 | 高 |
+| [paper_048](https://arxiv.org/abs/2310.14196) | direct | 支持 | Learning to Discern：偏好+表示两段式处理异构演示；39/50 top-good 等 | 全文 | 高 |
+
 **首轮结论**：动作模态对齐有两条实证路线——显式编码（tokenizer/码本，036/042）与
 潜表示对齐（040/041/043）；"连续性"是关键分歧（CLAM 74% vs 16%）。跨本体以
 行为/母题/通用码本对齐（040/041/042），与 sim-实 对齐迁移同构（衔接 OPT-002）。
