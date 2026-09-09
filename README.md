@@ -25,43 +25,43 @@ VLA（Vision-Language-Action）数据处理 agent 的调研与设计仓库。
 
 ## 文件树（含逻辑流转）
 
-角色标注：①入口地图 / ②现状与约束 / ③证据链 / ④设计与机会 / ⑤过程资产。
+角色标注：地图 / 现状与约束 / 证据链 / 设计与机会 / 过程资产。
 
 ```
 agent4data/
 ├── README.md ────────────────── 本文件：导航入口
 ├── AGENTS.md ────────────────── 模板规范（一切显式、状态唯一归属）
-├── PROJECT.md ───────────────── ② 项目约束与事实承诺（稳态假设、文档边界）
-├── plan.md ──────────────────── ⑤ 调研阶段计划（13 phase 已完成）
-├── issues.md ────────────────── ② 未决问题（001 次优 / 002 观测 gap / 003 终态歧义）
-├── opportunities.md ─────────── ④ 机会候选（OPT-001 语义旋钮 / OPT-002 real2sim 捷径）
+├── PROJECT.md ───────────────── 现状 项目约束与事实承诺（稳态假设、文档边界）
+├── plan.md ──────────────────── 过程 调研阶段计划（13 phase 已完成）
+├── issues.md ────────────────── 现状 未决问题（001 次优 / 002 观测 gap / 003 终态歧义）
+├── opportunities.md ─────────── 设计 机会候选（OPT-001 语义旋钮 / OPT-002 real2sim 捷径）
 │
 ├── docs/                        ── 已接受的世界模型（verified）
 │   ├── reports/
-│   │   ├── [top_level_view.md](docs/reports/top_level_view.md) ─ ① 五面思维地图（问题怎么归属）
-│   │   └── [main_report.md](docs/reports/main_report.md) ───── ⑤ 完整论证（背景档案）
+│   │   ├── [top_level_view.md](docs/reports/top_level_view.md) ─ 地图 五面思维地图（问题怎么归属）
+│   │   └── [main_report.md](docs/reports/main_report.md) ───── 过程 完整论证（背景档案）
 │   ├── survey/
-│   │   ├── [research_questions.md](docs/survey/research_questions.md) ─ ③ 调研范围与证据标准
-│   │   ├── [glossary.md](docs/survey/glossary.md) ───────────────── ③ 术语表
-│   │   ├── [survey_findings.md](docs/survey/survey_findings.md) ─── ③ 综述定稿（文献结论）
-│   │   └── [agent_basics_tutorial.md](docs/survey/agent_basics_tutorial.md) ─ ③ agent 教学
+│   │   ├── [research_questions.md](docs/survey/research_questions.md) ─ 证据 调研范围与证据标准
+│   │   ├── [glossary.md](docs/survey/glossary.md) ───────────────── 证据 术语表
+│   │   ├── [survey_findings.md](docs/survey/survey_findings.md) ─── 证据 综述定稿（文献结论）
+│   │   └── [agent_basics_tutorial.md](docs/survey/agent_basics_tutorial.md) ─ 证据 agent 教学
 │   └── design/
-│       └── [design_framework.md](docs/design/design_framework.md) ─ ④ L0–L4 设计框架
+│       └── [design_framework.md](docs/design/design_framework.md) ─ 设计 L0–L4 设计框架
 │
 ├── design/                     ── 未验证区（草稿，不属 world model）
-│   ├── [problems_and_requirements.md](design/problems_and_requirements.md) ─ ★② 现状综述：
+│   ├── [problems_and_requirements.md](design/problems_and_requirements.md) ─ ★现状 现状综述：
 │   │     问题 → 方案局限 → 必需功能与接口 → 证据分级（见下）
-│   └── [design_draft.md](design/design_draft.md) ─────────────────── ④ 具体设计草稿（TBD）
+│   └── [design_draft.md](design/design_draft.md) ─────────────────── 设计 具体设计草稿（TBD）
 │
 ├── synthesis/                  ── 证据链（查证用）
-│   ├── [evidence_matrix.md](synthesis/evidence_matrix.md) ── ③ (论文, 研究问题) → 证据等级
-│   ├── [gap_list.md](synthesis/gap_list.md) ──────────────────── ③ 缺口（含 blocking 状态）
-│   └── [review_record.md](synthesis/review_record.md) ────────── ⑤ 评审与修订记录
+│   ├── [evidence_matrix.md](synthesis/evidence_matrix.md) ── 证据 (论文, 研究问题) → 证据等级
+│   ├── [gap_list.md](synthesis/gap_list.md) ──────────────────── 证据 缺口（含 blocking 状态）
+│   └── [review_record.md](synthesis/review_record.md) ────────── 过程 评审与修订记录
 │
-├── papers/                     ── ③ 文献库（candidates/metadata/bibtex/raw 文本）
-├── notes/extractions/          ── ③ 35 篇逐篇抽取笔记
+├── papers/                     ── 证据 文献库（candidates/metadata/bibtex/raw 文本）
+├── notes/extractions/          ── 证据 35 篇逐篇抽取笔记
 ├── scripts/                    ── 检索/下载/检查脚本（观测型）
-├── logs/                       ── ⑤ 搜索/下载/决策记录
+├── logs/                       ── 过程 搜索/下载/决策记录
 ├── reference/                  ── 现有方法包（只读参照）
 └── .claude/skills/             ── 项目技能（research_skill 等）
 ```
@@ -84,8 +84,8 @@ issues.md（登记新问题，如 ISSUE-003）
 
 - ★ = 日常主要阅读点；其余文件按需查证（`logs/`、`plan.md`、`main_report.md`、
   `review_record.md` 为历史档案）。
-- 逻辑链 = ① 地图定归属 → ② 现状与约束 → ③ 证据侧翼 → ④ 设计应对 →
-  未决回流 ②；⑤ 过程资产只做溯源。
+- 逻辑链 = 地图定归属 → 现状与约束 → 证据侧翼 → 设计应对 → 未决回流现状；
+  过程资产只做溯源。
 - 证据分级（[社区一致] / [单篇受控] / [本项目实测] / [引用未核验]）见
   `problems_and_requirements.md` §4。
 
