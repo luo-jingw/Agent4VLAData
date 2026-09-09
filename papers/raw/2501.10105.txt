@@ -1,0 +1,1801 @@
+
+===== PAGE 1 =====
+Universal Actions for Enhanced Embodied Foundation Models
+Jinliang Zheng* 1,2,5, Jianxiong Li* † 1, Dongxiu Liu* 4,1, Yinan Zheng1,
+Zhihao Wang3,1, Zhonghong Ou4, Yu Liu2, Jingjing Liu1, Ya-Qin Zhang1, Xianyuan Zhan‡ 1,5,6
+1 AIR, Tsinghua University, 2 Sensetime Research, 3 Peking University
+4 Beijing University of Posts and Telecommunications, 5 Shanghai AI Lab, 6 BAAI
+{zhengjl23, li-jx21}@mails.tsinghua.edu.cn
+zhanxianyuan@mail.tsinghua.edu.cn
+Abstract
+Training on diverse, internet-scale data is a key factor in
+the success of recent large foundation models. Yet, using the
+same recipe for building embodied agents has faced notice-
+able difficulties. Despite the availability of many crowd-
+sourced embodied datasets, their action spaces often ex-
+hibit significant heterogeneity due to distinct physical em-
+bodiment and control interfaces for different robots, caus-
+ing substantial challenges in developing embodied founda-
+tion models using cross-domain data.
+In this paper, we
+introduce UniAct, a new embodied foundation modeling
+framework operating in a Universal Action Space. Our
+learned universal actions capture the generic atomic behav-
+iors across diverse robots by exploiting their shared struc-
+tural features, and enable enhanced cross-domain data uti-
+lization and cross-embodiment generalizations by eliminat-
+ing the notorious heterogeneity. The universal actions can
+be efficiently translated back to heterogeneous actionable
+commands by simply adding embodiment-specific details,
+from which fast adaptation to new robots becomes sim-
+ple and straightforward.
+Our 0.5B instantiation of Uni-
+Act reaches 14X larger SOTA embodied foundation mod-
+els in extensive evaluations on various real-world and sim-
+ulation robots, showcasing exceptional cross-embodiment
+control and adaptation capability, highlighting the cru-
+cial benefit of adopting universal actions. Project page:
+https://2toinf.github.io/UniAct/
+1. Introduction
+In fields like natural language processing and computer vi-
+sion, foundation models trained on vast and diverse data
+sources have demonstrated remarkable success and strong
+generalization ability, highlighting the benefits of learn-
+*Equal contribution
+†Project Lead
+‡Corresponding author
+Figure 1. Universal action space holds the potential to be versatile
+to ANY domain-specific actions.
+ing general-purpose models over task-specific counterparts
+[1, 5, 40, 62]. Inspired by these successes, developing ver-
+satile embodied foundation models that are capable of han-
+dling cross-task, cross-environment, and cross-embodiment
+generalization, offers a promising pathway towards building
+general-purpose embodied agent [8, 17, 18, 28, 31, 61, 68].
+However, significant challenges arise from the substan-
+tial heterogeneity of embodied data [20, 49, 64]. Such het-
+erogeneity is evident not only in visual discrepancies caused
+by variations in camera placements (e.g., wrist or third-
+person view) and environmental conditions (e.g., lighting
+or background variations), but more critically, in action
+heterogeneity [17, 48, 65]. 1) Robots with different em-
+bodiment (e.g., different degrees of freedom or distinctions
+across robotic arms, quadrupeds, and cars) possess entirely
+distinct action spaces [68]. 2) Furthermore, the diversity
+in control interfaces (e.g., end effector (EEF) position or
+velocity controller for robotics arms) leads to fundamen-
+tally different physical meanings for action commands [49].
+3) Even when actions are collected from the same robotic
+platform but by different human manipulators, the multi-
+modality in human behaviors also exacerbates such het-
+arXiv:2501.10105v2  [cs.RO]  8 Mar 2025
+
+===== PAGE 2 =====
+erogeneity [14, 34, 41, 55]. Consequently, embodied ac-
+tion data collected across different robots and institutions
+tend to reside on largely disjoint manifolds within the orig-
+inal physical spaces (e.g., position and rotation of end-
+effectors) [17, 65], significantly complicating data sharing
+across different data sources.
+Currently, no existing solution can adequately address
+the issue of action heterogeneity. Most prior studies forcibly
+treat different action spaces as equivalent and apply the
+same discretization or normalization techniques, leading to
+a potentially conflicted action space where similar action
+encodings could represent entirely different physical mean-
+ings [31, 49, 61]. While some efforts attempt to design
+a physically interpretable action space that is applicable
+across various robotic systems by na¨ıvely aggregating all
+individual action spaces [17, 41]. This requires extensive
+human engineering efforts and fails to uncover and lever-
+age the inherent connections across different embodied ac-
+tion spaces, impeding the effective development of general-
+purpose embodied foundation models.
+In this paper, we introduce UniAct (Embodied founda-
+tion models with Universal Actions), a novel embodied
+modeling framework that is constructed in the Universal
+Action Space rather than the troublesome heterogeneous ac-
+tion spaces. The universal actions learned in UniAct encode
+the generic atomic behaviors that are generalizable across
+diverse robotics platforms without being constrained to spe-
+cific embodiment mechanics and control interfaces. For in-
+stance, different robots should perform similar behaviors of
+“moving forward” when facing a target directly ahead, de-
+spite exhibiting totally different control signals due to their
+embodiment gaps. This abstraction transcends specific em-
+bodiment and control constraints, allowing it to be univer-
+sally applicable across diverse robotics platforms, provid-
+ing significant potential to enhance cross-embodiment data
+utilization and model generalization. In this sense, mini-
+mal parameters and data are sufficient to decode the univer-
+sal action to an embodiment-specific one, since the general
+motion behaviors have been captured in the universal space
+and the decoder simply needs to add some embodiment de-
+tails for each robotic platform, therefore enabling efficient
+adaptation across new robotic systems during deployment.
+In details, UniAct employs a shared Vision Language
+Model (VLM) [6, 32, 35, 39, 40, 72] to construct the univer-
+sal action space as a vector-quantized codebook [63]. Akin
+to a learnable skill library [34, 45, 55], each code encap-
+sulates an atomic behavior versatile enough to be executed
+by diverse robots. This setup acts as a crucial information
+bottleneck, driving the VLM to identify and exploit shared
+primitive behaviors across diverse action spaces. This ex-
+traction scheme enables effective generalization of behav-
+iors for cross-embodiment control, making our 0.5B in-
+stantiation, UniAct-0.5B, surpasses models 14x larger, such
+as OpenVLA [31] with 7B parameters, in a wide range
+of tasks. The derived universal actions can be translated
+into precise, actionable commands for various embodiments
+through streamlined heterogeneous decoders.
+These de-
+coders take the universal action as conditional input and
+augment it with embodiment-specific features from their
+unique observational data.
+This allows for flexible cus-
+tomization according to specific requirements, such as the
+inclusion or exclusion of proprioceptive features or vari-
+ations in the number of camera views.
+Fast adaptation
+to new domains or robotic platforms can be achieved by
+simply adding new heads as lightweight decoders for new
+tasks. Our comprehensive evaluations on challenging task
+settings, including large view changes and an unseen robot
+not present in the training data, confirm UniAct’s remark-
+able transferability, demonstrating great advantages of de-
+veloping embodied foundation models within a universal
+action space over the conventional heterogeneous spaces.
+2. Related Work
+Multimodal Foundation Models. Large Language Models
+(LLMs) [1, 5, 40, 62] have exhibited remarkable capabili-
+ties across a variety of tasks, showcasing impressive zero-
+shot and in-context learning capabilities [16]. Building on
+this, large Vision Language Models (VLMs) have been de-
+veloped by integrating vision and language into a unified
+tokenized space, demonstrating outstanding multimodal
+instruction-following abilities [6, 21, 32, 35, 58, 59, 72].
+Their success is primarily attributed to extensive internet-
+scale pretraining, which leverages vast and diverse high-
+quality data corpora from the Internet.
+Embodied Foundation Models.
+When developing em-
+bodied foundation models, an additional crucial modal-
+ity—action (the deployable control signals that robots can
+interpret and execute, e.g., EEF position/velocity)—is in-
+corporated during training.
+State-of-the-art models are
+often constructed as Vision Language Action models
+(VLA) [9, 10, 18, 31, 49], integrating visual and linguis-
+tic inputs with actionable outputs. However, the action la-
+bels collected from different robotics platforms and labs ex-
+hibit significant heterogeneity [30, 49, 64], impeding effec-
+tive data sharing across different sources. To sidestep this
+challenge, many works employ large-scale action-free vi-
+sion language data, such as out-of-domain human activi-
+ties [15, 24, 25], to firstly obtain a good embodied VLMs,
+then finetune it to a specialized VLA given a small set of
+action labels from a specific robot platform [3, 4, 7, 10, 12,
+19, 22, 29, 36, 37, 42, 47, 66, 67, 69, 72]. While these
+methods can enhance sample efficiency for specific robots
+on a narrow set of tasks, they suffer from serious perfor-
+mance bottlenecks towards building a generalist embodied
+agent [7, 19, 56], as the action data gathered from any sin-
+gle robot platform is far less comprehensive than crowed-
+sourced data collected globally [20, 30, 49].
+
+===== PAGE 3 =====
+Figure 2. UniAct leverages diverse data sources for generalist embodied control. A shared Vision Language Model (VLM) extracts
+transferable features across various data sources; The output tokens are converted into universal actions, represented as vector-quantized
+codes where each code captures common atomic behaviors across different robots; The Gumbel Softmax-selected universal action is then
+translated back into specific commands through different heads, each encoding embodiment-specific features for individual robots.
+Some recent works leverage the abundant heterogeneous
+action labels to develop generalist robot policies for cross-
+embodiment control. RT-X series [49], Octo [61] and Open-
+VLA [31] leverage data from different 7-DoF robots to en-
+hance generalization over the one trained on single robot
+source. Step further, CrossFormer [17], RDT [41], π0 [8]
+and Yang et al. [68] explore the data from robots with to-
+tally distinct mechanical structures, such as those in ma-
+nipulation and navigation, and from single-arm versus bi-
+manual systems.
+However, existing works either ignore
+the heterogeneous properties of action spaces of different
+sources, crudely treating them as equal without considering
+their inherent conflicts [31, 49, 61], or na¨ıvely aggregate
+all action spaces together, failing to exploit the underlying
+shared commonalities across different robots [8, 17, 41, 68].
+Embodied Models with Latent Action Spaces. Our work
+aims to extract a versatile universal action space, akin to
+a latent space but encodes common atomic control behav-
+iors and patterns across various robotic platforms. Some
+works develop embodied models in latent spaces [4, 13, 34,
+45, 54, 55, 69, 70]. Among them, LAPA [69], IGOR[4],
+and LAPO [54] develop a latent action space through joint
+self-supervised training of inverse and forward dynamics
+models on action-free videos [11]. However, the latent ac-
+tions extracted in this way primarily focus on explaining the
+changes between video frames, lacking embodiment con-
+siderations or direct causal connections to actual control
+signals. To see why this is problematic, assuming we add
+a new object in front of the robot, the visual inputs will
+change but this has nothing to do with the control behavior,
+an ideal encoded action should not capture such distracted
+information. BeT [55], VQ-BeT [34] and QueST [45] also
+build a discrete codebook of actions via K-means cluster-
+ing [43] or Vector Quantization [33, 44, 63], where each
+code in the codebook encodes a different clustering center
+for action labels. These works primarily focus on simpler
+domains with a single embodiment type, which enhances
+the ability to model complex human demonstrations with
+multiple modes, but struggles to address action heterogene-
+ity across different embodiments. In contrast, our universal
+actions integrate goal information from the embodiment-
+agnostic language modality with supervision on the actual
+action signal, providing a versatile and abstracted skill li-
+brary to facilitate cross-embodiment sharing. Moreover, our
+research delves into a more complex heterogeneous setting
+and develops a large embodied foundation model, moving
+beyond the limited scopes considered in previous studies.
+3. The UniAct Framework
+We introduce UniAct, an embodied foundation modeling
+framework designed to operate in a Universal Action Space,
+adept at bridging domain gaps and facilitating training on
+
+===== PAGE 4 =====
+large-scale heterogeneous data. We first discuss the desir-
+able properties of universal actions, and then provide a de-
+tailed discussion about the model architecture and learning
+scheme for extracting and decoding universal actions from
+heterogeneous cross-embodiment data.
+3.1. Universal Action Space
+The desired universal action space is that all movements,
+driven by heterogeneous control signals from various em-
+bodiments, can be distilled into shared latent atomic behav-
+iors, despite their distinct physical meanings. We refer to
+these abstract behavior representations as universal actions,
+which are shared across all physical embodiments.
+We are particularly interested in exploring a discrete uni-
+versal action space. This is motivated by the robust capabil-
+ities of discrete representations in complex reasoning, plan-
+ning, and predictive learning, as demonstrated by the suc-
+cess of LLMs and VLMs [1, 5, 6, 60] and Vector Quantized
+Variational Autoencoders [52, 63]. In this paper, we model
+the universal action space as U ∈RN×D and implement it
+with a vector quantized codebook [63], represented as
+U = (u1, u2, u3...uN),
+(1)
+where N is the space size and each ui is a D-dimensional
+vector embedding that represents a generic atomic behavior.
+Several prior studies [4, 11, 69] pursued a similar con-
+cept of constructing generic, latent actions by inferring
+them as the dynamic changes observed between two visual
+states. However, this scheme suffers two key limitations,
+leading to suboptimal and noisy universal action spaces:
+• The observational changes encompass not only the out-
+comes of robots, but also external factors (e.g., the ap-
+pearance of new objects, human intervention, etc.) that
+have no causal connection to the actual control.
+• The interval between two observations critically influ-
+ences the semantic interpretation of the extracted atomic
+behaviors, making standardizing behavioral interpreta-
+tion complicated across different data sources.
+3.2. Universal Action Extraction
+To derive the desirable universal action space, we propose a
+new method for extracting universal actions, pivoting away
+from solely focusing on explaining observational changes,
+but more on understanding task progression. Specifically,
+we fine-tune a large vision language model as the univer-
+sal action extractor, which outputs the likelihood p(u|o, g)
+of selecting universal action u given observation o and task
+goal g (e.g., language instruction). We want the correspond-
+ing adopted universal action u∗that matches the atomic be-
+havior encoded in the embodied data to satisfy:
+u∗= arg max
+u∈U
+p(u|o, g)
+(2)
+Akin to planning in the latent space [13, 50, 51], the ex-
+tractor aims to infer the most relevant universal action for
+solving a given task g under the observation o, thereby
+crafting universal actions directly related to task progres-
+sion rather than merely identifying the noisy observational
+changes. We employ a VLM to achieve this purpose due
+to its strong visual-language reasoning capability. More-
+over, fine-tuning a pre-trained VLM also greatly improves
+the sample efficiency when learning the universal actions.
+This extractor creates a crucial information bottleneck for
+cross-domain generalization, as different robots are forced
+to use the same discrete codebook U to capture the generic
+and shared atomic behaviors across all domains.
+To implement this, however, the non-differentiable
+arg max impedes the gradient propagation.
+So, we use
+categorical reparametrization during the training, utilizing
+the Gumbel-Softmax technique to facilitate gradient estima-
+tion [27]. Specifically, the forward procedure is as follows:
+u∗=
+n
+X
+i=1
+wiui,
+(3)
+where wi is the weight for each universal action ui, com-
+puted using the Gumbel Softmax function:
+wi =
+exp((log p(ui|o, g) + ϵi)/τ
+Pn
+k=1 exp((log p(uk|o, g) + ϵk)/τ
+(4)
+Here, ϵi is a Gumbel noise sampled from the Gumbel dis-
+tribution, and τ is the temperature to smooth the probability
+distribution. To promote parameter space exploration in the
+early training stage and the stability of model convergence,
+we gradually decay temperature τ during the training pro-
+cess. Our proposed universal action extractor is illustrated
+in Figure 2, please refer to the Appendix A for more details.
+3.3. Heterogeneous Decoding
+To efficiently translate the highly abstract behaviors in the
+universal action space into precise, embodiment-specific
+control signals, it is crucial to integrate more embodiment
+detail, such as control type, proprioception, and distinct
+observations.
+To address this, we introduce a series of
+lightweight decoder heads to adapt for each type of em-
+bodiment, denoted as H = (h1...hk...hK), K is number
+of training domains. Each head hk is specifically designed
+to learn the mapping from universal action u∗and visual
+observation o to heterogeneous control signals for the em-
+bodiment in domain k. The operation of each decoder head
+hk can be formulated as:
+ˆa(k) = hk(u∗, o),
+(5)
+where ˆa(k) is the predicted control signals. As overly com-
+plex decoding heads with excessive parameters could over-
+fit to the data distribution of the target domain, all hetero-
+geneous heads are implemented as simple MLP networks
+
+===== PAGE 5 =====
+that take the u∗and visual features o extracted by a shared
+vision backbone as inputs. By keeping the decoding heads
+lightweight, we ensure that the majority of learning is con-
+ducted for the universal actions, thereby maximally improv-
+ing generalization across different embodiments.
+3.4. Training Procedure
+The primary learning objective of UniAct is to distill a uni-
+versal action space that is shared across diverse embodi-
+ments, with the critical feature that these universal actions
+can be precisely translated back into domain-specific con-
+trol signals. To facilitate this, the model is trained using a
+comprehensive collection of K heterogeneous datasets D =
+(D1...Dk...DK). Each Dk comprises a set of robotic control
+trajectories, represented as τ (k)
+i
+= {o(k)
+i,t , a(k)
+i,t , gi}1≤t≤T ,
+where τ (k)
+i
+is the i-th trajectory of maximum length T, con-
+taining observations, actions, and goals. Concretely, Uni-
+Act ingests o and g as inputs to predict the universal ac-
+tion u∗using the universal action extractor, which is then
+mapped along with o to ˆa(k) using the heterogeneous de-
+coding heads. The overall training objective is as follows:
+min
+U,θ
+K
+X
+k=1
+Eai∈τi,τi∈DkLk(ˆa(k), a(k)
+i
+)
+(6)
+Here, Lk is the behavior cloning loss, which is customiz-
+able based on the nature of the action labels in each dataset,
+for example, employing Cross-Entropy for discrete actions
+and MSE, Huber loss, or diffusion loss [14, 26] for contin-
+uous actions. We optimize the above objective to learn both
+the universal action codebook U as well as the parameters
+θ of the universal action extractor and all heterogeneous de-
+coding heads. Importantly, while U and the universal action
+extractor are concurrently updated throughout each training
+iteration, the heterogeneous heads hk are updated based on
+the domain-specific sampled training batches. This train-
+ing strategy mirrors the philosophy in many meta-learning
+methods [23], which learns both globally shared parame-
+ters that allow adaptation to related tasks, as well as task-
+specific components that guarantee downstream task per-
+formance. Through this approach, UniAct strives to refine
+a robust, adaptive universal action space as well as a decod-
+ing strategy that can be seamlessly integrated with diverse
+embodiments and their specific operational contexts.
+4. Experiments
+In this section, we first describe the detailed implementation
+of the UniAct framework and then present the evaluation
+experiments conducted to answer the following questions:
+• Can universal actions enhance execution performance
+across various embodiments with large domain gaps?
+• Can universal actions be seamlessly transferred to new,
+unseen embodiments?
+• Dose UniAct learn a meaningful universal action space?
+4.1. Experiments Setup
+Implementation Details. In this paper, we build a 0.5B
+instantiation of UniAct on heterogeneous embodied data
+sources to explore a universal action space (U ∈R256×128).
+Specifically, UniAct-0.5B is built upon LLaVA-OneVion-
+0.5B [35], a well-trained VLM which can provide com-
+prehensive multi-modal representations.
+The training of
+UniAct-0.5B is carried out on 64 A100 GPUs with Deep-
+Speed [53] over a span of 10 days, utilizing 1 million
+demonstrations gathered from 28 distinct embodiments.
+The training data combines several open-sourced robot col-
+lections, including Open-X Embodiment [49], Libero [38],
+and Droid [30], standardized to include third-person visual
+observations and language instructions while preserving ac-
+tion heterogeneity. For more details about training and data
+constructions, please refer to the Appendix A.
+Baseline Setup. We select three state-of-the-art (SOTA)
+vision-language-action models including Octo [61], Cross-
+Former [17], OpenVLA [31], and one SOTA pretrained
+VLM model, LAPA [69] as baselines.
+Octo and Cross-
+Former are 0.1B policies, OpenVLA employs a 7B-
+parameter auto-regressive architecture with discrete actions.
+They are trained on about 1 million carefully curated robot
+demonstrations without action heterogeneity, such as pre-
+processing all absolute EEF positions to relative EEF posi-
+tions and removing joint position actions. LAPA is also a
+7B model, but instead of using action labels, it constructs
+latent actions by capturing visual changes between frames
+based on the same robot demonstrations. To adapt LAPA to
+generate real actions, further finetuning with action labels
+is required. In contrast, UniAct-0.5B is trained on a sim-
+ilar scale of data from the same data sources but does not
+employ such tedious data cleaning. We compare UniAct
+with the baseline models to demonstrate its effectiveness in
+extracting universal actions from heterogeneous data.
+4.2. Main Results
+To assess the cross-embodiment generalization capabilities
+of UniAct-0.5B, we conduct “out-of-the-box” evaluations
+on both a real-world WidowX robot [64] and a simulation
+Franka robot from Liu et al. [38]. Both platforms are com-
+monly used in previous works to test the effectiveness of
+generalist robot policies [49, 61, 64], and possess substan-
+tial domain gaps. Given that our training dataset includes
+data from these two embodiments, we can leverage the pre-
+trained heterogeneous heads to translate the universal ac-
+tions seamlessly back into deployable control signals.
+Real-World Robot Evaluation. Following Kim et al. [31],
+we define a comprehensive set of evaluation tasks for real-
+world robots, covering several dimensions of generaliza-
+tion: visual, motion, physical, semantic, and language
+
+===== PAGE 6 =====
+Figure 3. WidowX robot evaluation. We evaluate different axes of generalization ability, covering a total of 19 tasks. Representative tasks
+are presented above. For each task, we evaluate 10 trials and report the average success rate for each suites.
+Figure 4. For benchmarking purpose, we evaluate on the LIBERO benchmark [38] in simulations. LIBERO contains several task suites to
+examine different axes of policy abilities. LIBERO-90 contains 90 tasks and others each contain 10 tasks, covering 130 tasks. For each
+task, we evaluate 20 trials for each model and report the average success rate for each task suites.
+grounding. Overall, each model is evaluated across 190
+rollouts, distributed over 19 tasks with 10 trials each, see
+Appendix B for more details. Representative tasks and re-
+sults are illustrated in Figure 3. To adapt LAPA to WidowX
+robot, we full-tune it on Bridge [64] dataset about 2K gradi-
+ent steps. UniAct-0.5B outperforms 14X larger OpenVLA-
+7B and LAPA-7B in visual, motion, and physical general-
+ization tasks. This shows the substantial benefits of extract-
+ing universal actions from heterogeneous data in enhancing
+robustness to visual distractions and low-level control gen-
+eralization. While OpenVLA leverages a 7B backbone for
+superior semantic understanding and language grounding
+capability, UniAct-0.5B achieves comparable performance
+in semantic generalization and language grounding tasks,
+underscoring its efficiency and effectiveness.
+Simulation Evaluation. We utilize the LIBERO Bench-
+marks [38] for evaluation. Notably, baseline models are not
+initially trained on the simulation data, thus we fine-tune
+them on the LIBERO platform. The data used to train both
+UniAct and the baseline models are fully aligned in terms
+of tasks, data quantity, and image quality. For more details,
+please refer to Appendix A. The benchmark comprises 130
+tasks across five suites: LIBERO-Spatial, -Object, -Goal,
+-Long, and -90. The LIBERO-90 suite includes 90 tasks,
+while each of the other four suites contains 10 tasks. The
+results can be found in Fig 4. UniAct-0.5B surpasses base-
+line models in all suites, demonstrating a significant im-
+provement with an overall average accuracy. This superior
+performance can be attributed to the ability of UniAct to
+bridge domain gaps and extract generalizable atomic behav-
+iors. By leveraging demonstrations from various domains to
+learn the universal actions, UniAct significantly enhances
+task performance on the LIBERO benchmarks.
+4.3. Fast Adaptation to New Embodiment
+Experiment Setup. To assess the fast adaptation ability, we
+evaluate on a new real robot, AIRBOT (Figure 5). We eval-
+uate four different controller interfaces: relative/absolute
+EEF position and relative/absolute joint position. Neither
+UniAct nor the baselines were pre-trained on AIRBOT data.
+We collect 100 demonstrations on this new robot platform
+with the four different types of control interfaces. Consid-
+ering the significant heterogeneity among these control in-
+terfaces, we put a lot of effort into fine-tuning baselines and
+
+===== PAGE 7 =====
+Figure 5. Fast adaptation to new robots. We fine-tune models on an unseen AIRBOT robot with different controller interfaces including
+relative/absolute joint/EEF positions. The task is to stack the small cube on the small cuboid, requiring precise action execution. The
+fine-tuning data is collected w/o any distractors, but we also evaluate a hard version, where the policy should be robust to diverse clutters.
+make sure the model convergence meets the official require-
+ments (e.g., 95% prediction accuracy for OpenVLA).
+Fast Adaptation with UniAct.
+Unlike baseline models
+that require extensive training to bridge the adaptation gap
+across different action types, UniAct can rapidly adapt
+to new embodiments and control interfaces.
+Having al-
+ready learned cross-embodiment behaviors, we facilitate
+fast adaptation by freezing the codebook and the universal
+action extractor. Concurrently, we train four heterogeneous
+decoding heads from scratch for each type of actions with
+the collected demonstrations. Each newly introduced head
+is implemented with a simple MLP that takes the u∗and
+vision features o from a shared vision backbone as inputs.
+Evaluation. We conducted evaluations using both an easy
+and a hard version of the task “stack the cube on another
+cube”. The results can be found in Figure 5. UniAct-0.5B
+demonstrates consistently strong generalization across all
+types of control signals, surpassing the two baseline mod-
+els. Notably, the number of parameters UniAct-0.5B used
+for fine-tuning versus the total model size is the smallest
+(4M / 500M: 0.8%). In comparison, OpenVLA and Octo
+utilize 1.4% (97M / 7000M) and 2% (2M / 100M) of their
+total model sizes, respectively. This efficient parameter uti-
+lization highlights UniAct’s effectiveness and adaptability
+in applying learned universal actions to new tasks and em-
+bodiments with minimal parameter space expansion.
+4.4. Fast Adaptation to New Decoder Head
+Pretrained model Sweep Plate Fold Towel Cup on Plate Transport pen
+LLaVa-OV-0.5B
+7.5
+20
+2.5
+15
+UniAct-0.5B
+45
+62.5
+50
+65
+Table 1. Fast adaptation to Bimanual AIRBOT and ACT head
+We further test whether a more advanced decoder can im-
+prove performance by integrating ACT [? ] into UniAct-
+0.5B. We freeze UniAct-0.5B and adapt it to a Bimanual
+AIRBOT robot, using observations from a top view, two
+wrist views, and proprioception. We collect 250 demos per
+task for 4 tasks and compare UniAct-0.5B with the pre-
+trained LLaVa-OV-0.5B model. Tab 1 shows UniAct’s su-
+perior performance, validating its pretraining effectiveness.
+Additionally, we finetune UniAct-0.5B with the ACT de-
+coder on the LIBERO benchmark, using a top view, wrist
+view, and proprioception. As shown in Figure 4, UniAct
+achieves further improvements, demonstrating its adaptabil-
+ity with advanced decoders and richer observations. Please
+refer to Appendix B.4 for details.
+4.5. In-depth Analysis of Universal Actions
+In this section, we demonstrate that UniAct constructs a
+meaningful universal action space from two perspectives:
+1) Consistent semantical behaviors are encoded as the same
+universal actions across diverse embodiments; 2) Universal
+action extractor can efficiently exploit this shared structure
+in the universal action space across different robots.
+Interpretation of Universal Actions. We manually inspect
+the decoded behaviors for all 256 universal actions across
+different robots and observe at least 40% of them exhibit ex-
+act consistency. Fig 6 shows that the same universal action
+can be decoded back to consistent behaviors for different
+robots even with huge gaps. For instance, different robots
+with different viewpoints, and even those undergoing huge
+sim-to-real gaps, can execute similar semantical meaningful
+behaviors given the same universal action.
+Control with the Universal Action. Therefore, we can di-
+rectly interact with the robot to perform desired behaviors
+by choosing a sequence of universal actions. Fig 7 clearly
+demonstrates that we can control the robot using univer-
+sal actions without any robotic knowledge, such as learning
+complex forward/inverse kinematics transformations. This
+also underscores the potential of utilizing the universal ac-
+tion extractor as an action tokenizer to facilitate future de-
+ployments of more advanced embodied foundation models
+by planning in this discrete universal action space.
+Statistical Analysis For Universal Action Utilization.
+Here, we summarize the universal action utilization dis-
+tributions for different tasks across different robots.
+Ta-
+ble 2 clearly shows that the utilization distributions for the
+same tasks and different robots are similar, but for differ-
+
+===== PAGE 8 =====
+Figure 6. We manually check the decoded behavior for all 256 universal actions across different robots and observe at least 40% show
+exact consistency, even with varying viewpoints and significant domain gaps between the real world and simulation. Visualizations of
+repeated executions of the same universal action across different robots reveal clear, semantically meaningful, and consistent behaviors.
+Figure 7. Since all universal actions encode semantic meaningful behaviors, we can directly play with it! By selecting the desired behavior
+using its corresponding universal action ID, we can manually control the robot to perform complex tasks such as Pick & Place.
+PWidowX
+PFranka
+OWidowX
+OFranka
+PWidowX
+0.
+0.34
+0.45
+0.51
+PFranka
+0.34
+0.
+0.60
+0.58
+OWidowX
+0.45
+0.60
+0.
+0.44
+OFranka
+0.51
+0.58
+0.44
+0.
+Table 2. We calculate the JS divergence of the universal action uti-
+lization distributions for two tasks in two distinct domains (lower
+means more consistent). P and O denote “pick up the bowl“ and
+“open the drawer“, respectively. WidowX and Franka denote the
+robot in the real world and simulation in Figure 3-4, respectively.
+ent tasks and same robots are different, demonstrating that
+the universal action extractor indeed correctly exploits these
+embodiment-agnostic atomic behaviors by focusing more
+on task progressions over embodiment details.
+5. Conclusion
+We introduce UniAct, an innovative embodied foundation
+modeling framework that operates in a Universal Action
+Space to address the challenge of action heterogeneity. This
+universal action space encodes shareable atomic behaviors
+across diverse embodied action spaces to significantly en-
+hance cross-domain data utilization and facilitate cross-
+embodiment generalization, enabling our 0.5B parameter
+model to outperform SOTA models that are 14 times larger.
+Also, the learned universal actions can be precisely trans-
+lated to any embodiment-specific actions with minimal pa-
+rameters through heterogeneous decoding, thus allowing for
+fast adaptation to new robots possessing distinct control
+interfaces and physical properties. Moreover, our learned
+universal action extractor can also be used as a universal
+action tokenizer to power the construction of future large-
+scale embodied foundation models. Currently, UniAct is
+trained with a 0.5B parameter instantiation and evaluated
+mostly on single-arm robotics platforms due to resource
+constraints. Future work will focus on scaling up UniAct
+to larger models and extending its application to a broader
+range of embodiments, including bi-manual robots and even
+autonomous driving, further leveraging its versatile capabil-
+ity and effectiveness in more robotic applications.
+
+===== PAGE 9 =====
+6. Acknowledgment
+This work is supported by funding from Beijing Academy
+of Artificial Intelligence (BAAI) and Wuxi Research Insti-
+tute of Applied Technologies, Tsinghua University under
+Grant 20242001120.
+References
+[1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ah-
+mad, Ilge Akkaya, Florencia Leoni Aleman, Diogo Almeida,
+Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al.
+Gpt-4 technical report.
+arXiv preprint arXiv:2303.08774,
+2023. 1, 2, 4
+[2] Michael Ahn, Anthony Brohan, Noah Brown, Yevgen Cheb-
+otar, Omar Cortes, Byron David, Chelsea Finn, Chuyuan Fu,
+Keerthana Gopalakrishnan, Karol Hausman, et al. Do as i
+can, not as i say: Grounding language in robotic affordances.
+arXiv preprint arXiv:2204.01691, 2022. 16
+[3] Anurag Ajay, Seungwook Han, Yilun Du, Shuang Li, Abhi
+Gupta, Tommi Jaakkola, Josh Tenenbaum, Leslie Kaelbling,
+Akash Srivastava, and Pulkit Agrawal. Compositional foun-
+dation models for hierarchical planning. Advances in Neural
+Information Processing Systems, 36, 2024. 2
+[4] Anonymous.
+IGOR: Image-GOal representations are the
+atomic building blocks for next-level generalization in em-
+bodied AI.
+In Submitted to The Thirteenth International
+Conference on Learning Representations, 2024. under re-
+view. 2, 3, 4
+[5] Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang,
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei
+Huang, et al.
+Qwen technical report.
+arXiv preprint
+arXiv:2309.16609, 2023. 1, 2, 4
+[6] Jinze Bai, Shuai Bai, Shusheng Yang, Shijie Wang, Sinan
+Tan, Peng Wang, Junyang Lin, Chang Zhou, and Jingren
+Zhou. Qwen-vl: A frontier large vision-language model with
+versatile abilities. arXiv preprint arXiv:2308.12966, 2023. 2,
+4
+[7] Kevin
+Black,
+Mitsuhiko
+Nakamoto,
+Pranav
+Atreya,
+Homer Rich Walke, Chelsea Finn, Aviral Kumar, and Sergey
+Levine.
+Zero-shot robotic manipulation with pre-trained
+image-editing diffusion models. In The Twelfth International
+Conference on Learning Representations. 2, 16
+[8] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail,
+Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, Szymon Jakubczak, Tim
+Jones, Liyiming Ke, Sergey Levine, Adrian Li-Bell, Mohith
+Mothukuri, Suraj Nair, Karl Pertsch, Lucy Xiaoyang Shi,
+James Tanner, Quan Vuong, Anna Walling, Haohuan Wang,
+and Ury Zhilinsky. π0: A vision-language-action flow model
+for general robot control, 2024. 1, 3
+[9] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen
+Chebotar, Joseph Dabis, Chelsea Finn, Keerthana Gopalakr-
+ishnan, Karol Hausman, Alex Herzog, Jasmine Hsu, et al.
+Rt-1: Robotics transformer for real-world control at scale.
+arXiv preprint arXiv:2212.06817, 2022. 2
+[10] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen
+Chebotar, Xi Chen, Krzysztof Choromanski, Tianli Ding,
+Danny Driess, Avinava Dubey, Chelsea Finn, et al. Rt-2:
+Vision-language-action models transfer web knowledge to
+robotic control. arXiv preprint arXiv:2307.15818, 2023. 2
+[11] Jake Bruce, Michael D Dennis, Ashley Edwards, Jack
+Parker-Holder, Yuge Shi, Edward Hughes, Matthew Lai,
+Aditi Mavalankar, Richie Steigerwald, Chris Apps, et al. Ge-
+nie: Generative interactive environments. In Forty-first Inter-
+national Conference on Machine Learning, 2024. 3, 4
+[12] Chi-Lam Cheang, Guangzeng Chen, Ya Jing, Tao Kong,
+Hang Li, Yifeng Li, Yuxiao Liu, Hongtao Wu, Jiafeng Xu,
+Yichu Yang, et al. Gr-2: A generative video-language-action
+model with web-scale knowledge for robot manipulation.
+arXiv preprint arXiv:2410.06158, 2024. 2
+[13] Xi Chen, Ali Ghadirzadeh, Tianhe Yu, Jianhao Wang,
+Alex Yuan Gao, Wenzhe Li, Liang Bin, Chelsea Finn,
+and Chongjie Zhang.
+Lapo:
+Latent-variable advantage-
+weighted policy optimization for offline reinforcement learn-
+ing. Advances in Neural Information Processing Systems,
+35:36902–36913, 2022. 3, 4
+[14] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun
+Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song.
+Diffusion policy: Visuomotor policy learning via action dif-
+fusion. The International Journal of Robotics Research, page
+02783649241273668. 2, 5
+[15] Dima Damen, Hazel Doughty, Giovanni Maria Farinella,
+Sanja Fidler, Antonino Furnari, Evangelos Kazakos, Davide
+Moltisanti, Jonathan Munro, Toby Perrett, Will Price, et al.
+Scaling egocentric vision: The epic-kitchens dataset.
+In
+Proceedings of the European conference on computer vision
+(ECCV), pages 720–736, 2018. 2
+[16] Qingxiu Dong, Lei Li, Damai Dai, Ce Zheng, Jingyuan
+Ma, Rui Li, Heming Xia, Jingjing Xu, Zhiyong Wu, Tianyu
+Liu, et al. A survey on in-context learning. arXiv preprint
+arXiv:2301.00234, 2022. 2
+[17] Ria Doshi, Homer Rich Walke, Oier Mees, Sudeep Dasari,
+and Sergey Levine. Scaling cross-embodied learning: One
+policy for manipulation, navigation, locomotion and avia-
+tion. In 8th Annual Conference on Robot Learning. 1, 2,
+3, 5
+[18] Danny Driess, Fei Xia, Mehdi SM Sajjadi, Corey Lynch,
+Aakanksha
+Chowdhery,
+Brian
+Ichter,
+Ayzaan
+Wahid,
+Jonathan Tompson, Quan Vuong, Tianhe Yu, et al. Palm-
+e: an embodied multimodal language model. In Proceedings
+of the 40th International Conference on Machine Learning,
+pages 8469–8488, 2023. 1, 2
+[19] Yilun Du, Sherry Yang, Pete Florence, Fei Xia, Ayzaan
+Wahid, Pierre Sermanet, Tianhe Yu, Pieter Abbeel, Joshua B
+Tenenbaum, Leslie Pack Kaelbling, et al. Video language
+planning. In The Twelfth International Conference on Learn-
+ing Representations. 2, 16
+[20] Hao-Shu Fang, Hongjie Fang, Zhenyu Tang, Jirong Liu,
+Chenxi Wang, Junbo Wang, Haoyi Zhu, and Cewu Lu.
+Rh20t: A comprehensive robotic dataset for learning diverse
+skills in one-shot. In 2024 IEEE International Conference
+on Robotics and Automation (ICRA), pages 653–660. IEEE,
+2024. 1, 2
+[21] Nanyi Fei, Zhiwu Lu, Yizhao Gao, Guoxing Yang, Yuqi Huo,
+Jingyuan Wen, Haoyu Lu, Ruihua Song, Xin Gao, Tao Xi-
+
+===== PAGE 10 =====
+ang, et al. Towards artificial general intelligence via a mul-
+timodal foundation model. Nature Communications, 13(1):
+3094, 2022. 2
+[22] Jensen Gao, Bidipta Sarkar, Fei Xia, Ted Xiao, Jiajun Wu,
+Brian Ichter, Anirudha Majumdar, and Dorsa Sadigh. Phys-
+ically grounded vision-language models for robotic manipu-
+lation. In 2024 IEEE International Conference on Robotics
+and Automation (ICRA), pages 12462–12469. IEEE, 2024. 2
+[23] Jonathan Gordon, John Bronskill, Matthias Bauer, Sebas-
+tian Nowozin, and Richard Turner. Meta-learning probabilis-
+tic inference for prediction. In International Conference on
+Learning Representations, 2019. 5
+[24] Raghav Goyal, Samira Ebrahimi Kahou, Vincent Michal-
+ski, Joanna Materzynska, Susanne Westphal, Heuna Kim,
+Valentin Haenel, Ingo Fruend, Peter Yianilos, Moritz
+Mueller-Freitag, et al.
+The” something something” video
+database for learning and evaluating visual common sense.
+In Proceedings of the IEEE international conference on com-
+puter vision, pages 5842–5850, 2017. 2
+[25] Kristen
+Grauman,
+Andrew
+Westbury,
+Eugene
+Byrne,
+Zachary Chavis, Antonino Furnari, Rohit Girdhar, Jackson
+Hamburger, Hao Jiang, Miao Liu, Xingyu Liu, et al. Ego4d:
+Around the world in 3,000 hours of egocentric video. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition, pages 18995–19012, 2022. 2
+[26] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising dif-
+fusion probabilistic models. Advances in neural information
+processing systems, 33:6840–6851, 2020. 5
+[27] Eric Jang, Shixiang Gu, and Ben Poole.
+Categorical
+reparameterization with gumbel-softmax.
+arXiv preprint
+arXiv:1611.01144, 2016. 4
+[28] Eric Jang, Alex Irpan, Mohi Khansari, Daniel Kappler, Fred-
+erik Ebert, Corey Lynch, Sergey Levine, and Chelsea Finn.
+Bc-z: Zero-shot task generalization with robotic imitation
+learning.
+In Conference on Robot Learning, pages 991–
+1002. PMLR, 2022. 1
+[29] Siddharth Karamcheti, Suraj Nair, Annie S Chen, Thomas
+Kollar, Chelsea Finn, Dorsa Sadigh, and Percy Liang.
+Language-driven representation learning for robotics. arXiv
+preprint arXiv:2302.12766, 2023. 2
+[30] Alexander Khazatsky,
+Karl Pertsch,
+Suraj Nair,
+Ash-
+win Balakrishna, Sudeep Dasari, Siddharth Karamcheti,
+Soroush Nasiriany, Mohan Kumar Srirama, Lawrence Yun-
+liang Chen, Kirsty Ellis, et al.
+Droid:
+A large-scale
+in-the-wild robot manipulation dataset.
+arXiv preprint
+arXiv:2403.12945, 2024. 2, 5
+[31] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao,
+Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan
+Foster, Grace Lam, Pannag Sanketi, et al.
+Openvla: An
+open-source vision-language-action model. arXiv preprint
+arXiv:2406.09246, 2024. 1, 2, 3, 5, 12, 13, 14, 16
+[32] Xin Lai, Zhuotao Tian, Yukang Chen, Yanwei Li, Yuhui
+Yuan, Shu Liu, and Jiaya Jia. Lisa: Reasoning segmentation
+via large language model. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition,
+pages 9579–9589, 2024. 2
+[33] Doyup Lee, Chiheon Kim, Saehoon Kim, Minsu Cho, and
+Wook-Shin Han.
+Autoregressive image generation using
+residual quantization. In Proceedings of the IEEE/CVF Con-
+ference on Computer Vision and Pattern Recognition, pages
+11523–11532, 2022. 3
+[34] Seungjae Lee, Yibin Wang, Haritheja Etukuru, H. Jin Kim,
+Nur Muhammad Mahi Shafiullah, and Lerrel Pinto. Behavior
+generation with latent actions. In Forty-first International
+Conference on Machine Learning, 2024. 2, 3
+[35] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng
+Li, Hao Zhang, Kaichen Zhang, Yanwei Li, Ziwei Liu, and
+Chunyuan Li.
+Llava-onevision: Easy visual task transfer.
+arXiv preprint arXiv:2408.03326, 2024. 2, 5, 12
+[36] Jianxiong Li, Jinliang Zheng, Yinan Zheng, Liyuan Mao,
+Xiao Hu, Sijie Cheng, Haoyi Niu, Jihao Liu, Yu Liu, Jingjing
+Liu, Yaqin Zhang, and Xianyuan Zhan. Decisionnce: Em-
+bodied multimodal representations via implicit preference
+learning. In Forty-first International Conference on Machine
+Learning. 2
+[37] Jianxiong Li, Zhihao Wang, Jinliang Zheng, Xiaoai Zhou,
+Guanming Wang, Guanglu Song, Yu Liu, Jingjing Liu, Ya-
+Qin Zhang, Junzhi Yu, et al. Robo-mutual: Robotic mul-
+timodal task specification via unimodal learning.
+arXiv
+preprint arXiv:2410.01529, 2024. 2
+[38] Bo Liu, Yifeng Zhu, Chongkai Gao, Yihao Feng, Qiang Liu,
+Yuke Zhu, and Peter Stone. Libero: Benchmarking knowl-
+edge transfer for lifelong robot learning. Advances in Neural
+Information Processing Systems, 36, 2024. 5, 6, 14
+[39] Haotian Liu, Chunyuan Li, Yuheng Li, and Yong Jae Lee.
+Improved baselines with visual instruction tuning. In Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition, pages 26296–26306, 2024. 2
+[40] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee.
+Visual instruction tuning. Advances in neural information
+processing systems, 36, 2024. 1, 2
+[41] Songming Liu, Lingxuan Wu, Bangguo Li, Hengkai Tan,
+Huayu Chen, Zhengyi Wang, Ke Xu, Hang Su, and Jun Zhu.
+Rdt-1b: a diffusion foundation model for bimanual manipu-
+lation. arXiv preprint arXiv:2410.07864, 2024. 2, 3
+[42] Yecheng Jason Ma, Vikash Kumar, Amy Zhang, Osbert Bas-
+tani, and Dinesh Jayaraman. Liv: Language-image represen-
+tations and rewards for robotic control. In International Con-
+ference on Machine Learning, pages 23301–23320. PMLR,
+2023. 2
+[43] J. MacQueen. Some methods for classification and analysis
+of multivariate observations. 1967. 3
+[44] Fabian Mentzer, David Minnen, Eirikur Agustsson, and
+Michael Tschannen. Finite scalar quantization: Vq-vae made
+simple. In The Twelfth International Conference on Learning
+Representations. 3
+[45] Atharva Mete, Haotian Xue, Albert Wilcox, Yongxin Chen,
+and Animesh Garg.
+Quest:
+Self-supervised skill ab-
+stractions for learning continuous control.
+arXiv preprint
+arXiv:2407.15840, 2024. 2, 3
+[46] Yao Mu, Qinglong Zhang, Mengkang Hu, Wenhai Wang,
+Mingyu Ding, Jun Jin, Bin Wang, Jifeng Dai, Yu Qiao, and
+Ping Luo. EmbodiedGPT: Vision-language pre-training via
+embodied chain of thought. In Thirty-seventh Conference on
+Neural Information Processing Systems, 2023. 16
+
+===== PAGE 11 =====
+[47] Suraj Nair, Aravind Rajeswaran, Vikash Kumar, Chelsea
+Finn, and Abhinav Gupta. R3m: A universal visual repre-
+sentation for robot manipulation. In 6th Annual Conference
+on Robot Learning. 2
+[48] Haoyi Niu, Jianming Hu, Guyue Zhou, and Xianyuan Zhan.
+A comprehensive survey of cross-domain policy transfer for
+embodied agents. In The 33rd International Joint Confer-
+ence on Artificial Intelligence, 2024. 1
+[49] Abby O’Neill, Abdul Rehman, Abhinav Gupta, Abhiram
+Maddukuri, Abhishek Gupta, Abhishek Padalkar, Abraham
+Lee, Acorn Pooley, Agrim Gupta, Ajay Mandlekar, et al.
+Open x-embodiment:
+Robotic learning datasets and rt-x
+models. arXiv preprint arXiv:2310.08864, 2023. 1, 2, 3,
+5
+[50] Seohong Park, Tobias Kreiman, and Sergey Levine. Founda-
+tion policies with hilbert representations. In Forty-first Inter-
+national Conference on Machine Learning. 4
+[51] Seohong Park, Dibya Ghosh, Benjamin Eysenbach, and
+Sergey Levine. Hiql: Offline goal-conditioned rl with latent
+states as actions. Advances in Neural Information Processing
+Systems, 36, 2024. 4
+[52] William Peebles and Saining Xie. Scalable diffusion models
+with transformers. In Proceedings of the IEEE/CVF Inter-
+national Conference on Computer Vision, pages 4195–4205,
+2023. 4
+[53] Jeff Rasley, Samyam Rajbhandari, Olatunji Ruwase, and
+Yuxiong He. Deepspeed: System optimizations enable train-
+ing deep learning models with over 100 billion parame-
+ters. In Proceedings of the 26th ACM SIGKDD International
+Conference on Knowledge Discovery & Data Mining, pages
+3505–3506, 2020. 5
+[54] Dominik Schmidt and Minqi Jiang. Learning to act without
+actions. In The Twelfth International Conference on Learn-
+ing Representations. 3
+[55] Nur Muhammad Shafiullah, Zichen Cui, Ariuntuya Arty Al-
+tanzaya, and Lerrel Pinto. Behavior transformers: Cloning
+k modes with one stone. Advances in neural information
+processing systems, 35:22955–22968, 2022. 2, 3
+[56] Lucy Xiaoyang Shi, Zheyuan Hu, Tony Z Zhao, Archit
+Sharma, Karl Pertsch, Jianlan Luo, Sergey Levine, and
+Chelsea Finn. Yell at your robot: Improving on-the-fly from
+language corrections.
+arXiv preprint arXiv:2403.12910,
+2024. 2, 16
+[57] Chan Hee Song, Jiaman Wu, Clayton Washington, Brian M
+Sadler, Wei-Lun Chao, and Yu Su.
+Llm-planner: Few-
+shot grounded planning for embodied agents with large lan-
+guage models.
+In Proceedings of the IEEE/CVF Interna-
+tional Conference on Computer Vision (ICCV), pages 2998–
+3009, 2023. 16
+[58] Quan Sun, Qiying Yu, Yufeng Cui, Fan Zhang, Xiaosong
+Zhang, Yueze Wang, Hongcheng Gao, Jingjing Liu, Tiejun
+Huang, and Xinlong Wang. Emu: Generative pretraining in
+multimodality. In The Twelfth International Conference on
+Learning Representations, 2023. 2
+[59] Quan Sun, Yufeng Cui, Xiaosong Zhang, Fan Zhang, Qiy-
+ing Yu, Yueze Wang, Yongming Rao, Jingjing Liu, Tiejun
+Huang, and Xinlong Wang.
+Generative multimodal mod-
+els are in-context learners. In Proceedings of the IEEE/CVF
+Conference on Computer Vision and Pattern Recognition,
+pages 14398–14409, 2024. 2
+[60] Gemma Team, Thomas Mesnard, Cassidy Hardin, Robert
+Dadashi, Surya Bhupatiraju, Shreya Pathak, Laurent Sifre,
+Morgane Rivi`ere, Mihir Sanjay Kale, Juliette Love, et al.
+Gemma: Open models based on gemini research and tech-
+nology. arXiv preprint arXiv:2403.08295, 2024. 4
+[61] Octo Model Team, Dibya Ghosh, Homer Walke, Karl
+Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey
+Hejna,
+Tobias Kreiman,
+Charles Xu,
+et al.
+Octo:
+An open-source generalist robot policy.
+arXiv preprint
+arXiv:2405.12213, 2024. 1, 2, 3, 5, 12
+[62] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+Martinet, Marie-Anne Lachaux, Timoth´ee Lacroix, Baptiste
+Rozi`ere, Naman Goyal, Eric Hambro, Faisal Azhar, et al.
+Llama:
+Open and efficient foundation language models.
+arXiv preprint arXiv:2302.13971, 2023. 1, 2
+[63] Aaron Van Den Oord, Oriol Vinyals, et al. Neural discrete
+representation learning. Advances in neural information pro-
+cessing systems, 30, 2017. 2, 3, 4, 13
+[64] Homer Rich Walke, Kevin Black, Tony Z Zhao, Quan
+Vuong, Chongyi Zheng, Philippe Hansen-Estruch, An-
+dre Wang He, Vivek Myers, Moo Jin Kim, Max Du, et al.
+Bridgedata v2: A dataset for robot learning at scale. In Con-
+ference on Robot Learning, pages 1723–1736. PMLR, 2023.
+1, 2, 5, 6, 12
+[65] Lirui Wang, Xinlei Chen, Jialiang Zhao, and Kaiming He.
+Scaling proprioceptive-visual learning with heterogeneous
+pre-trained transformers. arXiv preprint arXiv:2409.20537,
+2024. 1, 2
+[66] Chuan Wen, Xingyu Lin, John So, Kai Chen, Qi Dou, Yang
+Gao, and Pieter Abbeel. Any-point trajectory modeling for
+policy learning. arXiv preprint arXiv:2401.00025, 2023. 2,
+16
+[67] Hongtao Wu, Ya Jing, Chilam Cheang, Guangzeng Chen,
+Jiafeng Xu, Xinghang Li, Minghuan Liu, Hang Li, and Tao
+Kong. Unleashing large-scale video generative pre-training
+for visual robot manipulation. In The Twelfth International
+Conference on Learning Representations. 2
+[68] Jonathan Yang, Catherine Glossop, Arjun Bhorkar, Dhruv
+Shah, Quan Vuong, Chelsea Finn, Dorsa Sadigh, and
+Sergey Levine.
+Pushing the limits of cross-embodiment
+learning for manipulation and navigation.
+arXiv preprint
+arXiv:2402.19432, 2024. 1, 3
+[69] Seonghyeon Ye, Joel Jang, Byeongguk Jeon, Sejune Joo,
+Jianwei Yang, Baolin Peng, Ajay Mandlekar, Reuben Tan,
+Yu-Wei Chao, Bill Yuchen Lin, et al. Latent action pretrain-
+ing from videos. arXiv preprint arXiv:2410.11758, 2024. 2,
+3, 4, 5
+[70] Haoqi Yuan, Zhancun Mu, Feiyang Xie, and Zongqing Lu.
+Pre-training goal-based models for sample-efficient rein-
+forcement learning. In The Twelfth International Conference
+on Learning Representations, 2024. 3
+[71] Michał Zawalski, William Chen, Karl Pertsch, Oier Mees,
+Chelsea Finn, and Sergey Levine. Robotic control via em-
+bodied chain-of-thought reasoning. In 8th Annual Confer-
+ence on Robot Learning, 2024. 16
+
+===== PAGE 12 =====
+[72] Jinliang Zheng, Jianxiong Li, Sijie Cheng, Yinan Zheng, Ji-
+aming Li, Jihao Liu, Yu Liu, Jingjing Liu, and Xianyuan
+Zhan. Instruction-guided visual masking. Advances in neu-
+ral information processing systems, 2024. 2
+A. Training Details
+Training hyper-parameters UniAct-0.5B utilizes the pre-
+trained parameters from LLava-One-Vision-0.5B [35] to
+initialize the VLM. For visual feature extraction in hetero-
+geneous decoding heads, we deploy an ImageNet pretrained
+ResNet18, which is commonly employed in vision-based
+policy learning [64]. This model was jointly trained dur-
+ing the large-scale pre-training process to enhance percep-
+tual capability in manipulation task scenarios. We adopt
+resolutions of 384×384 for the VLM and 224×224 for the
+ResNet18, consistent with their original configurations. Im-
+age augmentation settings and more hyper-parameters can
+be found in Table 3 and Table 4, respectively.
+Augmentation
+value
+RandomResize
+ratio=(0.75, 1.3333)
+scale=(0.5, 1.0)
+interpolation=BICUBIC
+RandomHorizontalFlip
+p=0.5
+ColorJitter
+contrast=(0.6, 1.4)
+brightness=(0.6, 1.4)
+saturation=(0.6, 1.4)
+Table 3. Image augmentation settings during training
+config
+value
+optimizer
+AdamW
+batch size
+1024
+learning rate
+2 × 10−5
+weight decay
+0.
+optimizer momentum
+β1, β2=0.9,0.95
+iters
+500K
+model precision
+BFloat16
+Table 4. Training hyper-parameters
+Data construction As illustrated in Table 5, we detail
+the composition of our training data, which includes the
+number of trajectories, samples, and the control inter-
+faces for the 28 distinct embodiments. Following previous
+works [31, 61], we assign different sampling rates to each
+dataset during training to ensure a balanced mix of embod-
+iments, tasks, and scenes. These sampling rates are spec-
+ified in Table 5. It is important to note that many of the
+datasets may contain distinctly action spaces such as EEF
+position and Joint position. In addition, images from dif-
+ferent datasets may contain multiple view points. By de-
+fault, we use only the first third-person perspective follow-
+ing [31, 61] to maintain consistency.
+
+===== PAGE 13 =====
+Dataset
+Trajectory
+Samples
+Sample rate(%)
+Control Interface
+Utaustin Mutex
+1500
+361871
+1.0
+EEF Position
+Berkeley Cable Routing
+1557
+38789
+0.2
+EEF velocity
+NYU Franka Play
+454
+44412
+1.0
+EEF velocity
+Kuka
+557893
+7130157
+12.7
+EEF Position
+Austin Sailor
+240
+352110
+2.2
+EEF velocity
+Fmb
+8611
+1136907
+1.0
+EEF velocity
+Berkeley Autolab
+1000
+95310
+1.2
+EEF Position
+Viola
+150
+75614
+0.9
+EEF Position
+Dobbe
+5208
+1139874
+1.4
+EEF Position
+Iamlab CMU
+631
+146241
+0.9
+EEF Position
+Austin Buds
+50
+34110
+0.2
+EEF Position
+Language Table
+441911
+6602077
+4.4
+EEF Position
+Stanford Hydra
+569
+357137
+4.4
+EEF Position
+Robo Set
+18246
+1419838
+5.0
+Joint position
+Austin Sirius
+559
+279724
+1.7
+EEF velocity
+Dlr Edan
+104
+8824
+0.1
+EEF Position
+Fractal
+86599
+3607028
+12.7
+EEF Position
+TOTO
+1003
+324669
+2.0
+Joint position
+Berkeley Fanuc
+415
+58660
+0.7
+EEF Position
+CMU Stretch
+135
+25012
+0.2
+EEF Position
+Roboturk
+1934
+186910
+2.3
+EEF Position
+Jaco Play
+976
+66094
+0.4
+EEF Position
+Taco Play
+3603
+230966
+3.0
+EEF Position
+BC-Z
+42811
+5957097
+7.5
+EEF Position
+Droid
+92115
+27043929
+10.0
+EEF Position
+Furniture Bench
+5100
+3905717
+2.4
+EEF velocity
+Bridge
+28933
+899685
+13.3
+EEF Position
+Libero
+6500
+1007204
+5.0
+EEF Position
+Table 5. Details of the training data composition, including the number of trajectories, number of samples, and control interfaces of the 28
+different data sources. Following [31], we set different sampling probabilities for different data, which we also report in this table.
+Categorical Reparameterization. Except for the Gumbel-
+Softmax utilized for training UniAct, we also explored an-
+other commonly used reparameterization technique: the
+Straight-Through Estimator (STE) [63]. However, empir-
+ical findings indicate that using STE can lead to severe col-
+lapses in the universal action codebook. An intuitive expla-
+nation for this is that each universal action requires numer-
+ous optimization steps to learn the highly abstracted behav-
+iors. Since STE involves hard sampling, it results in only
+one universal action being selected and optimized for each
+training sample. This lack of gradient distribution among all
+potential actions can stifle the learning process and reduce
+the diversity of learned actions.
+B. Evaluation Setups
+In this section, we delve deeper into the evaluation experi-
+ments for the three robotic embodiments used in our study:
+WidowX Robot, Franka Robot, and AIRBOT. We provide
+detailed scores for each embodiment to offer a clearer, more
+intuitive comparison of their performance.
+B.1. WidowX Robot in Real World
+The experiments on WidowX aim to assess the models’ gen-
+eralization capabilities across five distinct dimensions, as
+illustrated in Figure 8. Instead of merely reporting task suc-
+cess rates, we calculate scores based on the progress made
+towards completing the task for some complex tasks. This
+scoring method can more intuitively reflect the model’s un-
+derstanding and generalization ability [31]. Detailed scores
+are available in Table 6. In the subsequent sections, we will
+provide a comprehensive description of the task settings.
+Baseline models:
+Given that Octo, CrossFormer, and
+OpenVLA were trained using same data recipes (e.g., OXE)
+as UniAct, we directly evaluated their performance on the
+WidowX robot without further fine-tuning, consistent with
+their original implementations. For LAPA, we employed
+the OXE-pretrained model and adhered to the official pro-
+
+===== PAGE 14 =====
+tocol for fine-tuning with Bridge Data.
+This fine-tuning
+process involved 2,000 gradient steps with a batch size of
+64. An intriguing observation is that, despite CrossFormer’s
+utilization of more diverse pretraining data, its performance
+was inferior to that of its codebase model, Octo. We hypoth-
+esize that this discrepancy stems from a potentially subop-
+timal training pipeline, wherein all single-arm robots, re-
+gardless of their control interfaces, were treated as a ho-
+mogeneous embodiment. This approach may have induced
+negative transfer, resulting in performance degradation. In
+contrast, while UniAct also leverages diverse and heteroge-
+neous data, similar to CrossFormer, its well-defined univer-
+sal action space effectively mitigates negative transfer.
+Visual Generalization:
+This dimension evaluates the
+model’s ability to adapt to different visual environments
+characterized by variations in lighting, background, and ob-
+ject textures. Following the setups outlined in [31], we de-
+sign three specific tasks, detailed in Figure 8. Each task is
+set against a distinct background environment, features dif-
+ferent lighting brightness levels, and involves target objects
+in two colors: red and green. Additionally, we introduce
+various visual distractors unrelated to the task to assess the
+model’s ability to generalize visually and maintain robust-
+ness against such distractions. To ensure a fair comparison,
+all variables related to the model’s testing conditions are
+kept consistent across all models. All tasks in this suite are
+assigned binary score: 0 for failure and 1 for success.
+Motion Generalization: Tasks in this dimension aim to
+evaluate the robot’s capability to perform appropriate mo-
+tions while recognizing the target object’s position and ori-
+entation, which may not have been encountered during
+training. Specifically, we have designed two tasks: Lift egg-
+plant and Put carrot on plate, as detailed in Figure 8. The
+target objects are placed in several predetermined positions
+and oriented in pre-designed directions. This helps in as-
+sessing the robot’s adaptability to changes in physical task
+parameters. All tasks in this suite are assigned binary score:
+0 for failure and 1 for success.
+Physical Generalization: In this dimension, we exam-
+ine the model’s capability to manage physical variations
+in objects, such as size, weight, and material properties.
+The tasks are crafted to evaluate the robot’s adaptability
+to these fluctuations, which significantly influence manip-
+ulation strategies. Detailed task setups are listed in Fig-
+ure 8. The objects involved in these tasks, such as carrots
+and AAA batteries, often have irregular shapes or are placed
+in unusual positions (e.g., an overturned pot). Successfully
+handling and completing tasks with these objects requires a
+generalized policy that can accurately recognize the phys-
+ical attributes of the target objects and execute appropriate
+strategies. All tasks in this suite are assigned binary score:
+0 for failure and 1 for success.
+Semantic Generalization: In this dimension, we assess the
+model’s ability to understand and generalize across various
+semantic contexts. Specifically, the tasks especially the tar-
+get objects included in this dimension have never been en-
+countered during the training procedures for both UniAct
+and the baseline models. This approach tests the model’s
+capability to interpret and adapt to new instructions and
+environments, emphasizing its flexibility and learning ef-
+ficiency. The purple grape is highly smooth, so we assign
+scores as follows: 0.25 for touching the grape, 0.5 for grasp-
+ing it, 0.75 for moving it toward the pot, and 1 for success-
+fully completing a pick-and-place. Also, for the stack green
+cup on red cup task, we assign scores as follows: 0.25 for
+touching the green cup, 0.5 for grasping it, 0.75 for moving
+it toward the red cup, and 1 for successfully stacking. Other
+tasks in this suite are assigned binary scores.
+Language Grounding:
+This dimension evaluates the
+model’s ability to comprehend and execute commands that
+are grounded in natural language. The focus is on assess-
+ing the model’s proficiency in following novel instructions
+to manipulate specific objects as described verbally. While
+there are similarities with Semantic Generalization in terms
+of handling unseen scenarios, Language Grounding task
+distinctly tests the model’s capacity to accurately under-
+stand and act on language-based directives within poten-
+tially misleading environments. An illustrative example is
+placing two cups of different colors on a table and instruct-
+ing the model to manipulate one of them using language.
+The model must accurately ground the language instruction
+to the correct object in a complex real-world setting. This
+tests the model’s ability to connect linguistic descriptions
+directly with physical actions in dynamic and visually di-
+verse environments. For all tasks in this suite, we assign
+scores as follows: 0.5 for correct grounding, 1 for a suc-
+cessful task completion.
+B.2. Franka Robot in Simulation
+Baseline models.
+We include 6500 expert demonstra-
+tions of 130 different tasks collected with Franka Robot in
+LIBERO [38] simulation to train our UniAct-0.5B and then
+follow the LIBERO Benchmark [38] to evaluate our mod-
+els. The input images are rendered by the emulator and we
+use the default 128×128 resolution. As all the open-source
+baseline models were not initially trained with the simula-
+tion data, substantial effort was put into fine-tuning them to
+facilitate fair comparisons with our UniAct framework. The
+fine-tuning process for OpenVLA, Octo and CrossFormer
+was conducted on 8 A6000 GPUs and 2 4090 GPUs, last-
+ing 7 hours and 4 hours, respectively. Details of the training
+hyperparameters are provided in Table 7. Notably, we man-
+ually cleaned the “no-op’” data before fine-tuning Open-
+VLA following its official guidance, a step that proved cru-
+cial for achieving convergence. However, as shown in Fig-
+ure 9, even with an increased number of training steps, the
+
+===== PAGE 15 =====
+Figure 8. Illustration for WidowX evaluation tasks.
+model’s action accuracy remained low. In contrast, our Uni-
+Act framework demonstrated robustness to noisy data. For
+LAPA, we employed an identical training recipe to that used
+for the WidowX robots. The OXE-pretrained LAPA model
+was fine-tuned with 2,000 gradient steps on Libero, utiliz-
+ing a batch size of 64.
+Adapt to ACT head. To evaluate UniAct’s adaptability to
+heterogeneous decoder heads with varying model architec-
+tures, we augmented UniAct-0.5B with an additional ACT
+head and fine-tuned it on the Libero dataset. Leveraging
+ACT’s sophisticated architectural design, we incorporated
+image observations from a wrist-mounted perspective and
+proprioceptive data as supplementary inputs to the decoder
+head. We adhered to the official implementation settings
+for the ACT model. Fine-tuning was conducted for 200K
+gradient steps, utilizing a batch size of 256 across 8 A100
+GPUs.
+B.3. Fast adaptation to AIRBOT
+To assess the fast adaptation capability of UniAct-0.5B and
+baselines, we fine-tune them using newly collected demon-
+strations on an unseen embodiment during the pretraining
+phase, AIRBOT. In this section, we provide detailed infor-
+mation about the fine-tuning processes.
+
+===== PAGE 16 =====
+Task Category
+Task Name
+Octo
+OpenVLA
+UniAct-0.5B(ours)
+Visual Generalization
+put eggplant into pot(easy)
+3.0
+10.0
+10.0
+put eggplant into pot
+6.0
+6.0
+10.0
+put cup from counter into sink
+0.0
+2.0
+1.0
+put eggplant into pot
+3.0
+8.0
+5.0
+put corn on plate
+0.0
+7.0
+8.0
+Average Score
+2.4
+6.6
+6.8
+Motion Generalization
+lift eggplant
+4.0
+3.0
+6.0
+put carrot on plate
+2.0
+4.0
+6.0
+Average Score
+3.0
+3.5
+6.0
+Physical Generalization
+put carrot on plate
+2.0
+9.0
+9.0
+flip pot upright
+1.0
+2.0
+7.0
+lift AAA battery
+0.0
+7.0
+5,0
+Average Score
+1.0
+6.0
+7.0
+Sematic Generalization
+move doll into drying rack
+0.0
+5.0
+6.0
+lift white rape
+0.0
+1.0
+2.0
+take purple grapes out of pot
+4.5
+5.0
+5.0
+stack green cup on red cup
+3.25
+8.25
+2.5
+Average Score
+1.9
+4.8
+3.9
+Language Grounding
+put eggplant into pot
+6.0
+7.0
+5.0
+put yellow corn into pot
+7.0
+10.0
+10.0
+lift cheese
+1.0
+8.0
+6.0
+lift eggplant
+6.0
+8.0
+9.0
+put green cup on plate
+3.0
+10.0
+6.0
+put red cup on plate
+6.0
+10.0
+8.0
+Average Score
+4.8
+8.8
+7.3
+Table 6. Comparison between UniAct-0.5B and baseline models on detailed scores in WidowX evaluations.
+Fine-tuning Settings For UniAct: We utilized 4 A100
+GPUs to fine-tune UniAct-0.5B with DeepSpeed. Notably,
+we train a new MLP network from scratch as the heteroge-
+neous head for AIRBOT while keeping the other modules
+frozen. The fine-tuning was conducted over a span of 1
+hours. The training hyper-parameters employed during this
+process are detailed in Table 8.
+Fine-tuning Settings For Baseline Models.
+The fine-
+tuning for the baseline models, OpenVLA and Octo, was
+executed on 8 A6000 GPUs and 2 4090 GPUs, lasting 1.5
+hours and 0.5 hours, respectively. To ensure robust perfor-
+mance, the training of OpenVLA continued until it reached
+an accuracy rate of 95% on the training dataset, align-
+ing with the official requirements in [31]. Training hyper-
+parameters for this process are illustrated in Tab 10.
+B.4. Fast adaptation to Bi-manual AIRBOT
+To assess UniAct’s versatility across diverse embodiments,
+we performed fast adaptation experiments using the bi-
+manual AIRBOT. Given the requirement for precise per-
+ception of complex environments inherent in bi-manual
+robotic manipulation, which a simple MLP decoder head
+cannot fulfill, we employed an ACT decoder head for the
+bi-manual AIRBOT. We designed four challenging manipu-
+lation tasks for evaluation: ’sweep plate’, ’fold towel’, ’put
+cup on plate’, and ’transport pen’. For each task, we col-
+lected 250 demonstration trajectories and subsequently fine-
+tuned UniAct-0.5B. Training hyperparameters are detailed
+in Tab 9
+C. More Related Works
+Embodied Models with Hierarchical Structures. Uni-
+Act resembles a hierarchical-style structure, which firstly
+infers an universal action and then translate it into action-
+able actions. Some works also explore hierarchical struc-
+tures, utilizing the planning capabilities of LLMs or VLMs
+to decompose original instructions into linguistic [2, 46, 56,
+57, 71] or visual [7, 19, 66] sequences of subgoals. How-
+ever, transferring these language or visual subgoals into pre-
+cise actions still requires extensive action labels and strug-
+gles to leverage the shared structures across diverse action
+spaces.
+The universal action space in UniAct, however,
+
+===== PAGE 17 =====
+Figure 9. The learning curves for OpenVLA and Octo in LIBERO fintuning.
+Figure 10. The learning curves for OpenVLA and Octo in AIRBOT finetuning.
+Model-Task
+Config
+Value
+OpenVLA-LIBERO
+Optimizer
+AdamW
+Batch size
+64
+Learning rate
+3 × 10−4
+Weight decay
+1 × 10−2
+Optimizer momentum
+β1 = 0.9, β2 = 0.999
+Octo-LIBERO
+Optimizer
+AdamW
+Batch size
+64
+Learning rate
+3 × 10−4
+Weight decay
+1 × 10−2
+Optimizer momentum
+β1 = 0.9, β2 = 0.999
+Warmup iters
+2000
+OpenVLA-AIRBOT
+Optimizer
+AdamW
+Batch size
+64
+Learning rate
+3 × 10−4
+Weight decay
+1 × 10−2
+Optimizer momentum
+β1 = 0.9, β2 = 0.999
+Octo-AIRBOT
+Optimizer
+AdamW
+Batch size
+64
+Learning rate
+3 × 10−4
+Weight decay
+1 × 10−2
+Optimizer momentum
+β1 = 0.9, β2 = 0.999
+Warmup iters
+2000
+Table 7. Fine-tuning hyper-parameters for baseline models in sim-
+ulation.
+serves as a more fine-grained skill library that can be effi-
+ciently adapted to physically grounded actions. This space
+is also end-to-end trained, maximizing the VLMs’ capabil-
+config
+value
+optimizer
+AdamW
+batch size
+128
+learning rate
+3 × 10−4
+weight decay
+0.
+optimizer momentum
+β1, β2=0.9,0.95
+iters
+10K
+model precision
+BFloat16
+Table 8. Hyper-parameters for fine-tuning UniAct-0.5B on AIR-
+BOT
+config
+value
+optimizer
+AdamW
+batch size
+256
+learning rate
+5 × 10−4
+weight decay
+0.
+optimizer momentum
+β1, β2=0.9,0.95
+iters
+100K
+model precision
+BFloat16
+Table 9. Hyper-parameters for fine-tuning UniAct-0.5B on Bi-
+manual AIRBOT
+
+===== PAGE 18 =====
+ities to develop a flexible and comprehensive structure.
+D. Limitations and Future Works
+In this section, we discuss limitations in this work and the
+corresponding solutions. We hope this will inspire more
+interesting works.
+More Embodiments: In this study, we explore the con-
+cept of a universal action space that can be shared across
+different action spaces. In this current version, UniAct is
+mostly evaluated with varied control interfaces on single
+robotic arms.
+The underlying motivation stems from an
+intuitive observation: despite differences in control inter-
+faces, these robotic arms inherently exhibit common phys-
+ical movements. However, this raises a crucial question: Is
+the commonality of physical movement exclusive to robotic
+arms or similar embodiments?
+We argue that the answer is no. Future work will explore
+the universal actions for more complex embodiments, such
+as dual robotic arms, dexterous robotic hands, quadrupeds
+and even autonomous driving cars, which differ in degrees
+of freedom and mechanical structures. Despite their strong
+heterogeneity, these systems may also share some funda-
+mental movements with simpler robotic arms, holding the
+potential to be incorporated into the same universal action
+space. Therefore, we hope to develop a “truly” universal
+action space that is capable of encoding movements across
+ANY physical embodiment while recognizing unique char-
+acteristics and prioritizing shared commonalities. This of-
+fers a promising direction for future research, with strong
+potential for enabling cross-embodiment control across di-
+verse systems.
+More Flexible Network Design: In our current implemen-
+tation, UniAct utilizes identical decoding heads—a simple
+MLP network—for each embodiment to minimize the risk
+of over-fitting and facilitating training for the universal ac-
+tion extractor. However, it seems more reasonable that the
+complexity and number of parameters in the decoding heads
+should be tailored according to the control complexity of
+each embodiment and the diversity of its training data. For
+example, a bi-manual robot, with its increased degrees of
+freedom, would logically require a more complex decoding
+head than a single-arm robot to effectively learn and decode
+universal actions.
+Looking forward, as the dataset expands to include more
+demonstrations from more diverse embodiments, it will be-
+come crucial to develop specialized decoding heads that
+consider the specific control complexities of each embod-
+iment. Additionally, incorporating embodiment-specific in-
+formation, such as proprioceptive data or different views,
+into these decoding heads could significantly enhance their
+performance.
+Scaling Law For Universal Action Training: While our
+efforts to train UniAct with a vast array of open-source data
+have yielded commendable results, an intriguing question
+has arisen: Does more data unequivocally improve the uni-
+versal action space? This question calls for a thorough ex-
+amination from multiple perspectives. Firstly, does the in-
+corporation of more embodiments inherently enhance the
+action space, or is there greater value in accumulating di-
+verse task demonstrations for the same embodiment? More-
+over, it’s critical to consider whether the more data always
+bring better result.
+Studying the relationship between the amount of data
+and how well our universal action space performs could be
+very useful. By understanding these relationships, we can
+better plan our data collection to improve model training
+effectively and efficiently.
+More Utilization of Universal Action. Our work has high-
+lighted the robust capabilities of universal actions in deploy-
+ing cross-embodiment robot policies. However, we believe
+that the potential applications of universal actions extend far
+beyond what has been explored so far.
+One promising direction is in the development of world
+models, where universal actions serve as a form of ’tok-
+enizer’. This role involves breaking down complex actions
+into standardized, understandable components.
+By em-
+ploying a universal action space for planning, these world
+models can more accurately predict and simulate outcomes
+across various scenarios and environments. This uniform
+approach to understanding and interacting with the world
+is invaluable for advanced planning and decision-making in
+robotics.

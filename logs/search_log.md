@@ -90,3 +90,23 @@ Data Scaling Laws 未找到，替换为 LLM Trainer（更贴近调研主题）�
   episode filtering / resample keyframe / train-test split / augmentation crop /
   gripper suction / validation split。
 - 产出：docs/survey/community_issue_survey.md（6 个主题聚类，含精确 issue 链接）。
+
+
+### 对齐路线首轮（2026-09-08，RQ4，8 篇命中）
+
+检索网格（RQ4.1 跨模态对齐 / 4.2 动作表征空间 / 4.3 动作模式结构 /
+4.4 对齐度量 / 4.5 跨本体与 sim-实 对齐迁移 / 4.6 时序保真 / 4.7 生成增强保对齐）。
+arXiv API（cs.RO + 短语），Semantic Scholar 因限流不可用。
+
+命中（全部下载抽取，[paper_036](https://arxiv.org/abs/2606.14752)-043）：
+- [2606.14752](https://arxiv.org/abs/2606.14752) X-Tokenizer（4.2 动作 tokenizer；SRQ 非对称量化+三头语义对齐）
+- [2503.00200](https://arxiv.org/abs/2503.00200) UVAM（4.1/4.7 联合视频-动作潜表示+解耦扩散）
+- [2606.17046](https://arxiv.org/abs/2606.17046) GAM（4.3 动作 token 与几何 token 同潜序列联合解码）
+- [2605.15725](https://arxiv.org/abs/2605.15725) DiLA（4.2/4.3 解耦潜在动作世界模型；content-structure 分解）
+- [2607.27549](https://arxiv.org/abs/2607.27549) Behavior-Aligned（4.5 行为对齐表征；EE 轨迹对齐最有效）
+- [2602.13764](https://arxiv.org/abs/2602.13764) MOTIF（4.3/4.5 动作母题 VQ 聚类+进度感知 InfoNCE+本体对抗 GRL）
+- [2501.10105](https://arxiv.org/abs/2501.10105) UAT（4.2/4.5 通用动作 256x128 码本；新本体微调仅 0.8% 参数）
+- [2505.04999](https://arxiv.org/abs/2505.04999) CLAM（4.2 连续潜在动作；连续+联合 74% vs 离散+非联合 16%）
+
+未命中（仍为空缺，待第二轮）：RQ4.4（对齐度量，仅 X-Tokenizer 对齐损失侧面）；
+RQ4.6（时序保真/DTW 类，无直接命中）；RQ4.7（生成增强保验证，UVAM 部分覆盖）。

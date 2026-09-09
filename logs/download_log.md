@@ -37,3 +37,11 @@
 | 2026-09-06 20:44 | 2505.22626 | SCIZOR: A Self-Supervised Approach to Data Curation for Large-Scale Imitation Le | 2649890 B |
 | 2026-09-06 20:44 | 2606.16208 | ATHENA: Accelerated Multi-Task Heterogeneous Influence Functions for Robot Data  | 13067596 B |
 | 2026-09-06 20:44 | 2309.00743 | Language-Conditioned Change-point Detection to Identify Sub-Tasks in Robotics Do | 1011502 B |
+| 2026-09-09 16:01 | 2606.14752 | X-Tokenizer: A Multimodal Action Tokenizer for Vision-Language-Action Pretrainin | 18782427 B |
+| 2026-09-09 16:01 | 2503.00200 | Unified Video Action Model | 4127827 B |
+| 2026-09-09 16:01 | 2606.17046 | Geometric Action Model for Robot Policy Learning | 9206989 B |
+| 2026-09-09 16:01 | 2605.15725 | DiLA: Disentangled Latent Action World Models | 18845520 B |
+| 2026-09-09 16:01 | 2607.27549 | Cross-Embodiment Transfer via Behavior-Aligned Representations | 2348825 B |
+| 2026-09-09 16:01 | 2602.13764 | MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer | 16679647 B |
+| 2026-09-09 16:01 | 2501.10105 | Universal Actions for Enhanced Embodied Foundation Models | 12053877 B |
+| 2026-09-09 16:01 | 2505.04999 | CLAM: Continuous Latent Action Models for Robot Learning from Unlabeled Demonstr | 4757979 B |

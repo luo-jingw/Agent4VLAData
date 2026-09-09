@@ -1,0 +1,2377 @@
+
+===== PAGE 1 =====
+Geometric Action Model for Robot Policy Learning
+Jisang Han∗1
+Seonghu Jeon∗1
+Jaewoo Jung1,2
+Ren´e Zurbr¨ugg2,3
+Honggyu An1
+Tifanny Portela2,3
+Marco Hutter2
+Marc Pollefeys2
+Seungryong Kim† 1
+Sunghwan Hong† 2,3
+1KAIST AI
+2ETH Zurich
+3ETH AI Center
+https://cvlab-kaist.github.io/Geometric-Action-Model
+(a) Overall Pipeline of Geometric Action Model
+Inference Latency (ms)
+90
+LIBERO-Plus Camera (%)
+GAM 
+(Ours)
+80
+70
+Cosmos 
+-Policy
+Model Size
+OpenVLA-OFT
+60
+7B
+3B
+1B
+10
+5
+Real-World Success Rate (%)
+30
+22.5
+0 In-distribution 
+Camera
+Perturbed 
+Camera
+(b) Quantitative Results
+Geometric Action Model
+Geometric Foundation Model
+...
+Layer
+Layer
+...
+current
+future
+50
+500
+65
+50
+3D Reconstruction
+Ours
+Spatial Forcing
+Multi-view RGBs
+Previous 
+Action
+Language 
+Instruction
+...
+Current
+Feature
+60
+55
+52.5
+Next 
+Action
+40
+35
+Causal 
+Future 
+Predictor
+20
+t
+t+1 t+2
+...
+t+7
+Action Chunk
+Future
+Feature
+Figure 1: GAM repurposes geometric foundation models into fast and robust robot policies. (a)
+GAM jointly predicts future 3D geometry and action chunks within a shared geometric backbone.
+(b) By leveraging explicit 3D geometric priors, GAM improves robustness and real-world perfor-
+mance while reducing latency and model size compared to existing baselines.
+Abstract: Generalist robot policies must follow user instructions while reasoning
+about how objects, cameras, and robot actions interact in the 3D physical world.
+Recent vision-language-action models (VLAs) and video world-action models
+(WAMs) inherit strong semantic or temporal priors from large-scale foundation
+models, but they still operate primarily on 2D image frames or 2D-derived la-
+tent spaces, leaving implicit the 3D geometry required for contact-rich manipula-
+tion. We propose the Geometric Action Model (GAM), a language-conditioned
+manipulation policy that directly repurposes a pretrained geometric foundation
+model (GFM) as a shared substrate for perception, temporal prediction, and ac-
+tion decoding. GAM splits the GFM at an intermediate layer: the shallow layers
+serve as an observation encoder, and a causal future predictor inserted at the split
+layer forecasts future latent tokens conditioned on language, proprioception, and
+action history. The predicted future tokens are then routed through the remain-
+ing GFM blocks for feature propagation and decoding, allowing a single back-
+bone to produce both future geometry and actions. This design equips the GFM
+with language-conditioned temporal world modeling through minimal architec-
+tural modification while preserving its rich geometric priors. Across a broad suite
+of simulation and real-robot manipulation benchmarks, GAM is more accurate,
+more robust, faster, and lighter than current foundation-model-scale baselines.
+∗Equal contribution.
+†Corresponding author.
+arXiv:2606.17046v2  [cs.RO]  22 Jun 2026
+
+===== PAGE 2 =====
+1
+Introduction
+A long-standing goal in robotics is to build generalist manipulation policies that can follow natural-
+language instructions and manipulate arbitrary objects across diverse scenes [1, 2, 3, 4]. To achieve
+this, a general manipulation model must not only recognize objects and parse instructions, but also
+reason about how the physical world will evolve under its own actions. This requires a unified
+understanding of language, visual appearance, scene geometry, robot state, and physical dynamics.
+Recent progress has therefore increasingly relied on large-scale foundation models as pretrained
+substrates for robot policies. Vision-language-action models (VLAs) build on vision-language mod-
+els whose representations are aligned with natural language, and learn to map visual and linguistic
+tokens to robot actions [5, 1, 2, 4, 6, 7]. Video world-action models (WAMs) instead leverage pre-
+trained video generation models, using their world prediction priors to jointly model future frames
+and actions [3, 8]. While these approaches have shown impressive language-conditioned manipu-
+lation ability, they are fundamentally in 2D: 3D cues such as depth, scale, and occlusion are left
+implicit in monocular cues that the action decoder must disentangle on its own, leading to lim-
+ited generalization across environment changes, especially in robot initial state and camera view-
+point [9, 10].
+To overcome this limitation, recent work incorporates 3D geometric information into robot poli-
+cies. One line learns policies directly on explicit 3D observations such as raw point clouds [11, 12],
+demonstrating the value of geometry for generalization but typically requiring task-specific encoders
+trained from scratch. With the emergence of Geometric Foundation Models (GFMs) [13, 14, 15],
+some works transfer pretrained geometric priors into VLA policies, either distilling selected GFM
+features into the VLA backbone through representation alignment [16, 17, 18] or attaching a
+lightweight action head on top of a GFM’s final features [19, 20]. These improve spatial aware-
+ness, but use the GFM only as a static feature extractor: its multi-layer geometric structure is never
+repurposed as the policy’s own temporal and action-generating substrate.
+In this work, we propose Geometric Action Model (GAM), which directly repurposes a GFM as
+a manipulation policy by using it as a shared medium for perception, future-state prediction, and
+action decoding. We show that by jointly predicting future action and geometry, geometric world
+dynamics can be inherently incorporated into robot policies.
+Specifically, we split the pretrained GFM at an intermediate layer: the shallow layers serve as an
+observation encoder, while the remaining layers serve as a decoder block. Given the current visual
+observation, the observation encoder extracts spatially meaningful scene representations. To model
+how the world evolves over time, we insert a causal transformer at the intermediate layer that predicts
+future feature representations. This predictor is conditioned on task language, proprioception, and
+action history by introducing them as additional tokens at each timestep. The predicted future-state
+tokens are then processed by the remaining GFM decoder together with an action token, allowing
+the backbone to produce both future geometry and robot actions. An intuitive comparison between
+existing paradigms and our proposed framework is illustrated in Figure 2.
+Across diverse simulation [21, 9, 22] and real-world benchmarks, GAM matches or exceeds the
+success rate of current foundation-model-scale baselines such as VLAs and WAMs while using
+substantially fewer trainable parameters and substantially faster inference (55× faster), and shows
+improved generalization to unseen scenarios. GAM especially achieves outstanding performance in
+camera perturbation settings (↑9.7%p), which requires geometric understanding priors.
+Our contributions are as follows:
+• We introduce Geometric Action Model (GAM), a manipulation policy that combines tem-
+poral world modeling, latent feature-space prediction, and a geometric foundation-model
+substrate in a single shared-backbone architecture.
+• We show that action and geometry can be predicted in a shared token space: a single
+autoregressive sequence and a single backbone forward pass produce both action tokens
+and future-scene tokens, decoded by a lightweight action regression head and a depth head.
+2
+
+===== PAGE 3 =====
+RGBs
+Encoder
+Instruction
+VAE Latent
+Action tokens
+Video Diffusion Model
+Future Latent
+Action
+Decoder
+Future RGBs
+(a) Video WAMs
+RGBs
+Encoder
+Instruction
+Image feature Action tokens
+Vision-Language Model
+Action
+Distillation
+Geometric Foundation Model
+(b) Geometry-aware VLAs
+RGBs
+GFM Shallow Layers
+Instruction
+Geo. feature
+Action tokens
+Causal Future Predictor
+Future feature
+Action
+GFM Deep Layers
+DPT Head
+Action Head
+Future Geo.
+Action
+(c) GAM
+Figure 2: (a) Video WAMs [3, 8, 23] operate in 2D pixel space, predicting future latents and actions
+via video diffusion. (b) Geometry-aware VLAs [17, 18] predict actions using a VLA with passive
+feature distillation from an external GFM. (c) GAM (ours) unifies perception, geometry prediction,
+and action decoding by inserting a geometric world model inside a single GFM.
+• We demonstrate that across diverse simulation and real-world manipulation benchmarks,
+GAM is simultaneously more accurate, more robust, faster, and lighter than current
+foundation-model-scale alternatives.
+2
+Related Work
+Vision-Language-Action Models.
+Vision-language-action models (VLAs) adapt a pretrained
+vision-language model (VLM) into a robot policy. Early works [5, 1] autoregressively decode dis-
+crete action tokens from a finetuned VLM. This paradigm is extended through parallel decoding [2],
+flow-matching action experts [4, 6, 24], diffusion-based action heads [25], frequency-space action
+tokenizations [7], and compact open-source VLMs [26, 27]. This line of work extends large general-
+ist foundation models for humanoid and embodied control [28, 29, 30, 31], to spatial-representation
+variants [32], and to refinements in training and post-training [33, 34, 35]. While these VLAs lever-
+age strong open-vocabulary recognition to produce policies, they rely solely on 2D image priors
+and therefore lack 3D understanding. To address this, recent works [17, 18, 36] attempt to align
+intermediate VLA features with geometric foundation model. However, they do not fully exploit the
+geometric understanding of geometric foundation model backbone.
+World Action Models for Robot Manipulation. World action models are trained to predict future
+states in order to learn a policy. One branch builds on large pretrained video generation models [37],
+fine-tuning them to jointly predict future frames and actions [3, 8, 23], arguing that the benefit of
+such co-training stems primarily from training-time supervision rather than test-time future imag-
+ination [23, 7]. A second branch keeps the visual backbone frozen and trains a separate temporal
+predictor in its feature space for planning via model-predictive control [38, 39], with related work
+using implicit future-latent alignment as an auxiliary training signal [40]. However, these video
+backbones encode only 2D image-space priors, which do not explicitly resolve depth, scale, or oc-
+clusion. GAM instead predicts in the latent space of a geometric foundation model that encodes rich
+3D priors, while inheriting from both branches the paradigm of using future prediction as a training
+signal.
+Geometric Foundation Models for Manipulation. Geometric foundation models (GFMs) [14, 13,
+41, 42] infer dense 3D structures from multi-view images and have recently served as perceptual
+substrates for robot policies. Early approaches integrate GFMs with VLAs as frozen feature ex-
+tractors via representation alignment [17, 18], direct encoder replacement [36, 19], or point-cloud
+fusion [43]. Moving beyond static extraction, recent concurrent works adopt GFMs for predictive
+control: Song et al. [44] utilizes the GFM to jointly predict actions and current-frame 3D properties,
+while Xu et al. [45] employs the GFM with a diffusion policy to co-denoise future action chunks and
+3
+
+===== PAGE 4 =====
+(1) Observation 
+Encoding
+(2) Causal  
+Future Predictor
+(3) Feature Propagation 
+& Action Decoding
+(Optional) 
+Future Depths and Cameras
+“Put the ...”
+Task Instruction
+Causal Transformer Layer
+...
+...
+...
+Causal Transformer Layer
+Text 
+Enc.
+Geometry Head
+...
+RGBs
+Robot 
+State
+Prev. 
+Action
+Geo. 
+Feat.
+Future  
+Feature
+Future  
+Feature
+GFM Shallow Layers
+GFM Deeper Layers
+...
+...
+GFM Deeper Layers
+Predicted  
+Action Chunks
+Predicted  
+Action Chunks
+Action 
+Head
+Action 
+Head
+t=0
+Future  
+Feature
+Future  
+Feature
+Robot 
+State
+Prev. 
+Action
+Geo. 
+Feat.
+t=1
+(a) Geometric Action Model Pipeline
+Key
+Query
+: w/ Attention
+: w/o Attention
+(b) Block-causal Attention Mask
+Figure 3: Main architecture of GAM.
+3D latents. GAM departs from these paradigms in two ways: (1) action and future-scene predictions
+are jointly modeled within a single autoregressive token sequence rather than separated heads or
+diffusion processes, and (2) the GFM’s deep blocks are explicitly repurposed to decode predicted
+future tokens rather than merely processing observed ones.
+3
+Preliminaries: Geometric Foundation Models
+A geometric foundation model (GFM) such as VGGT [14] or DA3 [13] is a feed-forward transformer
+that maps one or more RGB images to dense 3D geometry. Given a sequence of V views I =
+{Iv}V
+v=1 with Iv ∈R3×h×w, a GFM produces per-pixel depth Dv ∈Rh×w or 3D point maps
+Pv ∈R3×h×w in a shared world frame, and per-view camera intrinsics and extrinsics (Kv, ξv) ∈
+R3×3 × SE(3) via auxiliary heads. Specifically, each view Iv is partitioned into P non-overlapping
+patches of size p × p and projected by a patch embedding into a per-view token sequence:
+z(0)
+v
+=
+
+cv, x1
+v, . . . , xP
+v
+
+∈R(1+P )×d,
+(1)
+where cv is a per-view camera token, {xj
+v}P
+j=1 are patch tokens, and d is the hidden dimension. The
+full input sequence concatenated across views is Z(0) = [z(0)
+1 , . . . , z(0)
+V ] ∈RV (1+P )×d.
+These tokens are processed by a stack of M transformer blocks {f (m)}M
+m=1 employing one of two
+attention modes. Frame-wise attention f (m)
+frame operates within each view tokens independently, at-
+tending over the (1 + P) tokens of a single image. Global attention f (m)
+global operates jointly over all
+V (1 + P) tokens, fusing information across viewpoints. The hidden state at the m-th transformer
+block evolves as follows:
+Z(m) = f (m) Z(m−1)
+,
+f (m) ∈{f (m)
+frame, f (m)
+global}.
+(2)
+After the transformer forward pass, dense geometry is decoded from multiple intermediate hidden
+states Z(m∗), where m∗is one of the selected layers in S = {m1, m2, m3, m4}. The extracted
+multi-layer hidden states are then fed into the DPT [46] head to estimate per-pixel geometry.
+4
+GAM: Geometric Action Model
+Problem Formulation. We consider language-conditioned robot manipulation. At each timestep
+t, the robot receives a multi-view RGB observation ot = {Iv,t}V
+v=1 from V fixed cameras, a pro-
+prioceptive state st ∈Rds describing the robot’s joint configuration and end-effector pose, and a
+natural-language task instruction ℓthat is held constant throughout an episode. The policy πθ must
+produce an action chunk ˆat ∈RC×da of length C, encoding the next C delta-pose or joint com-
+mands to be executed open-loop before the next observation is acquired. We learn a policy:
+πθ :
+ {ot−H+1, . . . , ot}, {st−H+1, . . . , st}, {at−H, . . . , at−1}, ℓ
+
+7→ˆat
+(3)
+4
+
+===== PAGE 5 =====
+from a dataset of N expert demonstrations D = {(τi, ℓi)}N
+i=1, where each trajectory τi =
+(ot, st, at)Ti
+t=1 pairs a sequence of observations, states, and executed action chunks with a fixed
+instruction ℓi. The policy conditions on a context window of H recent timesteps.
+Overview.
+In the following sections, we explain how we transform a pretrained GFM into a
+language-conditioned world-action model. Our key idea is to split the GFM into two parts and
+insert a causal temporal predictor between them. This design lets GAM formulate future prediction
+directly inside the GFM latent space, enabling all predictive computation to be performed in the
+GFM’s geometric representation space.
+Concretely, our framework operates in three sequential stages inside the GFM. First, the observation
+encoder (§4.1) repurposes the shallow layers of the GFM to extract latent geometric features from
+multi-view observations. Next, the causal future predictor (§4.2) operates at the split layer, where
+it combines these geometric features with language, proprioception, and action history to predict
+future latent tokens. Finally, during feature propagation and decoding (§4.3), the predicted future
+tokens are routed through the remaining deep GFM blocks to simultaneously decode future geometry
+and the final action chunk ˆat. Figure 3 (a) shows the overall architecture of our model.
+4.1
+Observation Encoder
+We first reuse the shallow layers of the pretrained GFM as the observation encoder. Let Ls denote
+the split layer where the causal future predictor is inserted. The original GFM transformer stack is
+then decomposed into an encoder and a decoder:
+E≤Ls = f (Ls) ◦· · · ◦f (1),
+D>Ls = f (M) ◦· · · ◦f (Ls+1).
+(4)
+Here, the choice of Ls is important because Ls must be deep enough to extract sufficiently rich
+visual features from the raw observations, yet shallower than the earliest layer used in the DPT head
+Ls < m1, so that predicted future states can be decoded into future geometries by the DPT heads.
+After defining this split layer Ls, for each timestep t′ in the context window, we tokenize the multi-
+view RGB observation ot′ = {Iv,t′}V
+v=1 using the original GFM patch embedding. This produces
+the initial multi-view token sequence:
+Z(0)
+t′
+=
+
+z(0)
+1,t′, . . . , z(0)
+V,t′
+
+∈RV (1+P )×d,
+(5)
+where each view contributes one camera token and P patch tokens. The observation encoder maps
+these tokens to the split-layer representation Z(Ls)
+t′
+. By applying this encoding independently to each
+timestep in the context window, the output of this stage is a sequence of per-timestep geometric latent
+states {Z(Ls)
+t−H+1, . . . , Z(Ls)
+t
+}.
+4.2
+Causal Future Predictor
+After the observation encoder, GAM performs temporal prediction directly at the split layer Ls,
+forecasting the next latent geometric state from current and past observations while conditioning
+on the task instruction, proprioception, and action history. To this end, we insert a causal future
+predictor gϕ between the shallow encoder E≤Ls and the deep decoder D>Ls. For each timestep t′
+in the context window, the encoder provides latent tokens Z(Ls)
+t′
+, and we embed the proprioceptive
+state st′ and previous action at′−1 as tokens:
+pt′ = ψs(st′),
+qt′ = ψa(at′−1),
+(6)
+with ψs, ψa lightweight projection layers, and the instruction ℓinto language tokens Lℓwith a
+pretrained text encoder. We then form a per-timestep token block by concatenating the encoded
+GFM tokens with the proprioception and action-history tokens Ut′ = [pt′; qt′; Z(Ls)
+t′
+]. The full
+input to the causal future predictor is X = [Lℓ; Ut′−H+1; . . . ; Ut′].
+The combined sequence X is then processed through block-causal self-attention [41], ensuring the
+model incorporates past and present contexts without future leakage, as illustrated in Figure 3 (b). At
+5
+
+===== PAGE 6 =====
+the final layer of the predictor gϕ, we read off the predictions from their respective sequence slots.
+Specifically, the hidden states corresponding to the geometry slots forecast the latent geometric
+tokens of the future frame, denoted as ˜Z(Ls)
+t′+1. Concurrently, the hidden state of the designated
+previous-action slot is projected to produce a predicted next action token ˜at′ ∈Rd, in direct analogy
+to next-token prediction in a causal language model. By jointly forecasting action and geometric
+latents in this layer, we ensure that action tightly interacts with spatial representations.
+This design of introducing a causal transformer predictor gϕ allows the pretrained GFM to acquire
+language-conditioned temporal world modeling with minimal architectural modification. Only the
+inserted gϕ needs to learn how to fuse language, proprioception, and action history with GFM latent
+features. The resulting predictions, eZ(Ls)
+t′+1 and ˜at′, are then passed to the remaining GFM blocks for
+joint geometry and action decoding.
+4.3
+Feature Propagation and Action Decoding
+Following the causal future predictor, the single action token ˜at′ is replicated V times to form a set
+of per-view action tokens {˜av,t′}V
+v=1, where ˜av,t′ = ˜at′. Concatenated with the geometry tokens,
+they are fed through the remaining GFM blocks D>Ls. We perform this feature propagation by
+appending each view’s corresponding action token ˜av,t′ directly to its geometry token sequence for
+each timestep:
+˜Z(M)
+t′+1 =
+ f (M) ◦· · · ◦f (Ls+1)h˜Z(Ls)
+1,t′+1; ˜a1,t′
+, . . . ,
+˜Z(Ls)
+V,t′+1; ˜aV,t′i
+.
+(7)
+To prevent future leakage, we extend the predictor’s causal mask strategy to the GFM’s remaining
+global attention layers (f (m)
+global).
+Finally, the propagated features are decoded by two heads. The lightweight action head hact ag-
+gregates action tokens over the context window to regress the executable action chunk ˆat′, while
+the original GFM depth head hdepth decodes geometry tokens into action-aligned future depth maps.
+The GFM’s deep blocks, originally pretrained to decode shallow features into 3D geometry, are thus
+repurposed here as the decoder of the world model’s predicted future.
+4.4
+Training and Inference
+The policy is trained end-to-end by minimizing a multi-task objective over action execution, world
+modeling, and geometric decoding:
+Ltotal = λactLact + λfeatLfeat + λdepthLdepth,
+(8)
+where the λ factors balance each term and H = {t−H+1, . . . , t} is the context window. The action
+loss Lact is an ℓ1 regression between the decoded action chunk ˆat′ and the expert action at′ over all
+t′ ∈H. The future-feature loss Lfeat anchors the predictor gϕ to temporal geometric transitions by
+aligning predicted future tokens ˜Z(Ls)
+t′+1 with the actual next frame Z(Ls)
+t′+1 extracted from frozen GFM:
+Lfeat =
+X
+t′∈H
+˜Z(Ls)
+t′+1 −Z(Ls)
+t′+1
+
+1 .
+(9)
+The future-depth loss Ldepth grounds the predicted future in valid 3D structure by supervising the
+decoded depth ˜Dt′+1 = hdepth(˜Z(m∗)
+t′+1 ) using depth head hdepth against ground-truth future depth
+Dt′+1, adopting the scale-invariant and gradient-matching penalties of the GFM [13, 15].
+At inference, we maintain the historical context online with key-value caching, so each step pro-
+cesses only the new observation ot and previous action at−1 in a single feed-forward pass.
+5
+Experiments
+5.1
+Implementation Details
+We use DA3-Giant [13] fine-tuned on Track4World [47] as the backbone. We insert a 12-layer
+causal predictor with width dg = 1024 at layer Ls = 12, where alternating attention begins. For
+6
+
+===== PAGE 7 =====
+Table 1: Evaluation results on LIBERO and LIBERO-Plus. Success rates are reported in % with
+absolute performance drops from LIBERO to LIBERO-Plus shown in parentheses. Color highlights
+denote the top three performing methods within each column: first , second , and third .
+Method
+Size
+Orig.
+Plus
+Cam.
+Robot
+Lang.
+Light
+BG
+Noise
+Layout
+VLAs
+π0.5 [6]
+3.3B
+96.9
+84.6 (↓12.3)
+72.0
+76.6
+86.5
+96.1
+95.2
+86.7
+86.0
+OpenVLA-OFT [2]
+7B
+97.1
+69.6 (↓27.5)
+56.4
+31.9
+79.5
+88.7
+93.3
+75.8
+74.3
+RIPT-VLA [34]
+7B
+97.5
+68.4 (↓29.1)
+55.2
+31.2
+77.6
+88.4
+91.6
+73.5
+74.2
+π0 [41]
+3.3B
+91.3
+69.3 (↓22.0)
+61.0
+40.8
+63.7
+89.3
+84.1
+80.1
+75.9
+π0-FAST [7]
+3.3B
+85.5
+61.6 (↓23.9)
+65.1
+21.6
+61.0
+73.2
+73.3
+74.4
+68.8
+UniVLA [33]
+8.5B
+95.2
+42.9 (↓52.3)
+1.8
+46.2
+69.5
+69.0
+81.0
+21.2
+31.9
+NORA [26]
+3B
+87.9
+39.0 (↓48.9)
+2.2
+37.0
+65.1
+45.7
+58.6
+12.8
+62.1
+OpenVLA [1]
+7B
+76.5
+15.6 (↓60.9)
+0.8
+3.5
+23.0
+8.1
+34.8
+15.2
+28.5
+WAMs
+Cosmos-Policy [3]
+2B
+98.5
+82.4 (↓16.1)
+73.4
+63.3
+89.3
+98.9
+83.5
+89.3
+84.0
+Fast-WAM [52]
+6B
+97.6
+50.0 (↓47.5)
+16.4
+44.5
+68.9
+78.2
+53.7
+37.7
+60.7
+WorldVLA [35]
+7B
+79.1
+25.0 (↓54.1)
+0.1
+27.9
+41.6
+43.7
+17.1
+11.0
+38.0
+Geometry-aware VLAs
+π0.5 + Spatial Forcing [17]
+3.3B
+94.0
+25.7 (↓58.3)
+0.1
+0.3
+26.8
+66.0
+45.9
+0.1
+59.8
+π0.5 + ROCKET [18]
+3.3B
+95.3
+47.5 (↓46.6)
+30.9
+75.6
+29.3
+69.2
+47.0
+25.4
+62.0
+GAM
+GAM (Ours)
+1.4B
+97.6
+85.5 (↓12.1)
+83.1
+70.0
+84.8
+97.2
+94.3
+95.3
+79.1
+the task instruction, we extract language tokens using a frozen T5 encoder [48]. The policy uses a
+context horizon of H = 4 for pre-training and H = 1 for post-training and predicts C = 8 step
+action chunks in a da = 7 end-effector action space from ds = 7 proprioceptive states. We pretrain
+GAM on 784K single-arm robot trajectories from RoboCasa365 [49], MimicGen [50], and OpenX-
+Embodiment [51], then post-train it on each benchmark. We optimize with AdamW using a constant
+learning rate, freeze layers before Ls and the depth head, and supervise depth with simulator ground
+truth. We set λact = 3, λfeat = 1, and λdepth = 3. Further details are provided in the appendix.
+5.2
+Experimental Setup
+Simulation Benchmarks. We evaluate generalization across distinct axes using two simulation
+benchmarks. Specifically, we train our policy on LIBERO [21], a lifelong single-arm manipula-
+tion benchmark spanning diverse spatial layouts, object identities, and task goals. To rigorously
+assess out-of-distribution robustness, we then evaluate the trained models in a zero-shot manner
+on LIBERO-Plus [9], which introduces controlled environmental perturbations across dimensions
+such as camera viewpoint, lighting, and backgrounds. We report additional results in the appendix.
+Real-Robot Setup. We train on four manipulation tasks (∼200 demonstrations each) using wrist-
+mounted and third-person cameras, adhering to the simulation protocol. Since ground-truth geome-
+try is unavailable in the real world, target future depth maps are obtained as pseudo-labels directly
+from the pretrained backbone GFM. We evaluate robustness via 20 trials per task, divided equally
+between nominal setups and perturbed environments, specifically varying external camera positions.
+See the appendix for robot environment with full task and evaluation details.
+Baselines. We compare GAM against representative baselines from three families discussed in §2:
+VLAs [1, 2, 4, 6, 7, 26, 33, 34], WAMs [3, 35, 52], and geometry-aware VLAs [17, 18]. For the
+real-robot setup, we compare against π0.5 [6] and Spatial Forcing [17]. For fairness, comparisons
+utilize a matched evaluation protocol, with performance numbers either re-evaluated using available
+checkpoints or taken directly from their respective published benchmarks.
+7
+
+===== PAGE 8 =====
+100
+Success Rate (%)
+100
+80
+60
+40
+20
+0
+Pick and Place
+80
+80
+80
+70
+70
+70
+70
+80
+60
+70
+30
+10
+10
+10
+10
+Stack milk  
+and cube
+Ours
+Spatial Forcing
+50
+40
+50
+30
+20
+30
+20
+20
+10
+10
+0
+Place pot and
+pan on cook top
+Insert cube into 
+covered pot
+1010
+2
+22
+2
+1
+1
+1
+Task 1
+Pick and  
+Place
+Task 2
+Stack milk  
+and cube
+2
+1
+2
+3
+Task 3
+Place pot and
+pan on cook top
+1
+3
+Task 4
+Insert cube into 
+covered pot
+Figure 4: Real-world robot tasks and results. Each task is evaluated under both in-domain (Light
+bar) and out-of-domain (Dark bar) settings. The illustration of each task is shown on the right.
+5.3
+Main Results
+Simulation Results. As shown in Table 1, GAM achieves highly competitive success rates on
+the standard LIBERO benchmark, where performance is heavily saturated. Crucially, on the more
+challenging LIBERO-Plus benchmark, our model consistently outperforms competing baselines,
+demonstrating a remarkable improvement in the camera-perturbation setting (↑9.7%p). This gain
+highlights the advantage of our end-to-end integration of the GFM. While existing geometry-aware
+VLAs only partially exploit GFM representations, GAM embeds the GFM throughout its entire
+predictive pathway to yield a deeply geometry-aware policy.
+Real-world Results. To examine whether the gains observed in simulation transfer to physical
+execution, we additionally evaluate GAM in a real-world setting. Figure 4 shows that GAM sub-
+stantially outperforms all baselines. In particular, our model remains robust under out-of-domain
+conditions (the camera-perturbation setting) where other baselines struggle. These results demon-
+strate that GAM generalizes to the real-world domain and is robust under perturbations, owing to its
+thorough exploitation of the GFM when training the policy.
+5.4
+Ablation Study
+Post-training Component Analysis.
+Table 2 summarizes ablation study of key post-training com-
+ponents on Object suite of LIBERO and LIBERO-Plus. Pretraining is crucial for robustness: omit-
+ting it mildly affects nominal LIBERO but severely degrades LIBERO-Plus. With a pretrained
+backbone, removing Ldepth or Lfeat has minimal impact, suggesting geometric dynamics are already
+encoded. Notably, even without pretraining, these future-prediction losses provide strong geometric
+supervision and substantially improve robustness on LIBERO-Plus. Finally, the horizon ablation
+shows that H = 1 is sufficient and more robust than longer histories, consistent with prior observa-
+tions that extended context can introduce spurious correlations [53, 54].
+Table 2: Component ablation.
+Pretrain
+Ldepth
+Lfeat
+H
+Orig.
+SR (%)
+Plus
+SR (%)
+✓
+✓
+✓
+1
+99.6
+89.7
+✓
+✓
+✓
+2
+97.2
+84.4
+✓
+✓
+✓
+4
+98.2
+85.1
+✓
+✗
+✓
+1
+98.4
+89.0
+✓
+✗
+✗
+1
+98.6
+89.5
+✓
+✓
+✗
+1
+99.6
+89.7
+✗
+✓
+✓
+1
+98.4
+73.4
+✗
+✗
+✓
+1
+95.2
+66.5
+✗
+✓
+✗
+1
+96.4
+80.0
+✗
+✗
+✗
+1
+93.6
+50.0
+Table 3: Layer ablation.
+Split layer Ls Orig. (%) Plus (%)
+0
+5.4
+1.8
+12
+99.6
+70.1
+19
+95.6
+63.4
+27
+1.2
+1.6
+33
+0.0
+0.0
+39
+0.0
+0.0
+Table 4: Inference cost.
+Method
+Size
+Time
+OpenVLA-OFT [1]
+7B
+77.8ms
+π0.5 [6]
+3.3B
+29.2ms
+Cosmos-Policy [3]
+2B
+382.4ms
+GAM (Ours)
+1.4B
+6.9ms
+Split Layer Ls Selection. Ta-
+ble 3 evaluates the depth of fu-
+ture predictor by shifting the
+split layer Ls and re-initializing
+the predictor.
+We exclude
+future-depth loss in this exper-
+iment because it is not equally
+applicable to all split layers and
+could isolate the effect of Lfeat
+itself.
+Our default choice of
+Ls = 12 achieves peak perfor-
+mance, validating it as the opti-
+mal seam between frame-wise and cross-view attention. While layer 19 remains competitive, insert-
+ing the predictor too early (Ls = 0) or late (Ls ∈{27, 33, 39}) causes total performance collapse.
+This confirms that forecasted tokens require sufficient interaction through deep layers to properly
+integrate into the pretrained 3D geometric prior.
+8
+
+===== PAGE 9 =====
+5.5
+Analysis
+0
+20
+40
+60
+80
+100
+L1
+L2
+L3
+L4
+L5
+Ours (GAM)
+Cosmos Policy
+𝜋0.5
+ROCKET
+Success Rate (%)
+Difficulty Level 
+Figure 5: Success rate vs. cam-
+era perturbation difficulty.
+Inference Speed and Model Size. As shown in Table 4, GAM
+achieves the lowest latency among all baselines, requiring only
+6.9 ms (≈145 Hz) for a single feed-forward pass and running up
+to 55× faster than the diffusion-based Cosmos Policy.
+All methods are benchmarked under the same setup, with further
+details provided in the appendix. By utilizing single-pass predic-
+tion, GAM avoids the multi-step denoising of diffusion policies,
+achieving low latency while matching prior accuracy and robust-
+ness with only 1.4B parameters.
+Robustness to Viewpoint and Scene Variation. Figure 5 further
+breaks down the camera-perturbation results by difficulty level of
+LIBERO-Plus [9]. GAM achieves consistently higher success rates than all baselines at every level,
+and the advantage remains clear even under the strongest perturbations.
+6
+Conclusion and Limitation
+We introduced Geometric Action Model, which unifies geometry and action prediction with tem-
+poral world modeling inside a single shared GFM. By inserting a causal transformer between the
+GFM’s shallow and deep layers, GAM autoregressively decodes actions and future geometries, re-
+solving the spatial ambiguities of traditional foundation-model substrates. Across extensive sim-
+ulation and real-world benchmarks, GAM achieves superior accuracy, faster inference, and strong
+out-of-distribution robustness to environmental perturbations. The framework also has limitations.
+Its language reasoning and commonsense capabilities are bounded by the frozen text encoder; inte-
+grating a large language model or an external reasoning module is a natural next step.
+Acknowledgments
+This work was supported under project ID a144 as part of the Swiss AI Initiative, through a grant
+from the ETH Domain and computational resources provided by the Swiss National Supercomputing
+Centre (CSCS) under the Alps infrastructure.
+9
+
+===== PAGE 10 =====
+Appendix
+This appendix provides experimental details, results, and analyses that complement the main paper.
+• Section A describes the training data, implementation details, simulation and real-world
+evaluation settings, baseline settings, and inference benchmark protocol.
+• Section B presents additional simulation benchmark results on LIBERO, LIBERO-Plus,
+and RoboCasa.
+• Section C provides additional ablations and analyses, including backbone variants, pre-
+training ablations, split-layer analysis, action-token attention, and robustness trends.
+A
+Experimental Settings and Reproducibility Details
+GAM is trained in two stages, following standard practice for generalist robot policies [2, 4]. The
+first stage jointly trains the predictor, action head, and the GFM backbone end-to-end on a large
+mixture of single-arm robot data. The model was trained using 64 NVIDIA GH200 GPUs witch
+batch size of 1024, which takes approximately ˜96 hours. The second stage fine-tunes the entire
+model on each benchmark’s official training set before evaluation. The second stage on simulation
+benchmark was trained using 16 NVIDIA GH200 GPUs with batch size of 160, which takes ˜48
+hours.
+A.1
+Pre-training Details
+We pre-train GAM on a weighted mixture of Open-X Embodiment [51] (OXE), MimicGen [50],
+and RoboCasa365 [49]. OXE provides broad real-robot coverage across multiple embodiments and
+manipulation domains, while MimicGen and RoboCasa365 provide simulation demonstrations with
+clean geometric supervision. The sampling ratios are 72%, 18%, and 10% for OXE, MimicGen, and
+RoboCasa365, respectively. For future-depth supervision, we use teacher pseudo-depth for OXE and
+re-rendered simulator depth for MimicGen and RoboCasa365. Figure 6 shows the dataset mixture
+used for pre-training.
+For OXE, we use the subset whose actions can be mapped to our common control interface and
+exclude datasets that are incompatible with our action space.. For RoboCasa365, we use only the
+manipulation-task subset. Across all three sources, we keep the original task language provided
+by the datasets and do not synthesize additional instructions. The language encoder is kept frozen
+during pre-training.
+All datasets are converted to a common observation and action format before training. Images are
+resized to 224×224, and the model uses two RGB views when available: an external view and a wrist
+view. Following Cosmos-policy [3] and π0.5 [6], standard image augmentations such as random
+cropping, rotation, and color jitter are applied during training and disabled during evaluation.
+A.2
+Simulation Experiments Details
+We adopt the LIBERO evaluation protocol established by OpenVLA [1] and OpenVLA-OFT [2].
+Specifically, we evaluate on the four standard LIBERO task suites: LIBERO-Spatial, LIBERO-
+Object, LIBERO-Goal, and LIBERO-Long, each consisting of 10 tasks. Following OpenVLA-
+OFT, we train on filtered LIBERO demonstrations by removing unsuccessful episodes and filtering
+idle/no-op frames, i.e., training samples with near-zero actions. We fine-tune a separate policy for
+each LIBERO suite.
+We report task execution success rate (SR, %) as our primary evaluation metric. For the original
+LIBERO benchmark, each task is evaluated over 50 randomized trials, resulting in 500 rollouts per
+suite. For LIBERO-Plus, we follow the official evaluation setting and use one rollout per perturbed
+10
+
+===== PAGE 11 =====
+784K
+trajectories
+Open X-Embodiment
+72%
+MimicGen
+18%
+RoboCasa365
+10%
+MimicGen
+18.0
+DROID
+13.8
+Fractal
+12.4
+Bridge
+10.2
+RoboCasa365
+10.0
+BC-Z
+9.5
+Language Table
+4.6
+Furniture Bench
+3.2
+TACO Play
+2.7
+KUKA
+2.3
+FMB
+1.9
+UT Austin Mutex
+1.8
+Jaco Play
+1.5
+Berkeley UR5
+1.5
+Stanford Hydra
+1.1
+Austin Sirius
+1.1
+RoboTurk
+0.9
+Berkeley Fanuc
+0.9
+Austin Sailor
+0.7
+NYU Door Opening
+0.5
+NYU Franka Play
+0.5
+Berkeley Cable Routing
+0.4
+Austin BUDS
+0.3
+CMU Stretch
+0.2
+DLR EDAN
+0.05
+Figure 6: Training Dataset Mixture. We illustrate the dataset mixture utilized during pretraining,
+detailing the relative proportions of each constituent dataset. The pie chart shows the high-level
+source mixture, and the bar chart shows the percentage of each constituent dataset relative to the
+entire training corpus.
+Table 5: Hyperparameters for LIBERO, LIBERO-Plus and real-world experiments.
+hyperparameter
+value
+# GPUs
+8 × NVIDIA GH200
+learning rate (LR)
+5.16e-5 backbone; 5.16e-4 action head and predictor
+total batch size
+160
+input images
+1 external camera image, 1 wrist-mounted camera image
+input image size
+224 x 224 px
+use observation history
+no (use single-step inputs)
+action chunk size
+8 steps (predict 8, execute all 8 open-loop at test time)
+use proprio (robot state)
+yes
+# trainable parameters
+983.2M total
+image augmentations
+90% random crop, ±5◦rotation, color jitter, JPEG q95:
+random resized crop=dict(scale=[0.9, 0.9], ratio=[1.0, 1.0])
+base only rotation=[±5 deg]
+random brightness=[0.3]
+random contrast=[0.6, 1.4]
+random saturation=[0.5, 1.5]
+random hue=[0.05]
+jpeg quality=95
+task instance. All models are trained with a global batch size of 160 for up to 110k training steps,
+until convergence is achieved.
+For baseline comparison, we re-evaluate π0.5 and Cosmos-Policy under our evaluation setting using
+publicly available checkpoints. We also re-evaluate π0.5 + Spatial Forcing and π0.5 + ROCKET
+using reproduced checkpoints from ROCKET [18]. Results for the remaining baselines are taken
+from Fei et al. [9] and Zheng et al. [55].
+11
+
+===== PAGE 12 =====
+(a) In-distribution
+(b) Out-of-distribution
+(a) Wrist Camera: Zed Camera
+(b) External Camera: RealSense
+Figure 7: Real-world experiments environment setup and ID vs. OOD Camera setup.
+Task 1
+Pick up the cube and place it on the plate.
+Task 2
+Pick up the chocolate milk and place it on top of the white milk, then pick up the cube 
+and stack it on top of the chocolate milk.
+Task 3
+Pick up the pot and place it on the bottom section of the induction cooktop,  
+then pick up the pan and place it on the top section of the induction cooktop.
+Task 4 Open the lid of the pot, put the yellow cube inside the pot, and close the lid again.
+Figure 8: Illustration of four real-world manipulation tasks.
+A.3
+Real-World Experiments Details
+Figure 7 illustrates the experimental environment used for our real-world evaluations. Our hardware
+setup includes a wrist-mounted ZED Camera and an external RealSense camera providing a third-
+person perspective.
+For training and evaluation, we defined four distinct tasks: Pick and place, Stack milk and cube,
+Place pot and pan on cooktop, and Insert cube into covered pot. We collected teleoperated demon-
+strations for each task: 284, 202, 184, and 169 demonstrations, respectively. Figure 8 shows the text
+instructions and corresponding visual illustrations for each task. All tasks were jointly trained within
+a unified dataset. The hardware specifications and hyperparameters used to train GAM, alongside
+the baselines (π0.5 [6] and Spatial Forcing [17]), are detailed in Tables 5, 6, and 7, respectively. All
+baseline models were trained until convergence using the default hyperparameters from the paper.
+During evaluation, we measured the success rate of each task across 20 trials. Specifically, 10
+trials were conducted under a normal setup (ID), while the remaining 10 trials evaluated robustness
+under an out-of-distribution (OOD) setup with camera perturbation. The camera perturbation was
+introduced by applying a translation of 85 cm and a rotation of 45◦to the external camera shown in
+Figure 7. The left side of Figure 7, we provide a visualization comparing ID and OOD environment
+settings. This perturbation setup was kept consistent across all evaluations.
+A.4
+Real-World Experiments Baseline Training Details
+For the baseline methods of real-world experiments, we follow the training recipes and default
+hyperparameters from the corresponding papers [17, 6], changing only the task data and camera
+12
+
+===== PAGE 13 =====
+Table 6: π0.5 hyperparameters.
+hyperparameter
+value
+# GPUs
+8 x NVIDIA H100 GPU
+learning rate (LR)
+5e-5
+total batch size
+16
+input images
+1 external camera image, 1 wrist-mounted camera image
+input image size
+224 x 224 px
+use observation history
+no (use single-step inputs)
+action chunk size
+10 steps (predict 10, execute all 10 open-loop at test time)
+use proprio (robot state)
+yes
+# trainable parameters
+3.3B total
+diffusion sampling algorithm
+flow matching
+number of integration steps
+10
+image augmentations
+90% random crops, color jitter:
+random resized crop=dict(scale=[0.9, 0.9],
+ratio=[1.0, 1.0])
+Table 7: Spatial Forcing hyperparameters.
+hyperparameter
+value
+# GPUs
+8 x NVIDIA H100 GPU
+learning rate (LR)
+2.5e-5
+total batch size
+16
+input images
+1 external camera image, 1 wrist-mounted camera image
+input image size
+224 x 224 px
+use observation history
+no (use single-step inputs)
+action chunk size
+10 steps (predict 10, execute all 10 open-loop at test time)
+use proprio (robot state)
+yes
+# trainable parameters
+853M total
+image augmentations
+90% random crops, color jitter:
+random resized crop=dict(scale=[0.9, 0.9],
+ratio=[1.0, 1.0])
+Table 8: Model-only inference latency on a single GH200 GPU.
+Policy
+Official
+PyTorch
+bf16
+precision
+Torch
+Compile
+CUDA
+Graphs
+Model-only
+latency
+GAM (Ours)
+✓
+✓
+✓
+✗
+17.5 ms
+GAM (Ours)
+✓
+✓
+✓
+✓
+6.9 ms
+pi0.5
+✓
+✓
+✓
+✗
+29.2 ms
+OpenVLA-OFT
+✓
+✓
+✓
+✗
+70.1 ms
+Cosmos Policy
+✓
+✓
+✓
+✗
+382.4 ms
+streams to match our evaluation setup (Table 6 and 7). Both π0.5 [6] and Spatial Forcing [17] use
+the same two RGB inputs as GAM, one external camera and one wrist-mounted camera, resized to
+224 × 224. We keep each baseline’s original inference protocol to preserve its intended deployment
+behavior. The main baseline-specific settings are summarized below; π0.5 uses flow-matching action
+decoding with 10 integration steps, while Spatial Forcing adopts its feature alignment loss recipe.
+A.5
+Inference Latency Comparison Details
+Table 8 reports the runtime configuration used for the inference-speed comparison in the main paper.
+All policies are evaluated on a single GH200 GPU with the same canonical observation input, bf16
+precision, warmup and measurement protocol, and model-only latency metric, excluding model
+loading and input preprocessing.
+In main paper, We use the official PyTorch inference path for each baseline. For π0.5, whose original
+implementation is based on JAX, we use the official PyTorch implementation. To separate common
+compiler and runtime effects from deployment-specific execution, we report a matched setting in
+which all policies use Torch Compile and none uses CUDA Graphs. Under this setting, GAM re-
+quires 17.5 ms for a single feed-forward action prediction, compared to 29.2 ms for π0.5, 70.1 ms for
+OpenVLA-OFT, and 382.4 ms for Cosmos Policy. GAM’s deployment setting further uses CUDA
+Graphs over its static single-pass inference path, reducing latency to 6.9 ms. This corresponds to
+approximately 145 Hz control and up to a 55.4× speedup over the diffusion-based Cosmos Policy.
+A.6
+Model Size Breakdown
+Table 9 details the parameter breakdown of the DA3-based GAM architecture. As reported, GAM
+uses a 1.4B-parameter model, making it substantially smaller than VLM-based and video-diffusion-
+based baselines such as π0.5, OpenVLA-OFT, and Cosmos-Policy. This compact size comes from
+repurposing a pretrained geometric backbone [13] as the shared substrate for perception, future-
+geometry prediction, and action decoding, rather than attaching a large language model or video-
+generation model as the policy backbone.
+Of the full model, approximately 983.2M parameters are trainable. Most of these trainable param-
+eters come from the later blocks of the ViT-Giant backbone, while the initial geometric layers and
+the DPT depth head remain frozen to preserve pretrained geometric structure. The Causal Future
+Predictor and lightweight action head are fully trainable and account for the remaining trainable pa-
+13
+
+===== PAGE 14 =====
+Table 9: Parameter breakdown of the DA3-based GAM model.
+Module
+Parameters
+Trainable?
+Trainable parameters
+backbone (ViT-Giant, 40 blocks)
+1136.5M
+blocks 13–39 trainable; blocks 0–12 frozen
+≈765M
+DPT head
+50.1M
+frozen
+0
+Causal Future Predictor
+210.2M
+trainable
+210.2M
+action head
+8.0M
+trainable
+8.0M
+total
+≈1404.8M
+–
+≈983.2M
+Table 11: Task-wise success rates on RoboCasa-Kitchen. We report per-task success rates and the
+overall average.
+Task
+SR
+Task
+SR
+Task
+SR
+Task
+SR
+PnPCabToCounter
+40.0%
+PnPSinkToCounter
+71.3%
+CloseDoubleDoor
+90.0%
+TurnOffSinkFaucet
+88.3%
+PnPCounterToCab
+50.3%
+PnPStoveToCounter
+56.3%
+CloseSingleDoor
+100.0%
+TurnSinkSpout
+84.7%
+PnPCounterToMicrowave
+29.3%
+OpenSingleDoor
+70.3%
+OpenDrawer
+92.3%
+CoffeePressButton
+79.0%
+PnPCounterToSink
+75.7%
+OpenDoubleDoor
+98.3%
+CloseDrawer
+99.3%
+TurnOnMicrowave
+90.7%
+PnPCounterToStove
+44.0%
+TurnOnStove
+74.3%
+TurnOnSinkFaucet
+89.7%
+TurnOffMicrowave
+94.3%
+PnPMicrowaveToCounter
+11.3%
+TurnOffStove
+30.0%
+CoffeeServeMug
+71.3%
+CoffeeSetupMug
+33.7%
+Overall
+69.4%
+rameters. This design allows GAM to adapt the geometric representation for control while keeping
+the overall model size below the larger foundation-model baselines in the main comparison.
+B
+Additional Benchmark Results
+B.1
+Additional Results on RoboCasa-kitchen
+Table 10: Average success rates on
+RoboCasa Kitchen.
+Method
+Avg. SR (%)
+GROOT-N1
+49.6
++ DreamGen
+57.6
++ DUST
+58.5
+UWM
+60.8
+π0
+62.5
+GROOT-N1.5
+64.1
++ HAMLET
+66.4
+Video Policy
+66.0
+FLARE
+66.4
+Cosmos Policy
+67.1
+GAM (Ours)
+69.4
+RoboCasa-Kitchen is a simulation benchmark derived from
+RoboCasa [22], which focuses on everyday manipulation
+in realistic and diverse kitchen environments. We evalu-
+ate on 24 kitchen manipulation tasks that cover pick-and-
+place, articulated-object interaction, appliance control, and
+coffee-related manipulation skills.
+Because our base pre-training setup uses two camera views,
+whereas RoboCasa-Kitchen adopts a 3-view observation,
+we further train GAM from the base pre-training check-
+point for 3-view format.
+We also increase the action
+chunk size from 8 to 16 steps to better accommodate the
+longer-horizon nature of RoboCasa-Kitchen tasks. For the
+benchmark demonstrations, we re-extract depth for the 300
+demonstrations per task and use only successful trajectories
+for training. As summarized in Table 10, We find that GAM
+outperforms existing baselines, including Cosmos Policy [3], on RoboCasa-Kitchen, We addition-
+ally provide the per-task breakdown of RoboCasa-Kitchen in Table 11.
+B.2
+Additional LIBERO and LIBERO-Plus Results
+Table 12 provides the suite-by-perturbation breakdown for LIBERO-Plus [9], expanding the ag-
+gregate LIBERO and LIBERO-Plus results reported in the main paper. Figure 9 further breaks
+down LIBERO-Plus performance by perturbation difficulty level, showing how GAM behaves as
+each perturbation becomes more severe. Table 13 reports task-wise success rates on the original
+LIBERO [21] benchmark.
+14
+
+===== PAGE 15 =====
+Table 12: LIBERO-Plus robustness results across four task suites. Success rates are reported in
+%. ”Orig.” denotes the results of LIBERO benchmark without any perturbation.
+(a) Spatial
+Method
+Orig. Cam. Robot Lang. Light
+BG Noise Layout Total
+GAM (Ours)
+98.6
+91.5
+79.4
+95.6 100.0
+99.6
+96.6
+94.3 93.4
+π0.5
+98.8
+76.6
+86.3
+96.4
+97.9
+99.6
+92.0
+98.2 92.0
+Cosmos-policy
+98.1
+83.5
+59.7
+96.4
+99.7
+85.3
+91.7
+95.1 87.3
+Fast-WAM
+98.2
+14.4
+44.0
+69.5
+87.3
+69.8
+35.0
+60.5 54.4
+OpenVLA-OFT
+97.6
+88.3
+40.0
+80.5
+98.3
+97.3
+96.3
+93.9 84.0
+RIPT-VLA
+97.5
+85.4
+38.0
+99.7
+99.7 100.0
+92.0
+92.3 85.8
+π0
+96.8
+70.7
+49.1
+67.9
+92.8
+95.0
+87.7
+94.0 78.6
+π∗
+0
+96.8
+17.8
+6.6
+58.8
+89.7
+90.7
+90.9
+89.1 60.7
+π0-Fast
+96.4
+87.2
+26.9
+84.2
+37.0
+97.7
+93.2
+95.5 74.4
+UniVLA
+96.5
+1.1
+52.6
+83.9
+96.6
+90.7
+15.7
+69.5 55.5
+NORA
+92.2
+4.3
+50.9
+63.8
+66.8
+65.5
+12.5
+84.6 47.6
+WorldVLA
+85.6
+0.0
+44.3
+46.3
+65.1
+19.8
+11.7
+46.1 32.5
+OpenVLA
+84.7
+0.0
+3.7
+27.7
+12.3
+50.4
+12.0
+40.7 19.4
+π0.5 + ROCKET 96.4
+14.9
+18.0
+35.4
+50.7
+45.0
+13.7
+48.6 31.5
+(b) Object
+Method
+Orig. Cam. Robot Lang. Light BG Noise Layout Total
+GAM (Ours)
+99.6
+91.4
+76.9 100.0 100.0 99.7
+99.2
+79.7 90.6
+π0.5
+98.2
+86.4
+71.9
+91.0
+99.0 99.2
+96.2
+91.1 89.9
+Cosmos-policy
+100.0
+88.6
+61.6
+94.1
+99.7 96.8
+97.4
+86.4 88.3
+Fast-WAM
+100.0
+25.3
+64.1
+96.3
+97.9 77.8
+63.7
+73.0 71.2
+OpenVLA-OFT
+98.4
+38.9
+25.4
+99.0
+73.7 97.6
+72.3
+71.8 66.5
+RIPT-VLA
+97.5
+37.9
+26.4
+80.8
+85.9 99.2
+68.0
+70.1 64.3
+π0
+98.8
+80.1
+31.9
+75.4
+94.3 85.9
+87.9
+76.2 74.7
+π∗
+0
+98.8
+22.2
+8.3
+70.0
+90.9 91.1
+87.0
+76.2 61.4
+π0-Fast
+96.8
+72.0
+27.6
+71.5
+71.0 95.2
+93.1
+84.5 72.7
+UniVLA
+96.8
+0.0
+42.2
+86.9
+25.6 81.5
+10.4
+27.3 36.7
+NORA
+95.4
+0.5
+28.4
+76.4
+25.3 54.8
+5.7
+55.8 34.4
+WorldVLA
+89.0
+0.0
+26.4
+57.2
+20.5 17.3
+18.0
+53.6 28.6
+OpenVLA
+88.4
+0.5
+4.5
+21.0
+1.0 45.2
+11.4
+22.4 14.0
+π0.5 + ROCKET
+98.8
+41.4
+27.1
+44.6
+91.6 69.8
+34.1
+83.6 53.9
+(c) Goal
+Method
+Orig. Cam. Robot Lang. Light BG Noise Layout Total
+GAM (Ours)
+97.4
+94.9
+67.5
+67.8 100.0 91.8
+97.1
+64.5 80.4
+π0.5
+98.0
+77.2
+73.6
+70.5
+93.2 92.5
+87.3
+70.4 79.3
+Cosmos-policy
+98.2
+64.0
+64.1
+73.4 100.0 85.1
+75.2
+65.2 73.5
+Fast-WAM
+97.0
+8.1
+24.7
+49.8
+75.3 44.5
+23.7
+48.0 39.2
+OpenVLA-OFT
+97.9
+62.0
+25.2
+53.2
+93.9 92.5
+75.2
+59.1 63.0
+RIPT-VLA
+97.5
+65.7
+23.2
+45.4
+74.2 79.7
+71.0
+59.8 58.0
+π0
+95.8
+56.6
+43.3
+43.2
+90.3 84.7
+82.8
+59.8 63.4
+π∗
+0
+95.8
+12.3
+5.6
+39.3
+84.2 76.5
+76.5
+44.7 44.9
+π0-Fast
+88.6
+70.8
+20.5
+47.3
+95.3 60.9
+69.7
+51.6 57.5
+UniVLA
+95.6
+3.9
+37.9
+45.6
+89.6 78.3
+33.5
+22.6 40.7
+NORA
+89.4
+2.9
+31.1
+56.6
+60.6 60.5
+18.2
+53.9 38.8
+WorldVLA
+82.6
+0.3
+30.6
+42.2
+68.8 30.3
+13.5
+47.4 31.8
+OpenVLA
+79.2
+2.5
+2.7
+21.5
+9.0 27.1
+19.5
+25.6 15.1
+π0.5 + ROCKET 96.6
+41.2
+36.9
+27.6
+57.0 47.0
+28.2
+46.8 39.7
+(d) Long
+Method
+Orig. Cam. Robot Lang. Light BG Noise Layout Total
+GAM (Ours)
+94.6
+62.5
+62.8
+95.3
+91.6 88.2
+89.5
+79.5 78.0
+π0.5
+92.4
+49.2
+76.1
+89.6
+93.8 90.3
+73.1
+85.9 77.9
+Cosmos-policy
+97.6
+58.9
+67.4
+94.8
+96.4 68.9
+91.8
+92.9 81.0
+Fast-WAM
+95.2
+17.7
+45.3
+60.1
+52.2 22.8
+28.5
+61.2 41.1
+OpenVLA-OFT
+94.5
+38.7
+38.2
+87.0
+89.4 86.8
+63.5
+76.9 66.4
+RIPT-VLA
+97.5
+34.1
+38.4
+88.3
+93.4 89.3
+66.4
+79.2 67.5
+π0
+73.8
+38.7
+39.9
+69.7
+79.2 72.3
+64.6
+77.6 61.3
+π∗
+0
+85.2
+3.8
+3.6
+68.4
+74.5 69.5
+64.4
+69.6 48.4
+π0-Fast
+60.2
+33.2
+12.0
+43.6
+91.6 44.6
+46.1
+47.8 43.4
+UniVLA
+92.0
+1.9
+53.2
+64.2
+65.7 74.4
+25.4
+16.4 39.9
+NORA
+74.6
+1.2
+39.4
+64.0
+30.3 54.0
+15.1
+59.5 36.3
+WorldVLA
+59.0
+0.0
+12.2
+20.6
+20.4
+1.7
+1.6
+4.4
+8.2
+OpenVLA
+53.7
+0.0
+3.0
+22.2
+10.6 19.4
+17.6
+28.3 14.3
+π0.5 + ROCKET 89.2
+25.3
+38.4
+11.0
+77.0 29.4
+23.8
+71.5 36.7
+Figure 9: Detailed zero-shot robustness on LIBERO-Plus. We report success rates across diffi-
+culty levels L1–L5 for each perturbation category in the LIBERO-PLUS benchmark. The Average
+panel summarizes performance across all perturbation categories.
+Overall, these breakdowns show that GAM preserves strong performance on the original LIBERO
+tasks while improving robustness on LIBERO-Plus, especially under perturbations that require sta-
+ble geometric understanding such as camera-viewpoint changes.
+B.3
+Generated Future Depth Maps
+In Figure 10, we visualize the future depth predictions generated by GAM across each task suite
+in the LIBERO benchmark. Given a current RGB observation, GAM predicts the and future depth
+15
+
+===== PAGE 16 =====
+Table 13: Per-task success rates on LIBERO Original. Task names are abbreviated by removing
+suite-level repeated context.
+Spatial 98.6%
+Object 99.0%
+Goal 97.4%
+Long 94.6%
+Task
+SR
+Task
+SR
+Task
+SR
+Task
+SR
+Between plate & ramekin
+100%
+Alphabet soup
+100%
+Open middle drawer
+100%
+Soup + tomato sauce to basket
+96%
+Next to ramekin
+100%
+Cream cheese
+98%
+Bowl on stove
+100%
+Cream cheese + butter to basket
+100%
+From table center
+98%
+Salad dressing
+100%
+Wine bottle on cabinet
+96%
+Stove on + moka pot on stove
+98%
+On cookie box
+100%
+BBQ sauce
+100%
+Top drawer open + bowl inside
+90%
+Bowl in bottom drawer + close
+100%
+In top drawer
+98%
+Ketchup
+98%
+Bowl on cabinet
+98%
+Mugs to left/right plates
+80%
+On ramekin
+96%
+Tomato sauce
+94%
+Plate to front of stove
+98%
+Book to caddy back compartment
+100%
+Next to cookie box
+100%
+Butter
+100%
+Cream cheese in bowl
+100%
+Mug to plate + pudding to plate
+96%
+On stove
+100%
+Milk
+100%
+Turn on stove
+100%
+Soup + cream cheese box to basket
+96%
+Next to plate
+94%
+Chocolate pudding
+100%
+Bowl on plate
+92%
+Both moka pots on stove
+88%
+On wooden cabinet
+100%
+Orange juice
+100%
+Wine bottle on rack
+100%
+Mug to microwave + close
+92%
+maps while simultaneously generating actions that align spatially with the anticipated future geom-
+etry. As demonstrated in the visualizations, GAM accurately forecasts the future depth alongside its
+corresponding action sequence.
+16
+
+===== PAGE 17 =====
+T = 0
+T = 0
+T = 1
+T = 1
+T = 2
+T = 2
+T = 3
+T = 3
+T = 4
+T = 4
+T = 5
+T = 5
+T = 7
+T = 7
+T = 8
+T = 8
+T = 9
+T = 9
+T = 10
+T = 10
+Current
+RGB
+Current
+Depth
+GT
+Future
+Pred
+Future
+Progress
+>
+(a) LIBERO-Spatial: bowl from table center to plate.
+T = 0
+T = 0
+T = 1
+T = 1
+T = 2
+T = 2
+T = 3
+T = 3
+T = 5
+T = 5
+T = 6
+T = 6
+T = 8
+T = 8
+T = 9
+T = 9
+T = 10
+T = 10
+T = 11
+T = 11
+Current
+RGB
+Current
+Depth
+GT
+Future
+Pred
+Future
+Progress
+>
+(b) LIBERO-Object: tomato sauce to basket.
+T = 0
+T = 0
+T = 1
+T = 1
+T = 2
+T = 2
+T = 3
+T = 3
+T = 4
+T = 4
+T = 5
+T = 5
+T = 6
+T = 6
+T = 7
+T = 7
+T = 8
+T = 8
+T = 9
+T = 9
+Current
+RGB
+Current
+Depth
+GT
+Future
+Pred
+Future
+Progress
+>
+(c) LIBERO-Long: cream cheese and butter to basket.
+Progress
+>
+T = 0
+T = 0
+T = 1
+T = 1
+T = 2
+T = 2
+T = 3
+T = 3
+T = 5
+T = 5
+T = 6
+T = 6
+T = 8
+T = 8
+T = 9
+T = 9
+T = 10
+T = 10
+T = 11
+T = 11
+Current
+RGB
+Current
+Depth
+GT
+Future
+Pred
+Future
+(d) LIBERO-Goal: wine bottle on cabinet.
+Figure 10: Future depth visualizations predicted by our model on representative LIBERO
+tasks.
+17
+
+===== PAGE 18 =====
+Figure 11: Attention visualizations of action tokens.
+C
+Ablation and Diagnostic Analyses
+C.1
+When to Predict Actions?
+Table 14: Direct action-token ablation.
+Variant
+Orig. Plus
+Direct-action supervision
+98.4
+84.1
+GAM (Ours)
+99.6
+89.7
+We additionally evaluate a direct-action supervision
+variant that applies the action loss directly to the out-
+put action token of the causal future predictor, without
+passing the action token through the remaining DA3
+blocks. This ablation uses the same setting as the main
+component ablation on LIBERO-Object.
+Passing the action token through the deep geometric decoder provides an additional improvement,
+particularly on LIBERO-Plus Object, suggesting that the remaining GFM layers contribute to refine
+the action representation, especially under camera perturbations.
+C.2
+Attention Analysis
+In Figure 11, we visualize the attention maps of action tokens across GFM layers to inspect which
+visual regions contribute to action decoding. As shown in the attention maps, several intermediate
+layers attend to task-relevant regions, with clear saliency around manipulated objects and nearby
+contact regions. This qualitative trend is consistent with the layer ablation: mid-level representations
+retain object-level structure while still leaving enough depth in the GFM decoder for action-token
+refinement.
+18
+
+===== PAGE 19 =====
+References
+[1] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster,
+G. Lam, P. Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv
+preprint arXiv:2406.09246, 2024.
+[2] M. J. Kim, C. Finn, and P. Liang. Fine-tuning vision-language-action models: Optimizing
+speed and success. arXiv preprint arXiv:2502.19645, 2025.
+[3] M. J. Kim, Y. Gao, T.-Y. Lin, Y.-C. Lin, Y. Ge, G. Lam, P. Liang, S. Song, M.-Y. Liu, C. Finn,
+et al. Cosmos policy: Fine-tuning video models for visuomotor control and planning. arXiv
+preprint arXiv:2601.16163, 2026.
+[4] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman,
+B. Ichter, et al. π0: A vision-language-action flow model for general robot control. arXiv
+preprint arXiv:2410.24164, 2024.
+[5] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid,
+et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In
+Conference on Robot Learning, pages 2165–2183. PMLR, 2023.
+[6] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi,
+C. Finn, N. Fusai, et al. π0.5: a vision-language-action model with open-world generalization.
+arXiv preprint arXiv:2504.16054, 2025.
+[7] K. Pertsch, K. Stachowicz, B. Ichter, D. Driess, S. Nair, Q. Vuong, O. Mees, C. Finn, and
+S. Levine. Fast: Efficient action tokenization for vision-language-action models. arXiv preprint
+arXiv:2501.09747, 2025.
+[8] J. Pai, L. Achenbach, V. Montesinos, B. Forrai, O. Mees, and E. Nava. mimic-video: Video-
+action models for generalizable robot control beyond vlas. arXiv preprint arXiv:2512.15692,
+2025.
+[9] S. Fei, S. Wang, J. Shi, Z. Dai, J. Cai, P. Qian, L. Ji, X. He, S. Zhang, Z. Fei, et al.
+Libero-plus: In-depth robustness analysis of vision-language-action models. arXiv preprint
+arXiv:2510.13626, 2025.
+[10] A. Wilcox, M. Ghanem, M. Moghani, P. Barroso, B. Joffe, and A. Garg. Adapt3r: Adap-
+tive 3d scene representation for domain transfer in imitation learning.
+arXiv preprint
+arXiv:2503.04877, 2025.
+[11] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu. 3d diffusion policy: Generalizable
+visuomotor policy learning via simple 3d representations. arXiv preprint arXiv:2403.03954,
+2024.
+[12] W. Huang, Y.-W. Chao, A. Mousavian, M.-Y. Liu, D. Fox, K. Mo, and L. Fei-Fei. Point-
+world:
+Scaling 3d world models for in-the-wild robotic manipulation.
+arXiv preprint
+arXiv:2601.03782, 2026.
+[13] H. Lin, S. Chen, J. Liew, D. Y. Chen, Z. Li, G. Shi, J. Feng, and B. Kang. Depth anything 3:
+Recovering the visual space from any views. arXiv preprint arXiv:2511.10647, 2025.
+[14] J. Wang, M. Chen, N. Karaev, A. Vedaldi, C. Rupprecht, and D. Novotny. Vggt: Visual ge-
+ometry grounded transformer. In Proceedings of the Computer Vision and Pattern Recognition
+Conference, pages 5294–5306, 2025.
+[15] J. Wang, M. Chen, S. Zhang, N. Karaev, J. Sch¨onberger, P. Labatut, P. Bojanowski, D. Novotny,
+A. Vedaldi, and C. Rupprecht. Vggt-ω. arXiv preprint arXiv:2605.15195, 2026.
+19
+
+===== PAGE 20 =====
+[16] S. Yu, S. Kwak, H. Jang, J. Jeong, J. Huang, J. Shin, and S. Xie.
+Representation align-
+ment for generation: Training diffusion transformers is easier than you think. arXiv preprint
+arXiv:2410.06940, 2024.
+[17] F. Li, W. Song, H. Zhao, J. Wang, P. Ding, D. Wang, L. Zeng, and H. Li. Spatial forcing:
+Implicit spatial representation alignment for vision-language-action model.
+arXiv preprint
+arXiv:2510.12276, 2025.
+[18] G. Sun, T. Du, K. Feng, C. Luo, X. Ding, Z. Shen, Z. Wang, Y. He, and A. Li. Rocket:
+Residual-oriented multi-layer alignment for spatially-aware vision-language-action models.
+arXiv preprint arXiv:2602.17951, 2026.
+[19] Q. Qian, G. Zhao, G. Zhang, J. Wang, R. Xu, J. Gao, and D. Zhao. Gp3: A 3d geometry-aware
+policy with multi-view images for robotic manipulation. arXiv preprint arXiv:2509.15733,
+2025.
+[20] S. Ge, Y. Zhang, S. Xie, W. Zhang, M. Zhou, and Z. Wang. Vggt-dp: Generalizable robot
+control via vision foundation models. arXiv preprint arXiv:2509.18778, 2025.
+[21] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone. Libero: Benchmarking knowl-
+edge transfer for lifelong robot learning. Advances in Neural Information Processing Systems,
+36:44776–44791, 2023.
+[22] S. Nasiriany, A. Maddukuri, L. Zhang, A. Parikh, A. Lo, A. Joshi, A. Mandlekar, and Y. Zhu.
+Robocasa: Large-scale simulation of everyday tasks for generalist robots.
+arXiv preprint
+arXiv:2406.02523, 2024.
+[23] S. Ye, Y. Ge, K. Zheng, S. Gao, S. Yu, G. Kurian, S. Indupuru, Y. L. Tan, C. Zhu, J. Xiang,
+et al. World action models are zero-shot policies. arXiv preprint arXiv:2602.15922, 2026.
+[24] L. X. Shi, B. Ichter, M. Equi, L. Ke, K. Pertsch, Q. Vuong, J. Tanner, A. Walling, H. Wang,
+N. Fusai, et al. Hi robot: Open-ended instruction following with hierarchical vision-language-
+action models. arXiv preprint arXiv:2502.19417, 2025.
+[25] S. Liu, L. Wu, B. Li, H. Tan, H. Chen, Z. Wang, K. Xu, H. Su, and J. Zhu. Rdt-1b: a diffu-
+sion foundation model for bimanual manipulation. In International Conference on Learning
+Representations, volume 2025, pages 29982–30009, 2025.
+[26] C.-Y. Hung, Q. Sun, P. Hong, A. Zadeh, C. Li, U. Tan, N. Majumder, S. Poria, et al. Nora: A
+small open-sourced generalist vision language action model for embodied tasks. arXiv preprint
+arXiv:2504.19854, 2025.
+[27] S. Bai, K. Chen, X. Liu, J. Wang, W. Ge, S. Song, K. Dang, P. Wang, S. Wang, J. Tang, et al.
+others. 2025. qwen2. 5-vl technical report. arXiv preprint arXiv:2502.13923, 4(5), 1.
+[28] J. Bjorck, F. Casta˜neda, N. Cherniadev, X. Da, R. Ding, L. Fan, Y. Fang, D. Fox, F. Hu,
+S. Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv
+preprint arXiv:2503.14734, 2025.
+[29] G. R. Team, A. Abdolmaleki, S. Abeyruwan, J. Ainslie, J.-B. Alayrac, M. G. Arenas, A. Bal-
+akrishna, N. Batchelor, A. Bewley, J. Bingham, et al. Gemini robotics 1.5: Pushing the frontier
+of generalist robots with advanced embodied reasoning, thinking, and motion transfer. arXiv
+preprint arXiv:2510.03342, 2025.
+[30] C. Cheang, S. Chen, Z. Cui, Y. Hu, L. Huang, T. Kong, H. Li, Y. Li, Y. Liu, X. Ma, et al. Gr-3
+technical report. arXiv preprint arXiv:2507.15493, 2025.
+[31] J. Yang, R. Tan, Q. Wu, R. Zheng, B. Peng, Y. Liang, Y. Gu, M. Cai, S. Ye, J. Jang, et al.
+Magma: A foundation model for multimodal ai agents. In Proceedings of the computer vision
+and pattern recognition conference, pages 14203–14214, 2025.
+20
+
+===== PAGE 21 =====
+[32] D. Qu, H. Song, Q. Chen, Y. Yao, X. Ye, Y. Ding, Z. Wang, J. Gu, B. Zhao, D. Wang, et al.
+Spatialvla: Exploring spatial representations for visual-language-action model. arXiv preprint
+arXiv:2501.15830, 2025.
+[33] Q. Bu, Y. Yang, J. Cai, S. Gao, G. Ren, M. Yao, P. Luo, and H. Li. Univla: Learning to act
+anywhere with task-centric latent actions. arXiv preprint arXiv:2505.06111, 2025.
+[34] S. Tan, K. Dou, Y. Zhao, and P. Kr¨ahenb¨uhl. Interactive post-training for vision-language-
+action models. arXiv preprint arXiv:2505.17016, 2025.
+[35] J. Cen, C. Yu, H. Yuan, Y. Jiang, S. Huang, J. Guo, X. Li, Y. Song, H. Luo, F. Wang, et al.
+Worldvla: Towards autoregressive action world model.
+arXiv preprint arXiv:2506.21539,
+2025.
+[36] A. Abouzeid, M. Mansour, Q. Sun, Z. Sun, and D. Song. Geoaware-vla: Implicit geometry
+aware vision-language-action model. arXiv preprint arXiv:2509.14117, 2025.
+[37] N. Agarwal, A. Ali, M. Bala, Y. Balaji, E. Barker, T. Cai, P. Chattopadhyay, Y. Chen, Y. Cui,
+Y. Ding, et al.
+Cosmos world foundation model platform for physical ai.
+arXiv preprint
+arXiv:2501.03575, 2025.
+[38] G. Zhou, H. Pan, Y. LeCun, and L. Pinto. Dino-wm: World models on pre-trained visual
+features enable zero-shot planning. arXiv preprint arXiv:2411.04983, 2024.
+[39] M. Assran, A. Bardes, D. Fan, Q. Garrido, R. Howes, M. Muckley, A. Rizvi, C. Roberts,
+K. Sinha, A. Zholus, et al. V-jepa 2: Self-supervised video models enable understanding,
+prediction and planning. arXiv preprint arXiv:2506.09985, 2025.
+[40] R. Zheng, J. Wang, S. Reed, J. Bjorck, Y. Fang, F. Hu, J. Jang, K. Kundalia, Z. Lin, L. Magne,
+et al. Flare: Robot learning with implicit world modeling. arXiv preprint arXiv:2505.15659,
+2025.
+[41] Y. Wang, J. Zhou, H. Zhu, W. Chang, Y. Zhou, Z. Li, J. Chen, J. Pang, C. Shen, and T. He. π3:
+Scalable permutation-equivariant visual geometry learning. arXiv e-prints, pages arXiv–2507,
+2025.
+[42] N. Keetha, N. M¨uller, J. Sch¨onberger, L. Porzi, Y. Zhang, T. Fischer, A. Knapitsch, D. Zauss,
+E. Weber, N. Antunes, et al. Mapanything: Universal feed-forward metric 3d reconstruction.
+arXiv preprint arXiv:2509.13414, 2025.
+[43] L. Sun, B. Xie, Y. Liu, H. Shi, T. Wang, and J. Cao. Geovla: Empowering 3d representations
+in vision-language-action models. arXiv preprint arXiv:2508.09071, 2025.
+[44] Z. Song, Q. Li, J. Zhou, Z. Yuan, T. Chen, L. Lin, and G. Wang.
+Robotic manipulation
+is vision-to-geometry mapping (f(v) →g): Vision-geometry backbones over language and
+video models. arXiv preprint arXiv:2604.12908, 2026.
+[45] C. Xu, H. Li, S. Cheng, J. Hu, H. Fan, Z. Feng, and S. Liu. Action-geometry prediction with
+3d geometric prior for bimanual manipulation. arXiv preprint arXiv:2602.23814, 2026.
+[46] R. Ranftl, A. Bochkovskiy, and V. Koltun. Vision transformers for dense prediction. In Pro-
+ceedings of the IEEE/CVF international conference on computer vision, pages 12179–12188,
+2021.
+[47] J. Lu, J. Xu, W. Hu, R. Zhu, C. Zhao, S.-K. Yeung, Y. Shan, and Y. Liu. Track4world: Feed-
+forward world-centric dense 3d tracking of all pixels. arXiv preprint arXiv:2603.02573, 2026.
+[48] C. Raffel, N. Shazeer, A. Roberts, K. Lee, S. Narang, M. Matena, Y. Zhou, W. Li, and P. J.
+Liu. Exploring the limits of transfer learning with a unified text-to-text transformer. Journal
+of machine learning research, 21(140):1–67, 2020.
+21
+
+===== PAGE 22 =====
+[49] S. Nasiriany, S. Nasiriany, A. Maddukuri, and Y. Zhu. Robocasa365: A large-scale simulation
+framework for training and benchmarking generalist robots. arXiv preprint arXiv:2603.04356,
+2026.
+[50] A. Mandlekar, S. Nasiriany, B. Wen, I. Akinola, Y. Narang, L. Fan, Y. Zhu, and D. Fox.
+Mimicgen: A data generation system for scalable robot learning using human demonstrations.
+arXiv preprint arXiv:2310.17596, 2023.
+[51] O.-E. Collaboration, A. O’Neill, A. Rehman, A. Gupta, A. Maddukuri, A. Gupta, A. Padalkar,
+A. Lee, A. Pooley, A. Gupta, et al. Open x-embodiment: Robotic learning datasets and rt-x
+models. arXiv preprint arXiv:2310.08864, 1(2), 2023.
+[52] T. Yuan, Z. Dong, Y. Liu, and H. Zhao. Fast-wam: Do world action models need test-time
+future imagination? arXiv preprint arXiv:2603.16666, 2026.
+[53] C. Wen, J. Lin, T. Darrell, D. Jayaraman, and Y. Gao. Fighting copycat agents in behavioral
+cloning from observation histories. Advances in Neural Information Processing Systems, 33:
+2564–2575, 2020.
+[54] P. De Haan, D. Jayaraman, and S. Levine. Causal confusion in imitation learning. Advances
+in neural information processing systems, 32, 2019.
+[55] Y. Zheng, X. Li, S. Gu, Y. Zheng, S. Tian, W. Li, L. Wang, S. Fei, P. Li, Y. Gao, et al.
+Pokevla: Empowering pocket-sized vision-language-action model with comprehensive world
+knowledge guidance. arXiv preprint arXiv:2604.20834, 2026.
+22

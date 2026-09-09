@@ -565,3 +565,128 @@ papers:
     year={2023}, eprint={2309.00743}}'
   status: downloaded
   screening_relevance: high
+- id: paper_036
+  title: 'X-Tokenizer: A Multimodal Action Tokenizer for Vision-Language-Action Pretraining'
+  authors:
+  - Miracle Kang
+  - Lights Shi
+  - Lucy Liang
+  - Roy Gan
+  year: 2026
+  venue: arXiv
+  source_id: '2606.14752'
+  pdf_path: papers/raw/2606.14752.pdf
+  bibtex: '@article{kang2026xtokenizer, title={X-Tokenizer: A Multimodal Action Tokenizer
+    for Vision-Language-Action Pretraining}, author={Kang, Miracle and others}, year={2026},
+    eprint={2606.14752}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_037
+  title: Unified Video Action Model (UVAM)
+  authors:
+  - Shuang Li
+  - Yihuai Gao
+  - Dorsa Sadigh
+  - Shuran Song
+  year: 2025
+  venue: arXiv
+  source_id: '2503.00200'
+  pdf_path: papers/raw/2503.00200.pdf
+  bibtex: '@article{li2025uvam, title={Unified Video Action Model}, author={Li, Shuang
+    and others}, year={2025}, eprint={2503.00200}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_038
+  title: Geometric Action Model for Robot Policy Learning
+  authors:
+  - Jisang Han
+  - Seonghu Jeon
+  - Jaewoo Jung
+  - Rene Zurbruegg
+  year: 2026
+  venue: arXiv
+  source_id: '2606.17046'
+  pdf_path: papers/raw/2606.17046.pdf
+  bibtex: '@article{han2026gam, title={Geometric Action Model for Robot Policy Learning},
+    author={Han, Jisang and others}, year={2026}, eprint={2606.17046}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_039
+  title: 'DiLA: Disentangled Latent Action World Models'
+  authors:
+  - Tianqiu Zhang
+  - Muyang Lyu
+  - Yufan Zhang
+  - Fang Fang
+  year: 2026
+  venue: arXiv
+  source_id: '2605.15725'
+  pdf_path: papers/raw/2605.15725.pdf
+  bibtex: '@article{zhang2026dila, title={DiLA: Disentangled Latent Action World Models},
+    author={Zhang, Tianqiu and others}, year={2026}, eprint={2605.15725}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_040
+  title: Cross-Embodiment Transfer via Behavior-Aligned Representations
+  authors:
+  - Ajay Sridhar
+  - Jensen Gao
+  - Jonathan Yang
+  - Jean Mercat
+  - Suneel Belkhale
+  year: 2026
+  venue: arXiv
+  source_id: '2607.27549'
+  pdf_path: papers/raw/2607.27549.pdf
+  bibtex: '@article{sridhar2026beh, title={Cross-Embodiment Transfer via Behavior-Aligned
+    Representations}, author={Sridhar, Ajay and others}, year={2026}, eprint={2607.27549}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_041
+  title: 'MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer'
+  authors:
+  - Heng Zhi
+  - Wentao Tan
+  - Lei Zhu
+  - Fengling Li
+  - Jingjing Li
+  year: 2026
+  venue: arXiv
+  source_id: '2602.13764'
+  pdf_path: papers/raw/2602.13764.pdf
+  bibtex: '@article{zhi2026motif, title={MOTIF: Learning Action Motifs for Few-shot
+    Cross-Embodiment Transfer}, author={Zhi, Heng and others}, year={2026}, eprint={2602.13764}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_042
+  title: Universal Actions for Enhanced Embodied Foundation Models (UAT)
+  authors:
+  - Jinliang Zheng
+  - Jianxiong Li
+  - Dongxiu Liu
+  - Yinan Zheng
+  year: 2025
+  venue: arXiv
+  source_id: '2501.10105'
+  pdf_path: papers/raw/2501.10105.pdf
+  bibtex: '@article{zheng2025uat, title={Universal Actions for Enhanced Embodied Foundation
+    Models}, author={Zheng, Jinliang and others}, year={2025}, eprint={2501.10105}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_043
+  title: 'CLAM: Continuous Latent Action Models for Robot Learning from Unlabeled
+    Demonstrations'
+  authors:
+  - Anthony Liang
+  - Pavel Czempin
+  - Matthew M. Hong
+  - Yutai Zhou
+  year: 2025
+  venue: arXiv
+  source_id: '2505.04999'
+  pdf_path: papers/raw/2505.04999.pdf
+  bibtex: '@article{liang2025clam, title={CLAM: Continuous Latent Action Models for
+    Robot Learning from Unlabeled Demonstrations}, author={Liang, Anthony and others},
+    year={2025}, eprint={2505.04999}}'
+  status: downloaded
+  screening_relevance: high

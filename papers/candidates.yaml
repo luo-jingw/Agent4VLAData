@@ -645,3 +645,108 @@ papers:
   - language
   search_relevance: medium
   notes: 旋钮 1（事件/子任务边界检测）的组件级先例。
+- id: paper_036
+  title: 'X-Tokenizer: A Multimodal Action Tokenizer for Vision-Language-Action Pretraining'
+  authors:
+  - Miracle Kang
+  - Lights Shi
+  year: 2026
+  source: arxiv
+  source_id: '2606.14752'
+  url: http://arxiv.org/abs/2606.14752
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.2
+- id: paper_037
+  title: Unified Video Action Model (UVAM)
+  authors:
+  - Shuang Li
+  - Yihuai Gao
+  year: 2025
+  source: arxiv
+  source_id: '2503.00200'
+  url: http://arxiv.org/abs/2503.00200
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.5
+- id: paper_038
+  title: Geometric Action Model for Robot Policy Learning
+  authors:
+  - Jisang Han
+  - Seonghu Jeon
+  year: 2026
+  source: arxiv
+  source_id: '2606.17046'
+  url: http://arxiv.org/abs/2606.17046
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.3
+- id: paper_039
+  title: 'DiLA: Disentangled Latent Action World Models'
+  authors:
+  - Tianqiu Zhang
+  - Muyang Lyu
+  year: 2026
+  source: arxiv
+  source_id: '2605.15725'
+  url: http://arxiv.org/abs/2605.15725
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.2
+- id: paper_040
+  title: Cross-Embodiment Transfer via Behavior-Aligned Representations
+  authors:
+  - Ajay Sridhar
+  - Jensen Gao
+  year: 2026
+  source: arxiv
+  source_id: '2607.27549'
+  url: http://arxiv.org/abs/2607.27549
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.5
+- id: paper_041
+  title: 'MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer'
+  authors:
+  - Heng Zhi
+  - Wentao Tan
+  year: 2026
+  source: arxiv
+  source_id: '2602.13764'
+  url: http://arxiv.org/abs/2602.13764
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.3
+- id: paper_042
+  title: Universal Actions for Enhanced Embodied Foundation Models (UAT)
+  authors:
+  - Jinliang Zheng
+  - Jianxiong Li
+  year: 2025
+  source: arxiv
+  source_id: '2501.10105'
+  url: http://arxiv.org/abs/2501.10105
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.2/4.5
+- id: paper_043
+  title: 'CLAM: Continuous Latent Action Models for Robot Learning from Unlabeled
+    Demonstrations'
+  authors:
+  - Anthony Liang
+  - Pavel Czempin
+  year: 2025
+  source: arxiv
+  source_id: '2505.04999'
+  url: http://arxiv.org/abs/2505.04999
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.2

@@ -63,6 +63,38 @@ agentic synthetic data、LLM-as-judge、DSPy/TextGrad 类自动优化、
 **RQ2.4** 工程模式：离线批量数据管线中 agent 的架构模式（批量推理、工具设计、
 成本控制、验证回路），以及与传统确定性管线如何结合。
 
+## RQ4 动作模态对齐（2026-09-08 收束后的主动研究方向）
+
+**背景（收束决策，见 `logs/decision_log.md` 2026-09-08）**：北星 = vision /
+language / action 三模态对齐，action 序列视作一种模态。纯几何重采样会破坏
+对齐（跳帧、压低必要停顿）；研究方向转为"找到与 vision / 文本 prompt 对齐
+的 action 模态增强方式"。本组问题取代 RQ2（agent 方向，标记为 superseded）。
+
+**RQ4.1 跨模态对齐方法**：vision-text、text-action、vision-action 及其它模态
+（本体感受、真空反馈）的对齐学习范式；action 作为模态的跨模态表征学习
+（对比、掩码、匹配）。
+
+**RQ4.2 动作表征空间**：action 序列如何编码进与 vision/text 共同的空间
+（tokenizer / 量化 / embedding / latent）；动作本身低秩而 action 序列高维的
+含义（subspace / 流形维度）。
+
+**RQ4.3 动作模式结构**：可识别模式——流形、聚类、函数簇；"一条指令对应
+一类同构 action 序列簇"的证据；指令-模式对应（语言条件切分/事件边界，
+衔接 [paper_035](https://arxiv.org/abs/2309.00743) / [paper_011](https://arxiv.org/abs/2603.01465)）。
+
+**RQ4.4 对齐度量**：如何度量 action 模态与 text/vision 的对齐（互信息、
+InfoNCE 类、DTW 类时序相似度、表征对齐）；与既有 H(ℓ|v)（可见的跨模态
+冗余度量）的关系。
+
+**RQ4.5 跨本体 / sim→real 动作迁移**：对齐后"良好但不可直接迁移"的 action
+label 的复用（统一动作空间、域适应、不变特征）；与 OPT-002 复活后的关系。
+
+**RQ4.6 时序结构与保真**：驻留/停顿/事件驻留的对齐语义；时间规整（DTW 类）
+在动作对齐中的作用（衔接 GAP-01）。
+
+**RQ4.7 生成/增强保对齐**：生成式（diffusion/flow）action 建模、动作增强
+如何保持对齐；增强的验证方式（衔接 MimicGen 教训）。
+
 ## 不回答的问题
 
 - RL replay buffer 的数据处理（仅在与演示过滤相邻处提及）。

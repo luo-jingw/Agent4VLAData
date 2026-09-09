@@ -165,3 +165,22 @@ episode 划分防自相关泄漏"这条规则在数据集论文中几乎从不�
 ## 证据缺口
 
 见 `synthesis/gap_list.md`。
+
+
+## RQ4.1/4.2/4.3/4.5 动作模态对齐（首轮，2026-09-08）
+
+| paper_id | 证据类型 | 支持/反对 | 证据摘要 | 来源位置 | 可信度 |
+|---|---|---|---|---|---|
+| [paper_036](https://arxiv.org/abs/2606.14752) | direct | 支持 | X-Tokenizer：SRQ 非对称量化 + 三头语义对齐，把 action 序列编码进 vision/text 共同空间；M=16/64 隐式低秩 | 全文 | 高 |
+| [paper_037](https://arxiv.org/abs/2503.00200) | direct | 支持 | UVAM：联合视频-动作潜表示 + 解耦扩散（无离散化）；7 公开基准 + 真机 OOD | 全文 | 高 |
+| [paper_038](https://arxiv.org/abs/2606.17046) | direct | 支持 | GAM：动作 token 与几何 token 在同一个 GFM 潜序列中联合解码 | 全文 | 高 |
+| [paper_039](https://arxiv.org/abs/2605.15725) | direct | 支持 | DiLA：预测瓶颈驱动的 content-structure 分解（连续 dz=256；VQ 流形扭曲对比） | 全文 | 高 |
+| [paper_040](https://arxiv.org/abs/2607.27549) | direct | 支持 | Behavior-Aligned：对齐行为表征（EE 轨迹最有效，BC+表征联合损失），跨本体可迁移 | 全文 | 高 |
+| [paper_041](https://arxiv.org/abs/2602.13764) | direct | 支持 | MOTIF：动作母题 = 进度感知 InfoNCE + 本体对抗 GRL 的 VQ 聚类；去运动学规范化 -10.33% | 全文 | 高 |
+| [paper_042](https://arxiv.org/abs/2501.10105) | direct | 支持 | UAT：通用动作 256x128 离散码本 28 本体；新本体微调仅 0.8% 参数；256 动作目检 + JS 散度验证 | 全文 | 高 |
+| [paper_043](https://arxiv.org/abs/2505.04999) | direct | 支持 | CLAM：连续潜在动作 + 联合训练解码器；连续+联合 74% vs 离散+非联合 16% | 全文 | 高 |
+
+**首轮结论**：动作模态对齐有两条实证路线——显式编码（tokenizer/码本，036/042）与
+潜表示对齐（040/041/043）；"连续性"是关键分歧（CLAM 74% vs 16%）。跨本体以
+行为/母题/通用码本对齐（040/041/042），与 sim-实 对齐迁移同构（衔接 OPT-002）。
+空缺：对齐度量本身（RQ4.4）与时序保真（RQ4.6）无直接命中——第二轮检索方向。

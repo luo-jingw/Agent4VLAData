@@ -1,0 +1,2527 @@
+
+===== PAGE 1 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Heng Zhi 1 * Wentao Tan 1 * Lei Zhu 1 # Fengling Li 2 Jingjing Li 3 Guoli Yang 4 Heng Tao Shen 1
+Abstract
+While vision-language-action (VLA) models
+have advanced generalist robotic learning, cross-
+embodiment transfer remains challenging due to
+kinematic heterogeneity and the high cost of col-
+lecting sufficient real-world demonstrations to
+support fine-tuning. Existing cross-embodiment
+policies typically rely on shared-private archi-
+tectures, which suffer from limited capacity of
+private parameters and lack explicit adaptation
+mechanisms. To address these limitations, we
+introduce MOTIF for efficient few-shot cross-
+embodiment transfer that decouples embodiment-
+agnostic spatiotemporal patterns, termed action
+motifs, from heterogeneous action data. Specifi-
+cally, MOTIF first learns unified motifs via vec-
+tor quantization with progress-aware alignment
+and embodiment adversarial constraints to en-
+sure temporal and cross-embodiment consistency.
+We then design a lightweight predictor that pre-
+dicts these motifs from real-time inputs to guide
+a flow-matching policy, fusing them with robot-
+specific states to enable action generation on new
+embodiments. Evaluations across both simula-
+tion and real-world environments validate the
+superiority of MOTIF, which significantly out-
+performs strong baselines in few-shot transfer
+scenarios by 6.5% in simulation and 43.7% in
+real-world settings. Code is available at https:
+//github.com/buduz/MOTIF.
+1. Introduction
+Embodied AI (Cui et al., 2024; Wang et al., 2025; Zhong
+et al., 2025) research aims to build generalist agents capable
+of perceiving and interacting with complex physical envi-
+ronments. Recently, driven by progress in multimodal large
+language models (MLLMs) (Liu et al., 2023; Achiam et al.,
+*Equal contribution 1Tongji University 2University of Technol-
+ogy Sydney 3University of Electronic Science and Technology of
+China 4Advanced Institute of Big Data. Correspondence to: Lei
+Zhu <leizhu0608@gmail.com>.
+Preprint Version.
+Execution 
+Segment
+xArm6
+Panda
+Alignment
+Embodiment-Agnostic
+Action Motifs
+Motif-guided
+Pull
+Push
+Pull
+Push
+Source Tasks
+Target Tasks
+Pull
+Push
+Motif 
+Extraction
+Cross-Emb
+Transfer
+E1+T1
+E2+T2
+E2+T1
+E1+T2
+Simulation Results
+Real-world Results
+Figure 1. Concept and Performance of MOTIF. (Top) Motif-
+guided Transfer.
+MOTIF extracts embodiment-agnostic ac-
+tion motifs by aligning execution segments from heterogeneous
+robots (e.g., xArm6, Panda), bridging kinematic gaps for cross-
+embodiment transfer. The schematic illustrates how task behaviors
+learned by a source embodiment E1 on task T1 are adapted to a
+target (E2 + T1). (Bottom Left) Simulation Results. MOTIF
+consistently outperforms strong baselines in Transfer Success Rate
+across all data regimes (1- to 50-shot). (Bottom Right) Real-
+world Results. Physical evaluations further validate this effective-
+ness, demonstrating significant improvements in both Transfer and
+Global success rates against SOTA methods.
+2023; Bai et al., 2025), robotic learning is transitioning from
+specialized visual policies (Zhao et al., 2023; Reuss et al.,
+2024; Chi et al., 2025) to general-purpose vision-language-
+action models (VLAs) (Kim et al., 2024; Black et al., 2024)
+that inherit the semantic reasoning and world knowledge
+of MLLMs. By pre-training on internet-scale data across
+heterogeneous embodiments (O’Neill et al., 2024), VLAs
+acquire generalizable manipulation priors and physical com-
+monsense. This paradigm integrates perception, reasoning,
+and control into a unified framework that grounds high-
+level semantics directly into low-level actions, facilitating
+zero-shot adaptation to novel tasks and open-world settings.
+Despite internet-scale pre-training, transferring VLAs to
+1
+arXiv:2602.13764v1  [cs.RO]  14 Feb 2026
+
+===== PAGE 2 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+new robots is hindered by two critical challenges: (1) Cross-
+Embodiment Misalignment. Kinematic heterogeneity leads
+to significant differences in action spaces that make source
+policies physically infeasible on the target embodiments,
+thereby restricting direct transfer. (2) Data Scarcity in New
+Embodiments. While fine-tuning effectively reduces do-
+main shifts, the high cost of data acquisition in new em-
+bodiments often makes collecting sufficient demonstrations
+impractical. This scarcity forces models to rely on few-
+shot learning, which is often insufficient for generalizing to
+complex and unseen scenarios.
+To achieve efficient cross-embodiment transfer, recent
+methods such as HPT (Wang et al., 2024a) and GR00T
+N1 (Bjorck et al., 2025) extend the vision-language-action
+(VLA) paradigm by designing shared-private architectures.
+Although these frameworks adapt to diverse embodiments
+via frozen backbones and fine-tuned private modules, their
+efficacy is constrained by two critical limitations: (1) Re-
+stricted Private Parameter Capacity. The limited capacity
+of the embodiment-specific private parameters impairs the
+alignment of heterogeneous action and state spaces within
+the shared embedding manifold. (2) Absence of Explicit
+Transfer Mechanisms. These approaches rely heavily on
+implicit alignment derived from large-scale pre-training
+rather than explicit transfer mechanisms. This dependency
+restricts rapid few-shot adaptation when encountering robots
+with novel kinematic structures.
+To address these challenges, we propose MOTIF for efficient
+few-shot cross-embodiment transfer. Specifically, in Stage
+I, MOTIF encodes heterogeneous actions into unified action
+motifs via vector quantization (VQ) (Van Den Oord et al.,
+2017). We employ a progress-aware alignment loss to en-
+force temporal consistency and an embodiment adversarial
+loss to bridge representational gaps. In Stage II, we develop
+a lightweight multimodal motif predictor to infer appro-
+priate action motifs conditioned on real-time observations
+and language instructions. In Stage III, we retrieve unified
+motifs and incorporate them into a vanilla flow-matching
+policy (Lipman et al., 2022) to guide the action generation.
+The policy decodes predicted spatiotemporal motifs into ac-
+tions by fusing them with embodiment-specific multimodal
+inputs, supporting efficient few-shot adaptation to new em-
+bodiments. Validated on heterogeneous robots via an inter-
+leaved task setting, MOTIF outperforms strong baselines by
+6.5% in simulation and 43.7% in real-world few-shot sce-
+narios, confirming the efficiency of action motif guidance.
+Our contributions are summarized as follows:
+• We propose MOTIF, a hierarchical framework that
+achieves efficient few-shot cross-embodiment transfer
+by decoupling embodiment-agnostic spatiotemporal
+action motifs from robot-specific execution.
+• We introduce a unified motif learning mechanism incor-
+porating progress-aware alignment and embodiment
+adversarial losses, coupled with a flow-matching policy
+to ground abstract motifs into precise actions.
+• Extensive experiments demonstrate that MOTIF
+achieves state-of-the-art performance,
+surpassing
+strong baselines by 6.5% in simulation and 43.7%
+in real-world few-shot transfer.
+2. Related Work
+2.1. Vision-Language-Action
+Vision-language-action models (VLAs) (Zitkovich et al.,
+2023; Kim et al., 2024; Liu et al., 2024; Kawaharazuka et al.,
+2025) integrate computer vision and natural language pro-
+cessing into robotic control, aiming to map multimodal ob-
+servations and text instructions directly to executable actions.
+This approach utilizes the rich semantic understanding of
+pre-trained foundation models to achieve open-vocabulary
+generalization in physical environments. For example, RT-
+2 (Zitkovich et al., 2023) discretizes robotic actions into text
+tokens, formulating control as a sequence modeling task
+to incorporate semantic knowledge from internet-scale pre-
+training. To mitigate precision loss in discrete tokenization,
+π0 (Black et al., 2024) integrates flow matching directly into
+VLMs to enable high-frequency continuous control. More
+recently, π0.5 (Intelligence et al., 2025) incorporates explicit
+reasoning into the policy by generating intermediate tokens
+prior to action generation. This chain-of-thought process
+decomposes complex tasks into sub-goals, improving per-
+formance on long-horizon multi-step manipulation. Despite
+these advancements, conventional VLAs focus on learning
+unified knowledge across embodiments but lack explicit
+cross-embodiment generalization designs. This limitation
+significantly increases the difficulty of transferring policies
+to downstream tasks on new embodiments.
+2.2. Cross-Embodiment Learning
+Cross-embodiment learning (Doshi et al., 2024; Wang et al.,
+2024b; Zheng et al., 2025) aims to synthesize a unified pol-
+icy capable of controlling diverse robots by learning a uni-
+fied representation space to bridge kinematic discrepancies.
+Scaling this paradigm, RT-X (O’Neill et al., 2024) aggre-
+gates datasets across diverse robotic platforms to train gener-
+alist policies, demonstrating that co-training with heteroge-
+neous data improves robustness over single-robot baselines.
+To overcome architectural constraints, Heterogeneous Pre-
+trained Transformers (HPT) (Wang et al., 2024a) introduces
+a modular architecture designed to process variable-size pro-
+prioceptive and action inputs, allowing a single shared trunk
+to control robots with varying joint configurations without
+explicit alignment. Extending these principles to humanoid
+robotics, GR00T N1 (Bjorck et al., 2025) establishes a foun-
+2
+
+===== PAGE 3 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+s𝑡:𝑡+𝐻
+…
+Conv-1D 
+Downsample
+Local Attn Transformer
+Progress Position 
+Embedding
+Decoder
+Embodiment
+Adversarial Loss
+Progress-Aware 
+Motif Alignment Loss
+𝑧𝑒
+Action Motif
+Stage I: Action Motif Learning
+State Trajectory
+Heterogeneous Embodiments
+𝑧𝑞
+Ƹ𝑠𝑡:𝑡+𝐻
+Perceiver
+s𝑡:𝑡+𝐻
+ℒ𝑀𝑆𝐸
+“Pick up the peg and 
+place it upright.”
+Obs Embedding
+Stage II: Multimodal Motif Predictor
+DINOv2
+T5
+Ƹ𝑧
+𝑧𝑒
+Reconstruction
+Obs Embedding
+DiT Block
+…
+State Encoder
+Action Encoder
+Motif Encoder
+Action Decoder
+State
+Noised Action
+Emb-Agnostic Motifs
+Emb-Specific
+Emb-Agnostic
+Stage III: Motif-conditioned Robotic Policy
+…
+…
+…
+ℒ𝐹𝑀
+……
+Ƹ𝑧
+𝑧𝑞
+Figure 2. Overview of the MOTIF framework. (Left) Stage I: We learn unified action motifs from heterogeneous robot data using
+VQ-VAE augmented with Progress-Aware Alignment and Embodiment Adversarial objectives to ensure cross-embodiment consistency.
+(Top Right) Stage II: A multimodal predictor infers these motifs from vision and language inputs using frozen foundation encoders.
+(Bottom Right) Stage III: Inferred motifs serve as structural guidance for a flow-matching policy, enabling a Diffusion Transformer
+(DiT) to generate embodiment-specific actions via few-shot transfer.
+dation model tailored specifically for generalizable control
+and diverse locomotion tasks. However, these large-scale
+generalist policies typically require massive joint training
+and lack efficient mechanisms for few-shot adaptation to un-
+seen embodiments, highlighting the need for the decoupled
+transfer approach proposed in this work.
+Parallel research mitigates kinematic heterogeneity by learn-
+ing unified latent representations that abstract away low-
+level execution details. Approaches like UniVLA (Bu et al.,
+2025b) and GO-1 (Bu et al., 2025a) construct task-centric or
+unified latent action spaces by mapping continuous visual
+observations to quantized representations, aligning cross-
+embodiment behaviors primarily based on visual state tran-
+sitions. Conversely, focusing on the control domain, VQ-
+BeT (Lee et al., 2024) and QueST (Mete et al., 2024) employ
+vector quantization on action data to derive discrete behav-
+ioral tokens, facilitating the modeling of multi-modal dis-
+tributions. To further bridge perception and execution, XR-
+1 (Fan et al., 2025) introduces unified vision-motion codes
+that jointly learn from visual state transitions and action tra-
+jectories, enforcing alignment between visual dynamics and
+physical motion within a shared manifold. However, these
+approaches often rely on implicit alignment that remains
+entangled with source-domain kinematics or focus on broad
+standardization. They lack the explicit decoupling of spa-
+tiotemporal patterns from execution details, which is critical
+for data-efficient few-shot transfer to novel embodiments.
+3. Preliminaries
+3.1. Problem Formulation
+Basic Setting.
+We define multi-task cross-embodiment
+robot manipulation as learning a policy πθ that maps the
+current language instruction l, observation image ot and
+state st to a future action sequence executable by a specific
+embodiment:
+πθ(l, ot, st) −→at:t+Ha ∈Aei,
+(1)
+where at:t+Ha = {at, at+1, . . . , at+Ha−1} denotes an ac-
+tion chunk of horizon Ha. In our setting, the set of em-
+bodiments E = {e1, e2, . . . , eN} consists of robots with
+heterogeneous kinematic structures. For any embodiment
+ei ∈E, its action at belongs to an embodiment-specific
+action space Aei, defined as the set of all feasible control
+signals for embodiment ei.
+Cross-Embodiment Transfer.
+Training data comprises
+extensive expert data Dsrc from source robots Esrc and a
+few demonstrations Dtgt from the target robot etgt. We
+aim to use these data to learn embodiment-agnostic action
+motifs and adapt policies to Aetgt under a few-shot setting.
+3
+
+===== PAGE 4 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+3.2. Flow Matching for Action Generation
+Flow Matching (Lipman et al., 2022) has been widely
+adopted
+for
+action
+sequence
+generation
+in
+recent
+works (Black et al., 2024; Gao et al., 2025). Given the
+language instruction l, current observation ot, and state st,
+the policy πθ is instantiated as a conditional time-dependent
+velocity field vθ(x | l, ot, st) defined over a continuous time
+horizon τ ∈[0, 1]. The generative process is governed by
+the following ordinary differential equation:
+dxτ/dτ = vθ(xτ | l, ot, st),
+(2)
+which transports samples from Gaussian noise x0
+∼
+N(0, I) to a future action chunk x1 = at:t+Ha.
+During training, we construct a linear interpolation path
+between x0 and the expert action sequence x1,
+xτ = (1 −τ)x0 + τx1,
+(3)
+and supervise the network to match the corresponding
+ground-truth velocity field along this path. Specifically,
+the ground-truth velocity is given by x1 −x0, and the flow-
+matching objective is defined as:
+LFM = Eτ,x0,x1
+
+∥vθ(xτ | l, ot, st) −(x1 −x0)∥2
+2
+
+.
+(4)
+During inference, action sequences are generated by solving
+the learned ordinary differential equation from τ=0 to τ=1:
+x1 = x0 +
+Z 1
+0
+vθ(xτ | l, ot, st) dτ.
+(5)
+4. Method
+In this section, we introduce MOTIF, a three-stage frame-
+work for few-shot cross-embodiment transfer, as illustrated
+in Figure 2. In Stage I, MOTIF learns embodiment-agnostic
+action motifs from short-horizon proprioceptive state seg-
+ments across heterogeneous robots. In Stage II, we train a
+lightweight multimodal motif predictor to infer motifs from
+visual observations and language instructions. In Stage III,
+the predicted motifs condition a flow-matching policy as
+abstract spatiotemporal priors, guiding embodiment-specific
+action generation on target robots.
+Definition 4.1 (Action Motifs). We define action motifs
+as statistically significant trajectory subsequences that rep-
+resent pure spatiotemporal patterns, independent of task
+semantics or robot embodiment.
+4.1. Stage I: Action Motif Learning
+In Stage I, our method learns unified embodiment-agnostic
+action motifs that capture reusable spatiotemporal patterns
+across heterogeneous robots. We encode short-horizon pro-
+prioceptive state transitions into discrete latent representa-
+tions, removing embodiment-specific kinematics.
+Kinematic Trajectory Canonicalization.
+To facilitate
+the learning of action motifs via vector quantization, pre-
+liminary kinematic alignment is a prerequisite. To this
+end, we adopt fixed-window state trajectory segments
+as a kinematic-level action representation. Given a seg-
+ment {st, st+1, . . . , st+Hs}, the sequence describes the
+end-effector motion executed within the window. We de-
+fine each state st as the absolute end-effector pose rather
+than joint configurations, since joint spaces exhibit strong
+embodiment-specific heterogeneity. To mitigate these bi-
+ases, we translate and rotate each end-effector trajectory into
+a canonical frame anchored at the initial end-effector pose,
+and apply scale normalization based on the robot workspace.
+The resulting motion segment is denoted as:
+x = T (st:t+Hs) ∈RHs×ds,
+(6)
+where Hs denotes the trajectory horizon and ds represents
+the dimension of the state. This segment x serves as the
+input to the latent action motif learning module.
+Latent Action Motif Learning.
+We learn discrete action
+motifs from motion segments of length Hs using a vector-
+quantized autoencoder (Van Den Oord et al., 2017). Given
+a segment x, we incorporate a progress-aware positional
+encoding derived from the normalized timestamp within the
+demonstration into the motion features, enabling the model
+to distinguish motifs at different execution stages.
+The encoder Eϕ, detailed in Figure 3, maps the input x to a
+temporally downsampled token sequence of length M:
+ze = Eϕ(x) = {z1, z2, . . . , zM},
+zm ∈Rde.
+(7)
+To capture fine-grained local dynamics while maintain-
+ing computational efficiency, Eϕ employs a local-attention
+Transformer with a restricted receptive field. Specifically,
+we apply a sliding-window attention mask where each to-
+ken at timestep t attends exclusively to its symmetric local
+neighborhood [t −k, t + k], to capture short-term kine-
+matic dependencies. Subsequently, a strided 1D convolu-
+tional layer compresses the temporal resolution from Hs
+to M, yielding the compact latent representation sequence
+ze. We discretize each token using a trainable codebook
+C = {ck}K
+k=1 with nearest-neighbor vector quantization:
+km = argmin
+j∈{1,...,K}
+∥zm −cj∥2,
+zq,m = ckm.
+(8)
+The decoder ˆx = Dψ(zq) mirrors the encoder and recon-
+structs the motion sequence via temporal upsampling, ensur-
+ing that the discrete action motifs retain sufficient kinematic
+structure for accurate reconstruction.
+We train the VQ-VAE by minimizing the standard objective:
+Lvq = ∥x−ˆx∥2
+2 +∥sg(ze)−zq∥2
+2 +β∥ze −sg(zq)∥2
+2, (9)
+where sg(·) denotes the stop-gradient operator, and β is a
+hyperparameter that weights the commitment term.
+4
+
+===== PAGE 5 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Sliding-window
+Attention Mask
+Conv-1D
+Downsample
+Local Attention
+Transformer Encoder
+𝒯(𝑠𝑡:𝑡+𝐻𝑠)
+Progress
+0
+1
+•
+•
+Progress-Aware PE
+Figure 3. Architecture of the Latent Action Motif Learning
+Module. The encoder integrates progress-aware positional encod-
+ings (PE) and employs a local-attention Transformer with a sliding-
+window mask to capture local dynamics, followed by strided 1D
+convolution for temporal downsampling.
+Progress-aware Motif Alignment Loss.
+To ensure cross-
+embodiment kinematic alignment and temporal consistency
+of action motifs, we introduce a progress-aware objective
+that explicitly aligns motion segments of the same task
+phase. We compute the normalized segment-level embed-
+ding ˆei by averaging the token sequence ze. Within a batch,
+we prioritize aligning segments that share the same language
+instruction l and occur at similar execution stages p. This is
+formalized by a progress-weighted similarity coefficient:
+wij = I[li = lj] exp
+ −(|pi −pj|/σ)2
+,
+(10)
+where σ controls the temporal tolerance. We then minimize
+the soft-weighted InfoNCE loss (Oord et al., 2018):
+Lnce = −1
+|A|
+X
+i∈A
+log
+P
+j̸=i wij exp(ˆe⊤
+i ˆej/γ)
+P
+k̸=i exp(ˆe⊤
+i ˆek/γ)
+,
+(11)
+where γ is the temperature.
+This objective promotes
+embodiment-agnostic semantics by strictly aligning task-
+consistent and temporally synchronized segments.
+Embodiment Adversarial Loss.
+To better model action
+motifs from embodiment-specific motion segments, we
+employ adversarial training via a gradient reversal layer
+(GRL) (Ganin & Lempitsky, 2015; Ganin et al., 2016). We
+introduce an embodiment discriminator Dω to identify robot
+identity y from the latent tokens {zm}M
+m=1. The discrimina-
+tor is trained to minimize the following objective:
+Ladv = −1
+M
+M
+X
+m=1
+log Dω(y | zm).
+(12)
+During backpropagation, the GRL inverts the gradient flow
+to the encoder, effectively forcing it to generate embodiment-
+invariant representations that confuse the discriminator.
+Algorithm 1 Training and Inference Pipeline of MOTIF
+Require: Dataset D, Pre-trained Encoders fimg, flang
+Ensure: Learned Policies Eϕ, Dψ, C, R, vθ
+1: Stage I: Action Motif Learning
+2: for sampled batch x from D do
+3:
+Encode: ze ←Eϕ(x)
+4:
+Quantize: zq ←VQ(ze; C)
+5:
+Reconstruct: ˆx ←Dψ(zq)
+6:
+Update ϕ, ψ, C, ω to minimize L1
+7: end for
+8: Stage II: Multimodal Motif Predictor
+9: Freeze Stage I modules (Eϕ, C)
+10: for sampled batch (ot, l, x) from D do
+11:
+Extract features: h ←[fimg(ot), flang(l)]
+12:
+Predict tokens: ˆz ←Rξ(h)
+13:
+Compute target: zm ←Eϕ(x)
+14:
+Update ξ to minimize L2
+15: end for
+16: Stage III: Motif-conditioned Robotic Policy
+17: Freeze Stage II predictor Rξ
+18: for sampled batch (l, ot, st, x) from D do
+19:
+// 1. Infer Motif Prior
+20:
+ˆz ←Rξ(fimg(ot), flang(l))
+21:
+˜zq ←VQ(ˆz; C)
+22:
+// 2. Prepare Flow Matching
+23:
+Sample τ ∼U(0, 1), x1 ∼N(0, I)
+24:
+Construct input:
+25:
+qin ←Concat(fs(st), fk(˜zq), fa(xτ))
+26:
+Update vθ to minimize L3
+27: end for
+28: Inference:
+29: Given (l, ot, st):
+30: 1. Infer Motif:
+31:
+ˆz ←R(fimg(ot), flang(l)), ˜zq ←VQ(ˆz; C)
+32: 2. Generate Action:
+33:
+x1 = x0 +
+R 1
+0 vθ(xτ | st, ot, l, ˜zq) dτ
+Overall training objective.
+The joint optimization objec-
+tive for Stage I is:
+L1 = Lvq + λnceLnce −λadvLadv.
+(13)
+In our implementation, we set β = 0.25, λnce = 0.1 and
+λadv = 0.1 to balance the motif alignment and adversarial
+objectives. This objective balances reconstruction fidelity,
+motif alignment, and embodiment invariance for learning
+unified action motifs.
+4.2. Stage II: Multimodal Motif Predictor
+In Stage II, we construct a lightweight multimodal motif
+predictor designed to infer appropriate action motifs based
+on real-time observations and language instructions. This
+policy bridges the gap between observation and latent action
+5
+
+===== PAGE 6 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Simulation
+Real World
+LiftPegUpright
+PlaceSphere
+PullCube
+StackCube
+PushCube
+PickCube
+Panda
+Panda
+xArm6
+WidowX AI
+LiftPegUpright
+PlaceSphere
+PullCube
+StackCube
+PushCube
+PickCube
+Panda
+xArm6
+WidowX AI
+ARX5
+Piper
+Piper
+PushCube
+PlaceSphere
+PickPlace
+StackCube
+ARX5
+Piper
+PushCube
+PlaceSphere
+PickPlace
+StackCube
+Figure 4. Overview of Simulation and Real-World Environments. We evaluate MOTIF across heterogeneous embodiments in both
+simulated (Left) and physical (Right) settings. The experiments follow an interleaved task allocation protocol, where red bounding boxes
+( ) denote the target (few-shot) embodiment-task pairs used to assess cross-embodiment transfer capability. The remaining pairs serve as
+the source domain with full supervision.
+space, enabling test-time motif inference without access to
+the future state trajectories.
+Given a current observation ot and a language instruction l,
+we first utilize frozen pre-trained encoders to extract rich se-
+mantic features. Specifically, we employ a DINOv2 (Oquab
+et al., 2023) vision encoder fimg and a T5 (Raffel et al., 2020)
+language encoder flang. These multimodal features are fused
+and compressed via a perceiver (Jaegle et al., 2021) mod-
+ule Rξ into a fixed-length sequence of M predicted motif
+tokens, denoted as ˆz = {ˆz1, . . . , ˆzM}:
+ˆz = Rξ
+ [fimg(ot), flang(l)]
+
+.
+(14)
+During training, we regress the predicted tokens ˆz to the
+ground-truth encoder representations ze = {z1, . . . , zM}
+derived from the frozen Stage I encoder using an MSE loss:
+L2 = 1
+M
+M
+X
+m=1
+∥ˆzm −sg(zm)∥2
+2.
+(15)
+This alignment mechanism equips Stage III with robust mo-
+tif priors inferred solely from vision and language, serving
+as structural guidance for action generation. Specifically,
+the predicted continuous tokens ˆz are quantized via the code-
+book C to obtain discrete motif embeddings which guide the
+subsequent robotic policy.
+4.3. Stage III: Motif-conditioned Robotic Policy
+In Stage III, we integrate unified embodiment-agnostic ac-
+tion motifs with embodiment-specific control to generate
+executable action sequences. We condition a flow-matching
+policy with predicted action motifs as a structural prior,
+guiding action generation toward intended motions under
+the kinematic constraints of the target embodiment.
+Retrieving Discrete Motifs.
+We obtain the discrete action
+motifs ˜zq by querying the unified codebook C using the
+continuous tokens predicted by the frozen Stage II predictor.
+This nearest-neighbor quantization ensures that the struc-
+tural guidance strictly aligns with the embodiment-agnostic
+latent space established in Stage I.
+Motif-conditioned Action Generation.
+We parameter-
+ize the policy using a standard flow-matching diffusion
+transformer (DiT) (Peebles & Xie, 2023).
+We employ
+embodiment-specific encoders for the proprioceptive state
+st and the noised action chunk xτ, while the discrete mo-
+tif sequence ˜zq is mapped by a shared encoder fk. We
+construct the DiT input tokens qin by concatenating these
+embeddings:
+qin = Concat
+ fs(st), fk(˜zq), fa(xτ)
+
+.
+(16)
+Further, we derive the cross-modal conditioning context c
+from the frozen vision and language encoders:
+c = Concat
+ fimg(ot), flang(l)
+
+.
+(17)
+Inside the DiT blocks, the input tokens qin serve as the query
+to attend to the context c. The policy is trained to minimize
+the conditional flow-matching loss:
+L3 = Eτ,x0,x1
+
+∥vθ(xτ|l, ot, st, ˜zq) −(x1−x0)∥2
+2
+
+. (18)
+5. Experiments
+In this section, we evaluate MOTIF in both simula-
+tion and real-world settings on multi-task few-shot cross-
+embodiment manipulation, as visualized in Figure 4. We test
+whether embodiment-agnostic action motifs mitigate cross-
+embodiment misalignment by transferring task-relevant spa-
+tiotemporal structure across heterogeneous robots.
+6
+
+===== PAGE 7 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Table 1. Multi-task Cross-Embodiment Transfer Results (Simulation). We report success rates (%) across varying supervision levels
+(K ∈{1, 3, 5, 10, 50}). Transfer measures the average success rate on target (few-shot) pairs, indicating cross-embodiment transfer.
+Global measures the overall performance across all 18 pairs. MOTIF significantly outperforms baselines in the data-scarce transfer
+regimes. The symbol * denotes that methods are pretrained on large-scale robot datasets.
+Method
+Params (B)
+1-Shot
+3-Shot
+5-Shot
+10-Shot
+50-Shot
+Transfer
+Global
+Transfer
+Global
+Transfer
+Global
+Transfer
+Global
+Transfer
+Global
+Diffusion Policy
+0.22
+15.67
+27.00
+27.00
+31.33
+29.33
+30.44
+38.00
+36.11
+46.00
+38.00
+HPT∗
+0.06
+10.00
+21.11
+15.00
+23.44
+17.33
+26.33
+26.33
+29.67
+44.33
+35.11
+π∗
+0
+3.30
+33.33
+45.78
+38.33
+48.22
+45.67
+52.67
+56.33
+59.56
+67.67
+62.89
+GR00T N1∗
+2.00
+21.67
+43.67
+33.00
+50.67
+35.00
+50.44
+44.67
+50.78
+57.67
+57.44
+MOTIF (Ours)
+0.31
+36.00
+55.78
+48.33
+55.33
+54.33
+60.44
+60.33
+60.44
+75.00
+66.00
+We adopt an interleaved task setting, where each embodi-
+ment has full demonstrations for a subset of tasks and only
+a few demonstrations for the remaining tasks, enforcing
+cross-embodiment transfer under limited target supervision.
+We aim to answer the following questions:
+1. Few-shot transfer: Can MOTIF improve success rates
+with limited demonstrations (e.g., 1/3/5-shot) com-
+pared to end-to-end baselines without action motifs?
+2. Ablations on action motifs: How much do action mo-
+tifs contribute to performance? Specifically, how do
+(i) kinematic trajectory canonicalization, (ii) progress-
+aware alignment, and (iii) embodiment adversarial ob-
+jectives affect motif quality and transferability?
+3. Real-world deployment: Can MOTIF transfer effec-
+tively in real-world manipulation and generate physi-
+cally executable actions under practical conditions?
+5.1. Simulation Setups and Baselines
+Simulation Setups. We evaluate on the ManiSkill (Tao
+et al., 2024) benchmark due to its support for diverse robot
+embodiments, enabling the assessment of transfer under
+kinematic heterogeneity. Our experimental setup utilizes
+three distinct robots: Franka Panda, xArm6, and WidowX
+AI. These robots perform six diverse manipulation tasks,
+including
+PushCube,
+PlaceSphere,
+PullCube,
+LiftPegUpright, PickCube, and StackCube. De-
+tailed task descriptions and specific success criteria are pro-
+vided in Appendix B.1. We collect 50 expert demonstrations
+for each embodiment-task pair, providing a standardized ba-
+sis for the interleaved task evaluation.
+Interleaved Task Setting.
+To evaluate few-shot cross-
+embodiment transfer, we adopt an interleaved task mask
+protocol. As detailed in Table 2, we partition tasks for each
+embodiment into Source tasks with Full data and Target
+tasks with Few data. Few refers to the specific number of
+demonstrations K provided for transfer, where K takes val-
+ues from the set {1, 3, 5, 10, 50}. For these few-shot cases,
+Table 2. Interleaved Task Allocation. We adopt an interleaved
+protocol where tasks are partitioned into Source (Full, 50 demos)
+and Target (Few, K demos). (a) Simulation setup with 6 tasks
+across 3 robots. (b) Real-world setup with 4 tasks across 2 robots.
+The Few entries denote the target embodiment-task pairs used for
+few-shot training and evaluation.
+(a) Simulation Environment
+Robot
+Push
+Cube
+Place
+Sphere
+Pull
+Cube
+LiftPeg
+Upright
+Pick
+Cube
+Stack
+Cube
+Panda
+Few
+Few
+Full
+Full
+Full
+Full
+xArm6
+Full
+Full
+Few
+Few
+Full
+Full
+WidowX AI
+Full
+Full
+Full
+Full
+Few
+Few
+(b) Real World Environment
+Robot
+Push
+Cube
+Place
+Sphere
+Pick
+Cube
+Stack
+Cube
+ARX5
+Few
+Few
+Full
+Full
+Piper
+Full
+Full
+Few
+Few
+we strictly select the first K demonstrations from the full
+sequence of 50 episodes rather than random sampling. This
+distribution ensures that every task serves as a full data
+source on one robot while remaining a few-shot target on
+another. This configuration prevents simple in-domain mem-
+orization and provides a rigorous benchmark to verify the
+effectiveness of cross-embodiment transfer.
+Baselines. We compare MOTIF with several representa-
+tive methods, including Diffusion Policy (Chi et al., 2025),
+π0 (Black et al., 2024), HPT (Wang et al., 2024a), and
+GR00T-N1 (Bjorck et al., 2025). These baselines cover both
+end-to-end action generation and shared-private embodi-
+ment conditioning paradigms. All are trained and evaluated
+under the same interleaved protocol and few-shot condi-
+tions.
+5.2. Simulation Experiments
+Evaluation Metrics.
+We evaluate policy performance
+using the Success Rate (SR), averaged over 50 rollouts
+for each embodiment-task pair. Let S denote the set of all
+7
+
+===== PAGE 8 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Table 3. Ablation on Motif Guidance. We compare the Transfer
+success rate (%) with and without incorporating retrieved motifs
+in Stage III. The removal of motif guidance leads to consistent
+performance drops across all supervision levels.
+Setting
+1-Shot
+3-Shot
+5-Shot
+10-Shot
+50-Shot
+w/o Motif Guidance
+30.67
+43.67
+47.33
+58.00
+71.67
+MOTIF (Full)
+36.00
+48.33
+54.33
+60.33
+75.00
+embodiment-task pairs, and SFew ⊂S denote the subset
+of target pairs (marked as “Few” in Table 2) restricted to
+few-shot supervision. Let R(e, τ) be the success rate for
+embodiment e on task τ. We report two aggregated metrics:
+Global= 1
+|S|
+X
+(e,τ)∈S
+R(e, τ), Transfer=
+1
+|SFew|
+X
+(e,τ)∈SFew
+R(e, τ). (19)
+The Global metric reflects the overall mastery of both source
+and target skills, whereas Transfer measures the capability
+to adapt to target embodiment-task combinations under data-
+scarce conditions.
+Quantitative Results. As shown in Table 1, MOTIF out-
+performs baselines, particularly in data-scarce regimes. In
+the challenging 1-shot setting, both scratch-trained methods
+(e.g., Diffusion Policy) and pre-trained models (e.g., HPT,
+GR00T N1) struggle to generalize, achieving success rates
+below 22%. While π0 performs better (33.33%), MOTIF
+still achieves the highest performance of 36.00%. This ad-
+vantage becomes more pronounced at 5-shot, where MOTIF
+rapidly improves to 54.33%, demonstrating a much steeper
+learning curve than π0 (45.67%) and GR00T N1 (35.00%).
+Even with full supervision (K = 50), MOTIF maintains
+distinct superiority (75.00%). These results confirm that
+retrieving unified action motifs provides a structural prior
+for rapid adaptation to target kinematics.
+5.3. Ablation Study.
+To validate the effectiveness of key components, we conduct
+ablation studies focusing on the Transfer success rate.
+Effectiveness of Motif Guidance. We first investigate the
+impact of incorporating retrieved motifs during Stage III.
+As shown in Table 3, removing motif guidance consistently
+degrades performance across all data regimes. Notably, in
+the low-data settings (1-shot and 3-shot), the performance
+drops by 5.33% and 4.66%, respectively. This indicates that
+without the explicit structural prior provided by the retrieved
+motifs, the policy struggles to efficiently ground high-level
+intents to target kinematics, leading to slower transfer.
+Impact of Action Motif Learning Designs. We investi-
+gate the essential components in Stage I for constructing the
+embodiment-agnostic motifs. Constructing the motif space
+Table 4. Ablation on Model Components (5-Shot). We ana-
+lyze the impact of Kinematic Trajectory Canonicalization (KTC),
+Progress-aware Alignment Loss (Lnce), and Embodiment Adver-
+sarial Loss (Ladv). Results indicate that each component is indis-
+pensable for effective cross-embodiment transfer.
+Variant
+Transfer SR (%)
+∆
+MOTIF (Full)
+54.33
+-
+w/o Kinematic Canonicalization
+44.00
+-10.33
+w/o Alignment Loss (Lnce)
+49.67
+-4.66
+w/o Adversarial Loss (Ladv)
+51.67
+-2.66
+Table 5. Real-World Cross-Embodiment Evaluation (5-Shot).
+Success rates (%) over 20 rollouts per task, following Target set-
+tings in Table 1(b). Transfer and Global averages are reported.
+Method
+Robot
+Tasks
+Metrics
+Push
+Cube
+Place
+Sphere
+Pick
+Place
+Stack
+Cube
+Transfer
+Global
+Diffusion Policy
+ARX5
+5.0
+30.0
+40.0
+50.0
+23.75
+36.88
+Piper
+55.0
+55.0
+55.0
+5.0
+GR00T N1∗
+ARX5
+10.0
+20.0
+40.0
+50.0
+21.25
+33.13
+Piper
+50.0
+40.0
+40.0
+15.0
+MOTIF
+ARX5
+60.0
+90.0
+65.0
+100.0
+(Ours)
+Piper
+70.0
+90.0
+70.0
+50.0
+67.50
+74.38
+without Kinematic Canonicalization causes the sharpest
+decline of 10.33%, confirming that unifying motion rep-
+resentations is a prerequisite for effective retrieval across
+embodiments. Additionally, our training objectives are cru-
+cial for refinement: removing the Progress-aware Alignment
+Loss (Lnce) and Embodiment Adversarial Loss (Ladv) leads
+to drops of 4.66% and 2.66%, respectively. These results
+demonstrate that Lnce ensures temporal consistency while
+Ladv helps eliminate embodiment-specific features, collec-
+tively ensuring the robustness of the learned motifs.
+5.4. Real-World Experiments
+Experiment Setups. To validate the effectiveness of MO-
+TIF in real-world environments, we employ two distinct
+robotic arms: the ARX5 and the Piper arm. We constructed
+a real-world dataset covering four manipulation tasks: Pick-
+Place, PushCube, StackCube, and PlaceSphere. For each
+embodiment-task pair, we collect 50 expert demonstrations.
+Consistent with our simulation benchmark, we adopt the
+same Interleaved Task Allocation protocol as detailed in Ta-
+ble 2(b) to evaluate cross-embodiment transfer. The policy
+performance is reported using the same metrics defined in
+5.2, averaged over 20 rollouts for each setting.
+Quantitative Results. Table 5 reports the 5-shot transfer
+performance on physical ARX5 and Piper arms. The gap
+between MOTIF and baselines is even more pronounced
+in the real world than in simulation. MOTIF achieves a
+8
+
+===== PAGE 9 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Transfer Avg. of 67.50%, substantially outperforming Dif-
+fusion Policy (23.75%) and GR00T N1 (21.25%). Unlike
+baselines that degrade under hardware noise, MOTIF ef-
+fectively grounds retrieved motifs into executable actions,
+demonstrating real-world robustness.
+6. Conclusion
+We introduced MOTIF, a framework enabling efficient few-
+shot cross-embodiment transfer by decoupling embodiment-
+agnostic action motifs from robot-specific kinematics. By
+leveraging progress-aware vector quantization and a motif-
+conditioned flow-matching policy, MOTIF effectively aligns
+heterogeneous action spaces with minimal target data. Ex-
+tensive experiments in simulation and the real world demon-
+strate that our approach significantly outperforms strong
+baselines, validating the importance of explicit structural
+priors for scalable generalist robotic learning.
+References
+Achiam, J., Adler, S., Agarwal, S., Ahmad, L., Akkaya, I.,
+Aleman, F. L., Almeida, D., Altenschmidt, J., Altman, S.,
+Anadkat, S., et al. Gpt-4 technical report. arXiv preprint
+arXiv:2303.08774, 2023.
+Bai, S., Chen, K., Liu, X., Wang, J., Ge, W., Song, S., Dang,
+K., Wang, P., Wang, S., Tang, J., et al. Qwen2. 5-vl
+technical report. arXiv preprint arXiv:2502.13923, 2025.
+Bjorck, J., Casta˜neda, F., Cherniadev, N., Da, X., Ding, R.,
+Fan, L., Fang, Y., Fox, D., Hu, F., Huang, S., et al. Gr00t
+n1: An open foundation model for generalist humanoid
+robots. arXiv preprint arXiv:2503.14734, 2025.
+Black, K., Brown, N., Driess, D., Esmail, A., Equi, M.,
+Finn, C., Fusai, N., Groom, L., Hausman, K., Ichter,
+B., et al. π0: A vision-language-action flow model for
+general robot control. arXiv preprint arXiv:2410.24164,
+2024.
+Bu, Q., Cai, J., Chen, L., Cui, X., Ding, Y., Feng, S., Gao,
+S., He, X., Hu, X., Huang, X., et al.
+Agibot world
+colosseo: A large-scale manipulation platform for scal-
+able and intelligent embodied systems. arXiv preprint
+arXiv:2503.06669, 2025a.
+Bu, Q., Yang, Y., Cai, J., Gao, S., Ren, G., Yao, M., Luo, P.,
+and Li, H. Univla: Learning to act anywhere with task-
+centric latent actions. arXiv preprint arXiv:2505.06111,
+2025b.
+Cadene, R., Alibert, S., Soare, A., Gallouedec, Q., Zoui-
+tine, A., Palma, S., Kooijmans, P., Aractingi, M., Shukor,
+M., Aubakirova, D., Russi, M., Capuano, F., Pascal, C.,
+Choghari, J., Moss, J., and Wolf, T. Lerobot: State-
+of-the-art machine learning for real-world robotics in
+pytorch. https://github.com/huggingface/
+lerobot, 2024.
+Chi, C., Xu, Z., Feng, S., Cousineau, E., Du, Y., Burch-
+fiel, B., Tedrake, R., and Song, S.
+Diffusion policy:
+Visuomotor policy learning via action diffusion. The
+International Journal of Robotics Research, 44(10-11):
+1684–1704, 2025.
+Cui, C., Ma, Y., Cao, X., Ye, W., Zhou, Y., Liang, K., Chen,
+J., Lu, J., Yang, Z., Liao, K.-D., et al. A survey on mul-
+timodal large language models for autonomous driving.
+In Proceedings of the IEEE/CVF winter conference on
+applications of computer vision, pp. 958–979, 2024.
+Doshi, R., Walke, H., Mees, O., Dasari, S., and Levine,
+S. Scaling cross-embodied learning: One policy for ma-
+nipulation, navigation, locomotion and aviation. arXiv
+preprint arXiv:2408.11812, 2024.
+Fan, S., Wu, K., Che, Z., Wang, X., Wu, D., Liao, F., Liu, N.,
+Zhang, Y., Zhao, Z., Xu, Z., et al. Xr-1: Towards versatile
+vision-language-action models via learning unified vision-
+motion representations. arXiv preprint arXiv:2511.02776,
+2025.
+Ganin, Y. and Lempitsky, V. Unsupervised domain adapta-
+tion by backpropagation. In International conference on
+machine learning, pp. 1180–1189. PMLR, 2015.
+Ganin, Y., Ustinova, E., Ajakan, H., Germain, P., Larochelle,
+H., Laviolette, F., March, M., and Lempitsky, V. Domain-
+adversarial training of neural networks. Journal of ma-
+chine learning research, 17(59):1–35, 2016.
+Gao, D., Zhao, B., Lee, A., Chuang, I., Zhou, H., Wang, H.,
+Zhao, Z., Zhang, J., and Soltani, I. Vita: Vision-to-action
+flow matching policy. arXiv preprint arXiv:2507.13231,
+2025.
+Intelligence, P., Black, K., Brown, N., Darpinian, J., Dha-
+balia, K., Driess, D., Esmail, A., Equi, M., Finn, C., Fusai,
+N., et al. π0.5: a vision-language-action model with open-
+world generalization. arXiv preprint arXiv:2504.16054,
+2025.
+Jaegle, A., Gimeno, F., Brock, A., Vinyals, O., Zisserman,
+A., and Carreira, J. Perceiver: General perception with it-
+erative attention. In International conference on machine
+learning, pp. 4651–4664. PMLR, 2021.
+Kawaharazuka, K., Oh, J., Yamada, J., Posner, I., and Zhu,
+Y. Vision-language-action models for robotics: A review
+towards real-world applications. IEEE Access, 2025.
+Kim, M. J., Pertsch, K., Karamcheti, S., Xiao, T., Balakr-
+ishna, A., Nair, S., Rafailov, R., Foster, E., Lam, G., San-
+keti, P., et al. Openvla: An open-source vision-language-
+action model. arXiv preprint arXiv:2406.09246, 2024.
+9
+
+===== PAGE 10 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Lee, S., Wang, Y., Etukuru, H., Kim, H. J., Shafiullah, N.
+M. M., and Pinto, L. Behavior generation with latent
+actions. arXiv preprint arXiv:2403.03181, 2024.
+Lipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., and
+Le, M. Flow matching for generative modeling. arXiv
+preprint arXiv:2210.02747, 2022.
+Liu, H., Li, C., Wu, Q., and Lee, Y. J. Visual instruction tun-
+ing. Advances in neural information processing systems,
+36:34892–34916, 2023.
+Liu, S., Wu, L., Li, B., Tan, H., Chen, H., Wang, Z., Xu,
+K., Su, H., and Zhu, J.
+Rdt-1b: a diffusion founda-
+tion model for bimanual manipulation. arXiv preprint
+arXiv:2410.07864, 2024.
+Mete, A., Xue, H., Wilcox, A., Chen, Y., and Garg, A. Quest:
+Self-supervised skill abstractions for learning continuous
+control. Advances in Neural Information Processing Sys-
+tems, 37:4062–4089, 2024.
+Mu, T., Ling, Z., Xiang, F., Yang, D., Li, X., Tao, S., Huang,
+Z., Jia, Z., and Su, H. Maniskill: Generalizable manipu-
+lation skill benchmark with large-scale demonstrations.
+arXiv preprint arXiv:2107.14483, 2021.
+Oord, A. v. d., Li, Y., and Vinyals, O. Representation learn-
+ing with contrastive predictive coding. arXiv preprint
+arXiv:1807.03748, 2018.
+Oquab, M., Darcet, T., Moutakanni, T., Vo, H., Szafraniec,
+M., Khalidov, V., Fernandez, P., Haziza, D., Massa, F., El-
+Nouby, A., et al. Dinov2: Learning robust visual features
+without supervision. arXiv preprint arXiv:2304.07193,
+2023.
+O’Neill, A., Rehman, A., Maddukuri, A., Gupta, A.,
+Padalkar, A., Lee, A., Pooley, A., Gupta, A., Mandlekar,
+A., Jain, A., et al. Open x-embodiment: Robotic learning
+datasets and rt-x models: Open x-embodiment collab-
+oration 0. In 2024 IEEE International Conference on
+Robotics and Automation (ICRA), pp. 6892–6903. IEEE,
+2024.
+Peebles, W. and Xie, S. Scalable diffusion models with
+transformers. In Proceedings of the IEEE/CVF interna-
+tional conference on computer vision, pp. 4195–4205,
+2023.
+Raffel, C., Shazeer, N., Roberts, A., Lee, K., Narang, S.,
+Matena, M., Zhou, Y., Li, W., and Liu, P. J. Exploring
+the limits of transfer learning with a unified text-to-text
+transformer. Journal of machine learning research, 21
+(140):1–67, 2020.
+Reuss, M., Ya˘gmurlu, ¨O. E., Wenzel, F., and Lioutikov,
+R. Multimodal diffusion transformer: Learning versa-
+tile behavior from multimodal goals.
+arXiv preprint
+arXiv:2407.05996, 2024.
+Tao, S., Xiang, F., Shukla, A., Qin, Y., Hinrichsen, X.,
+Yuan, X., Bao, C., Lin, X., Liu, Y., Chan, T.-k., et al.
+Maniskill3: Gpu parallelized robotics simulation and
+rendering for generalizable embodied ai. arXiv preprint
+arXiv:2410.00425, 2024.
+Van Den Oord, A., Vinyals, O., et al. Neural discrete rep-
+resentation learning. Advances in neural information
+processing systems, 30, 2017.
+Wang, J., Shi, E., Hu, H., Ma, C., Liu, Y., Wang, X., Yao,
+Y., Liu, X., Ge, B., and Zhang, S. Large language mod-
+els for robotics: Opportunities, challenges, and perspec-
+tives. Journal of Automation and Intelligence, 4(1):52–64,
+2025.
+Wang, L., Chen, X., Zhao, J., and He, K.
+Scaling
+proprioceptive-visual learning with heterogeneous pre-
+trained transformers. Advances in neural information
+processing systems, 37:124420–124450, 2024a.
+Wang, T., Bhatt, D., Wang, X., and Atanasov, N. Cross-
+embodiment robot manipulation skill transfer using la-
+tent space alignment. arXiv preprint arXiv:2406.01968,
+2024b.
+Zhao, T. Z., Kumar, V., Levine, S., and Finn, C. Learn-
+ing fine-grained bimanual manipulation with low-cost
+hardware. arXiv preprint arXiv:2304.13705, 2023.
+Zheng, J., Li, J., Liu, D., Zheng, Y., Wang, Z., Ou, Z., Liu,
+Y., Liu, J., Zhang, Y.-Q., and Zhan, X. Universal actions
+for enhanced embodied foundation models. In Proceed-
+ings of the Computer Vision and Pattern Recognition
+Conference, pp. 22508–22519, 2025.
+Zhong, Y., Bai, F., Cai, S., Huang, X., Chen, Z., Zhang, X.,
+Wang, Y., Guo, S., Guan, T., Lui, K. N., et al. A survey on
+vision-language-action models: An action tokenization
+perspective. arXiv preprint arXiv:2507.01925, 2025.
+Zitkovich, B., Yu, T., Xu, S., Xu, P., Xiao, T., Xia, F.,
+Wu, J., Wohlhart, P., Welker, S., Wahid, A., et al. Rt-2:
+Vision-language-action models transfer web knowledge
+to robotic control. In Conference on Robot Learning, pp.
+2165–2183. PMLR, 2023.
+10
+
+===== PAGE 11 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+A. Implementation and Training Details
+A.1. Hyperparameter Settings
+We detail the model architectures and specific hyperparameters for Action Motif Learning (Stage I), the Multimodal Motif
+Predictor (Stage II), and the Motif-conditioned Robotic Policy (Stage III) in Table 6. The optimization settings are largely
+consistent across stages, utilizing the AdamW optimizer with a cosine learning rate schedule. All experiments for the
+three stages are conducted on a single NVIDIA RTX 4090 GPU. We summarize the common and stage-specific training
+hyperparameters in Table 7.
+Table 6. Model Configurations for MOTIF Framework.
+Stage I: Action Motif Learning
+Stage II: Motif Predictor
+Stage III: Robotic Policy
+Architecture (VQ-VAE)
+Window Size (Hs)
+32
+Motif Num (M)
+16
+Model Dim (dmodel)
+256
+Latent Dim (de)
+256
+Codebook Size (K)
+128
+Enc/Dec Layers
+4 / 4
+Enc/Dec Heads
+8 / 8
+Dropout
+0.1
+Conv Layers
+2
+Kernel Sizes
+[5,3]
+Strides
+[2,1]
+Local Neighborhood (k)
+8
+Loss Coefficients
+Commitment (β)
+0.25
+Alignment (λnce)
+0.1
+Adversarial (λadv)
+0.1
+Encoders (Frozen)
+Vision
+DINOv2
+Language
+T5-Base
+Perceiver Resampler
+Model Dim
+512
+Depth
+6
+Heads
+8
+Dim Head
+64
+Latent Num (M)
+16
+Architecture (DiT)
+Action Horizon (Ha)
+16
+Hidden Size
+512
+Num Layers
+16
+Num Heads
+8
+Norm Type
+AdaNorm
+Dropout
+0.2
+Flow Matching
+Noise Beta (α, β)
+(1.5, 1.0)
+Noise Scale (s)
+0.999
+Inf. Timesteps
+4
+Buckets
+1000
+Table 7. Optimization Hyperparameters.
+Hyperparameter
+Stage I
+Stage II
+Stage III
+Common Settings
+Optimizer
+AdamW
+Peak Learning Rate
+1e-4
+Weight Decay
+0.01
+Warmup Ratio
+0.05
+Gradient Clip Norm
+1.0
+Stage-Specific Settings
+Batch Size
+128
+128
+64
+Training Epochs
+20
+30
+60
+A.2. Baseline Implementation Details
+We provide additional details of baselines used in our experiments. Overall, our baselines cover (i) generative behavior
+cloning policies for continuous control, and (ii) cross-embodiment architectures that explicitly support heterogeneous
+proprioception and action spaces. All baselines are trained and evaluated under the same interleaved task protocol and
+few-shot budgets.
+Diffusion Policy (DP) (Chi et al., 2025). Diffusion Policy is a generative behavior cloning method that models the
+conditional distribution of action trajectories via a denoising diffusion process. In our implementation, we utilize the
+codebase from the LeRobot (Cadene et al., 2024) platform. We configure the policy with an observation history of 2 frames
+11
+
+===== PAGE 12 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+(nobs steps = 2), a prediction horizon of 16 (H = 16), and an execution chunk size of 8 (naction steps = 8). The model is
+trained for 200,000 steps on a single NVIDIA RTX 5090 GPU with a batch size of 64, utilizing random cropping with a
+90% ratio for visual data augmentation.
+π0 (Black et al., 2024). π0 is a flow-matching-based vision-language-action model that integrates a VLM backbone to
+enable high-frequency continuous control. Following the official fine-tuning protocol, we perform full fine-tuning on the
+Base π0 model using a single NVIDIA RTX Pro 6000 GPU. The training is conducted for 100,000 steps with a batch size of
+32, utilizing a learning rate schedule with 3,000 warmup steps, a peak learning rate of 2 × 10−5, and a decay learning rate
+of 1.5 × 10−6.
+Heterogeneous Pretrained Transformers (HPT) (Wang et al., 2024a). HPT is a modular policy architecture designed
+for cross-embodiment learning. It employs a “stem-trunk-head” structure, where embodiment-specific stems encode
+heterogeneous proprioceptive states into a unified latent space, a shared Transformer trunk processes these latents alongside
+visual tokens, and embodiment-specific heads decode the features into actionable control signals. In our implementation, we
+select the HPT-Large version of the model. To support simultaneous multi-robot training, we instantiate distinct stems
+and heads for each embodiment. We perform full fine-tuning on all modules (including the shared trunk, as we observed
+superior performance) for 1,000 epochs. The training is conducted on a single NVIDIA RTX 4090 GPU with a batch size of
+768 and a learning rate of 1.0 × 10−5.
+GR00T-N1 (Bjorck et al., 2025). GR00T-N1 is a generalist vision-language-action policy designed for scalable cross-
+embodiment control. Architecturally, it employs a shared Diffusion Transformer (DiT) backbone to model the flow-based
+action distribution, coupled with lightweight embodiment-specific projectors (comprising state encoders, action encoders,
+and action decoders) to bridge heterogeneous kinematic spaces. This design is structurally analogous to our Stage III policy,
+making it the most direct baseline to validate the efficacy of our proposed action motif guidance. In our experiments, we
+adhere to the official fine-tuning protocol, training the model for 100,000 steps on a single NVIDIA L40 GPU. The training
+utilizes a batch size of 32 and a learning rate of 1.0 × 10−4.
+Fair comparison. For all baselines, we use the same demonstration datasets, few-shot target budgets, and evaluation
+protocols. All methods operate on the same observation modalities, including proprioceptive states, third-person and
+wrist-view images, and language instructions (with the exception of Diffusion Policy, which does not support language
+conditioning).
+B. Experimental Setups
+B.1. Simulation Task Description
+We provide detailed descriptions and success criteria for the six manipulation tasks used in ManiSkill (Mu et al., 2021; Tao
+et al., 2024) simulation experiments.
+PushCube: The goal is to push a cube into a designated target region. Success is achieved when the cube is fully contained
+within the target area.
+PlaceSphere: The goal is to pick a sphere and place it into a container. Success is achieved when the sphere is stably
+positioned inside the container.
+PullCube: The goal is to pull a cube into a designated target region. Success is achieved when the cube is fully contained
+within the target area.
+LiftPegUpright: The goal is to reorient a peg to stand upright on the table. Success is achieved when the peg remains stable
+in a vertical position.
+PickCube: The goal is to grasp a cube and lift it off the table. Success is achieved when the cube is lifted more than 2.5 cm
+above the surface.
+StackCube: The goal is to stack one cube on top of another. Success is achieved when the top cube is stable and the gripper
+is released.
+12
+
+===== PAGE 13 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+third-person view
+wrist-mounted view
+Piper
+ARX5
+Figure 5. Hardware Setup. We evaluate MOTIF on two heterogeneous single-arm robots: Piper (left) and ARX5 (right).
+B.2. Real-World Setup and Data Collection
+Hardware Setup. As illustrated in Figure 5, our real-world evaluation employs two distinct single-arm robots: the ARX5
+and the Piper. To ensure consistent visual perception across embodiments, each robot is equipped with two Intel RealSense
+D435i cameras, capturing both third-person and wrist-mounted views.
+Data Collection. We collect expert demonstrations using a leader-follower teleoperation system. Visual observations
+are captured at a resolution of 640×480, and the data collection frequency is set to 15Hz. The collected dataset adheres to
+the interleaved task protocol detailed in Table 2 of the main paper. Specifically, corresponding to Table 2(b), we collect 50
+demonstrations for Source tasks (marked as “Full”) and the specified number of shots for Target tasks (marked as “Few”) to
+rigorously evaluate few-shot transfer capabilities.
+Real-World Task Description. We evaluate MOTIF on four real-world manipulation tasks involving diverse interactions:
+PushCube: Push the green cube into the pink area. PlaceSphere: Pick up the ball and place into the box. PickPlace: Pick up
+the cube and place on the plate. StackCube: Stack the red cube on the blue cube.
+C. Additional Experimental Results
+C.1. Detailed Simulation Results
+We present the detailed per-task success rates for all methods across all supervision levels (K ∈{1, 3, 5, 10, 50}). In the
+following tables, cells highlighted in yellow denote the target embodiment-task pairs (corresponding to the “Few” split in
+the interleaved protocol), where the model is adapted using only K demonstrations. Conversely, uncolored cells represent
+source tasks with full supervision (50 demos).
+To provide a comprehensive analysis, we report four aggregated metrics:
+• Global: The average success rate across all six tasks for a specific robot row.
+• Transfer: The average success rate calculated exclusively on the target tasks (yellow cells) for a specific robot,
+measuring few-shot adaptation performance on that embodiment.
+• Cross-Emb. Global: The macro-average of the Global metric across all three heterogeneous robots (Panda, xArm6,
+WidowX) at a specific shot level.
+• Cross-Emb. Transfer: The macro-average of the Transfer metric across all three robots. This serves as the primary
+indicator for evaluating the method’s capability in cross-embodiment few-shot generalization.
+13
+
+===== PAGE 14 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Table 8, Table 9, Table 10, Table 11, and Table 12 provide the complete performance for Diffusion Policy (Chi et al., 2025),
+HPT (Wang et al., 2024a), GR00T N1 (Bjorck et al., 2025), π0 (Black et al., 2024), and MOTIF, respectively.
+Table 8. Diffusion Policy success rates (%) on six tasks across embodiments under few-shot settings.
+Models
+Shots
+Robot
+PushCube
+PlaceSphere
+PullCube
+LiftPegUpright
+PickCube
+StackCube
+Global
+Cross-Emb.
+Global
+Transfer
+Cross-Emb.
+Transfer
+Diffusion Policy
+1
+Panda
+56.00%
+6.00%
+86.00%
+16.00%
+0.00%
+0.00%
+27.33%
+27.00%
+31.00%
+15.67%
+xArm6
+92.00%
+2.00%
+28.00%
+0.00%
+12.00%
+8.00%
+23.67%
+14.00%
+WidowX AI
+80.00%
+2.00%
+38.00%
+56.00%
+4.00%
+0.00%
+30.00%
+2.00%
+3
+Panda
+38.00%
+0.00%
+92.00%
+44.00%
+20.00%
+4.00%
+33.00%
+31.33%
+19.00%
+27.00%
+xArm6
+84.00%
+2.00%
+44.00%
+0.00%
+2.00%
+0.00%
+22.00%
+22.00%
+WidowX AI
+74.00%
+4.00%
+6.00%
+70.00%
+80.00%
+0.00%
+39.00%
+40.00%
+5
+Panda
+34.00%
+8.00%
+76.00%
+36.00%
+20.00%
+0.00%
+29.00%
+30.44%
+21.00%
+29.33%
+xArm6
+78.00%
+2.00%
+72.00%
+0.00%
+4.00%
+0.00%
+26.00%
+36.00%
+WidowX AI
+62.00%
+6.00%
+20.00%
+68.00%
+60.00%
+2.00%
+36.33%
+31.00%
+10
+Panda
+86.00%
+2.00%
+84.00%
+40.00%
+14.00%
+0.00%
+37.67%
+36.11%
+44.00%
+38.00%
+xArm6
+86.00%
+14.00%
+72.00%
+4.00%
+0.00%
+12.00%
+31.33%
+38.00%
+WidowX AI
+78.00%
+0.00%
+28.00%
+66.00%
+60.00%
+4.00%
+39.33%
+32.00%
+50
+Panda
+94.00%
+6.00%
+82.00%
+34.00%
+16.00%
+0.00%
+38.67%
+38.00%
+50.00%
+46.00%
+xArm6
+84.00%
+0.00%
+94.00%
+0.00%
+8.00%
+2.00%
+31.33%
+47.00%
+WidowX AI
+56.00%
+10.00%
+40.00%
+76.00%
+80.00%
+2.00%
+44.00%
+41.00%
+Table 9. HPT success rates (%) on six tasks across embodiments under few-shot settings.
+Models
+Shots
+Robot
+PushCube
+PlaceSphere
+PullCube
+LiftPegUpright
+PickCube
+StackCube
+Global
+Cross-Emb.
+Global
+Transfer
+Cross-Emb.
+Transfer
+HPT
+1
+Panda
+16.00%
+0.00%
+52.00%
+0.00%
+48.00%
+0.00%
+19.33%
+21.11%
+8.00%
+10.00%
+xArm6
+44.00%
+18.00%
+0.00%
+4.00%
+64.00%
+0.00%
+21.67%
+2.00%
+WidowX AI
+12.00%
+14.00%
+68.00%
+0.00%
+40.00%
+0.00%
+22.33%
+20.00%
+3
+Panda
+22.00%
+4.00%
+58.00%
+4.00%
+70.00%
+0.00%
+26.33%
+23.44%
+13.00%
+15.00%
+xArm6
+18.00%
+26.00%
+0.00%
+2.00%
+76.00%
+8.00%
+21.67%
+1.00%
+WidowX AI
+6.00%
+24.00%
+42.00%
+0.00%
+62.00%
+0.00%
+22.33%
+31.00%
+5
+Panda
+30.00%
+4.00%
+64.00%
+10.00%
+76.00%
+2.00%
+31.00%
+26.33%
+17.00%
+17.33%
+xArm6
+30.00%
+24.00%
+6.00%
+2.00%
+70.00%
+2.00%
+22.33%
+4.00%
+WidowX AI
+26.00%
+20.00%
+42.00%
+4.00%
+60.00%
+2.00%
+25.67%
+31.00%
+10
+Panda
+36.00%
+6.00%
+70.00%
+2.00%
+70.00%
+2.00%
+31.00%
+29.67%
+21.00%
+26.33%
+xArm6
+38.00%
+28.00%
+22.00%
+12.00%
+72.00%
+2.00%
+29.00%
+17.00%
+WidowX AI
+26.00%
+14.00%
+52.00%
+0.00%
+80.00%
+2.00%
+29.00%
+41.00%
+50
+Panda
+70.00%
+22.00%
+54.00%
+8.00%
+56.00%
+2.00%
+35.33%
+35.11%
+46.00%
+44.33%
+xArm6
+40.00%
+28.00%
+68.00%
+12.00%
+48.00%
+0.00%
+32.67%
+40.00%
+WidowX AI
+28.00%
+12.00%
+44.00%
+46.00%
+94.00%
+0.00%
+37.33%
+47.00%
+Table 10. GR00T N1 success rates (%) on six tasks across embodiments under few-shot settings.
+Models
+Shots
+Robot
+PushCube
+PlaceSphere
+PullCube
+LiftPegUpright
+PickCube
+StackCube
+Global
+Cross-Emb.
+Global
+Transfer
+Cross-Emb.
+Transfer
+GR00T N1
+1
+Panda
+44.00%
+0.00%
+56.00%
+30.00%
+84.00%
+22.00%
+39.33%
+43.67%
+22.00%
+21.67%
+xArm6
+76.00%
+48.00%
+24.00%
+8.00%
+98.00%
+26.00%
+46.67%
+16.00%
+WidowX AI
+72.00%
+30.00%
+52.00%
+62.00%
+54.00%
+0.00%
+45.00%
+27.00%
+3
+Panda
+50.00%
+10.00%
+54.00%
+52.00%
+84.00%
+22.00%
+45.33%
+50.67%
+30.00%
+33.00%
+xArm6
+78.00%
+60.00%
+32.00%
+28.00%
+100.00%
+26.00%
+54.00%
+30.00%
+WidowX AI
+74.00%
+30.00%
+66.00%
+68.00%
+78.00%
+0.00%
+52.67%
+39.00%
+5
+Panda
+52.00%
+4.00%
+60.00%
+42.00%
+84.00%
+22.00%
+44.00%
+50.44%
+28.00%
+35.00%
+xArm6
+78.00%
+56.00%
+34.00%
+28.00%
+100.00%
+28.00%
+54.00%
+31.00%
+WidowX AI
+76.00%
+20.00%
+72.00%
+60.00%
+90.00%
+2.00%
+53.33%
+46.00%
+10
+Panda
+88.00%
+16.00%
+58.00%
+32.00%
+82.00%
+24.00%
+50.00%
+50.78%
+52.00%
+44.67%
+xArm6
+80.00%
+56.00%
+52.00%
+26.00%
+100.00%
+18.00%
+55.33%
+39.00%
+WidowX AI
+68.00%
+10.00%
+56.00%
+62.00%
+82.00%
+4.00%
+47.00%
+43.00%
+50
+Panda
+100.00%
+32.00%
+52.00%
+40.00%
+82.00%
+26.00%
+55.33%
+57.44%
+66.00%
+57.67%
+xArm6
+90.00%
+58.00%
+98.00%
+8.00%
+100.00%
+12.00%
+61.00%
+53.00%
+WidowX AI
+66.00%
+32.00%
+64.00%
+66.00%
+96.00%
+12.00%
+56.00%
+54.00%
+14
+
+===== PAGE 15 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+Table 11. π0 success rates (%) on six tasks across embodiments under few-shot settings.
+Models
+Shots
+Robot
+PushCube
+PlaceSphere
+PullCube
+LiftPegUpright
+PickCube
+StackCube
+Global
+Cross-Emb.
+Global
+Transfer
+Cross-Emb.
+Transfer
+π0
+1
+Panda
+66.00%
+30.00%
+88.00%
+20.00%
+84.00%
+34.00%
+53.67%
+45.78%
+48.00%
+33.33%
+xArm6
+84.00%
+44.00%
+32.00%
+0.00%
+94.00%
+28.00%
+47.00%
+16.00%
+WidowX AI
+48.00%
+24.00%
+40.00%
+36.00%
+68.00%
+4.00%
+36.67%
+36.00%
+3
+Panda
+48.00%
+46.00%
+80.00%
+16.00%
+80.00%
+32.00%
+50.33%
+48.22%
+47.00%
+38.33%
+xArm6
+78.00%
+54.00%
+46.00%
+10.00%
+86.00%
+34.00%
+51.33%
+28.00%
+WidowX AI
+36.00%
+38.00%
+42.00%
+62.00%
+78.00%
+2.00%
+43.00%
+40.00%
+5
+Panda
+74.00%
+56.00%
+76.00%
+18.00%
+78.00%
+34.00%
+56.00%
+52.67%
+65.00%
+45.67%
+xArm6
+80.00%
+66.00%
+66.00%
+10.00%
+80.00%
+28.00%
+55.00%
+38.00%
+WidowX AI
+62.00%
+24.00%
+58.00%
+70.00%
+68.00%
+0.00%
+47.00%
+34.00%
+10
+Panda
+70.00%
+42.00%
+78.00%
+50.00%
+86.00%
+42.00%
+61.33%
+59.56%
+56.00%
+56.33%
+xArm6
+80.00%
+68.00%
+84.00%
+52.00%
+84.00%
+32.00%
+66.67%
+68.00%
+WidowX AI
+62.00%
+32.00%
+50.00%
+70.00%
+88.00%
+2.00%
+50.67%
+45.00%
+50
+Panda
+90.00%
+82.00%
+80.00%
+48.00%
+90.00%
+48.00%
+73.00%
+62.89%
+86.00%
+67.67%
+xArm6
+76.00%
+66.00%
+78.00%
+34.00%
+84.00%
+42.00%
+63.33%
+56.00%
+WidowX AI
+50.00%
+48.00%
+40.00%
+54.00%
+98.00%
+24.00%
+52.33%
+61.00%
+Table 12. MOTIF success rates (%) on six tasks across embodiments under few-shot settings (same metrics as Table 8).
+Models
+Shots
+Robot
+PushCube
+PlaceSphere
+PullCube
+LiftPegUpright
+PickCube
+StackCube
+Global
+Cross-Emb.
+Global
+Transfer
+Cross-Emb.
+Transfer
+MOTIF
+1
+Panda
+98.00%
+14.00%
+94.00%
+18.00%
+96.00%
+60.00%
+63.33%
+55.78%
+56.00%
+36.00%
+xArm6
+80.00%
+90.00%
+70.00%
+2.00%
+100.00%
+66.00%
+68.00%
+36.00%
+WidowX AI
+56.00%
+38.00%
+50.00%
+40.00%
+30.00%
+2.00%
+36.00%
+16.00%
+3
+Panda
+94.00%
+26.00%
+96.00%
+28.00%
+72.00%
+42.00%
+59.67%
+55.33%
+60.00%
+48.33%
+xArm6
+86.00%
+90.00%
+54.00%
+16.00%
+100.00%
+76.00%
+70.33%
+35.00%
+WidowX AI
+34.00%
+42.00%
+18.00%
+22.00%
+98.00%
+2.00%
+36.00%
+50.00%
+5
+Panda
+96.00%
+44.00%
+90.00%
+28.00%
+84.00%
+70.00%
+68.67%
+60.44%
+70.00%
+54.33%
+xArm6
+84.00%
+88.00%
+68.00%
+24.00%
+94.00%
+64.00%
+70.33%
+46.00%
+WidowX AI
+60.00%
+46.00%
+32.00%
+22.00%
+88.00%
+6.00%
+42.33%
+47.00%
+10
+Panda
+98.00%
+50.00%
+98.00%
+28.00%
+90.00%
+52.00%
+69.33%
+60.44%
+74.00%
+60.33%
+xArm6
+84.00%
+80.00%
+72.00%
+42.00%
+94.00%
+54.00%
+71.00%
+57.00%
+WidowX AI
+64.00%
+30.00%
+8.00%
+44.00%
+90.00%
+10.00%
+41.00%
+50.00%
+50
+Panda
+100.00%
+72.00%
+94.00%
+48.00%
+96.00%
+56.00%
+77.33%
+66.67%
+85.00%
+71.67%
+xArm6
+76.00%
+94.00%
+96.00%
+42.00%
+94.00%
+72.00%
+79.00%
+69.00%
+WidowX AI
+72.00%
+2.00%
+60.00%
+6.00%
+100.00%
+22.00%
+43.67%
+61.00%
+MOTIF
+only stage3
+1
+Panda
+80.00%
+8.00%
+96.00%
+16.00%
+88.00%
+52.00%
+56.67%
+51.56%
+44.00%
+30.67%
+xArm6
+72.00%
+92.00%
+34.00%
+6.00%
+98.00%
+54.00%
+59.33%
+20.00%
+WidowX AI
+74.00%
+50.00%
+46.00%
+6.00%
+54.00%
+2.00%
+38.67%
+28.00%
+3
+Panda
+68.00%
+28.00%
+74.00%
+34.00%
+76.00%
+48.00%
+54.67%
+57.44%
+48.00%
+43.67%
+xArm6
+66.00%
+98.00%
+76.00%
+14.00%
+96.00%
+54.00%
+67.33%
+45.00%
+WidowX AI
+68.00%
+60.00%
+56.00%
+42.00%
+76.00%
+0.00%
+50.33%
+38.00%
+5
+Panda
+84.00%
+28.00%
+94.00%
+10.00%
+88.00%
+46.00%
+58.33%
+54.33%
+56.00%
+47.33%
+xArm6
+74.00%
+94.00%
+56.00%
+26.00%
+90.00%
+68.00%
+68.00%
+41.00%
+WidowX AI
+52.00%
+44.00%
+30.00%
+4.00%
+86.00%
+4.00%
+36.67%
+45.00%
+10
+Panda
+92.00%
+40.00%
+72.00%
+18.00%
+86.00%
+54.00%
+60.33%
+61.11%
+66.00%
+58.00%
+xArm6
+78.00%
+92.00%
+70.00%
+50.00%
+98.00%
+62.00%
+75.00%
+60.00%
+WidowX AI
+68.00%
+34.00%
+60.00%
+30.00%
+94.00%
+2.00%
+48.00%
+48.00%
+50
+Panda
+98.00%
+72.00%
+94.00%
+48.00%
+96.00%
+56.00%
+77.33%
+66.67%
+85.00%
+71.67%
+xArm6
+76.00%
+94.00%
+96.00%
+42.00%
+94.00%
+72.00%
+79.00%
+69.00%
+WidowX AI
+72.00%
+2.00%
+60.00%
+6.00%
+100.00%
+22.00%
+43.67%
+61.00%
+D. Qualitative Visualization
+We provide some simulation and real-world execution examples; please see Figure 6 and Figure 7 for details.
+15
+
+===== PAGE 16 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+(a) Panda: PushCube (Push the cube to the target position.)
+(b) Panda: PlaceSphere (Pick up the ball and place it in the target position.)
+Figure 6. Qualitative Simulation Results (Part I). Visualization of the Panda arm executing the few-shot target tasks PushCube and
+PlaceSphere.
+(c) xArm6: PullCube (Pull the cube to the target position.)
+(d) xArm6: LiftPegUpright (Pick up the peg and place it upright.)
+Figure 6. Qualitative Simulation Results (Part II). Visualization of the xArm6 arm executing the few-shot target tasks PullCube and
+LiftPegUpright.
+16
+
+===== PAGE 17 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+(e) WidowX AI: PickCube (Pick up the cube.)
+(f) WidowX AI: StackCube (Stack the cube on top of the other cube.)
+Figure 6. Qualitative Simulation Results (Part III). Visualization of the WidowX AI arm executing the few-shot target tasks PickCube
+and StackCube.
+(a) ARX5: PickPlace (Pick up the cube and place on the plate.)
+(b) ARX5: PlaceSphere (Pick up the ball and place into the box.)
+(c) ARX5: PushCube (Push the yellow cube into the pink area.)
+(d) ARX5: StackCube (Stack the red cube on the blue cube.)
+Figure 7. Qualitative Real-world Results (Part I). Visualization of the ARX5 embodiment executing four target tasks: PickPlace,
+PlaceSphere, PushCube, and StackCube.
+17
+
+===== PAGE 18 =====
+MOTIF: Learning Action Motifs for Few-shot Cross-Embodiment Transfer
+(e) Piper: PickPlace (Pick up the cube and place on the plate.)
+(f) Piper: PlaceSphere (Pick up the ball and place into the box.)
+(g) Piper: PushCube (Push the yellow cube into the pink area.)
+(h) Piper: StackCube (Stack the red cube on the blue cube.)
+Figure 7. Qualitative Real-world Results (Part II). Visualization of the Piper embodiment executing four target tasks: PickPlace,
+PlaceSphere, PushCube, and StackCube.
+18

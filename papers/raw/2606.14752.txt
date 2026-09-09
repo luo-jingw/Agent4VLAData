@@ -1,0 +1,1950 @@
+
+===== PAGE 1 =====
+X-Tokenizer: A Multimodal Action Tokenizer
+for Vision-Language-Action Pretraining
+Miracle Kang1,2,3,∗, Lights Shi1,∗†, Lucy Liang1,†, Roy Gan1, Dongxiu Liu1,3, Pushi Zhang1, Sylas
+Chen1, Shawn Qin1, Yinan Zheng3, Jinliang Zheng3, Hao Wang1, Xianyuan Zhan3,‡, Hang Su1,3,‡
+1X SQUARE ROBOT, 2City University of Hong Kong, 3Tsinghua University
+∗Equal Contributions, †Project Lead, ‡Correspondence Authors
+Modern Vision-Language-Action (VLA) models must bridge pretrained vision-language reasoning
+and precise continuous robot control. Existing action tokenizers discretize actions primarily for
+reconstruction, producing codes that preserve motion geometry but provide only weak semantic
+supervision to the backbone. We therefore formulate action tokenization not as mere compression,
+but as semantic interface learning between multimodal reasoning and executable control. To this end,
+we introduce X-Tokenizer, a lightweight encoder–Semantic Residual Quantization (SRQ)–decoder
+architecture that provides a shared action interface across diverse robotic arm embodiments. Its key
+component, SRQ, imposes an asymmetric structure on residual vector quantization: the first level is
+trained with Masked Action Modeling (MAM) to form a discrete action language that captures coarse
+motion intent, while deeper levels remain reconstruction-oriented residuals that preserve fine-grained
+details. To further align action tokens with multimodal semantics, X-Tokenizer is pretrained with
+contrastive alignment to the representation space of a pretrained foundation model and with next-frame
+vision-language feature prediction. Pretrained on 2.4M trajectories (2.0B action frames), a single
+frozen X-Tokenizer plugs into a mixed discrete-continuous VLA as a representation-shaping supervision
+signal. X-Tokenizer achieves top real-world aggregate and strong RoboTwin 2.0 simulation results.
+Outperforming FAST in multimodal grounding (+13.5%) and long-horizon tasks (+8.25), it shows that
+action tokenizers serve as semantic interfaces for VLA pretraining beyond mere action compression.
+Date: June 2026
+Project Page: https://x-square-robot.github.io/X-Tokenizer_projectPage/
+1
+Introduction
+Modern embodied foundation models—including Vision-Language-Action (VLA) policies with continuous
+action heads (1, 2, 3, 4, 5), latent world models (6, 7, 8, 9), and video-generation policies (10, 11, 12)—
+increasingly seek to couple pretrained multimodal reasoning with executable robot control. A central difficulty
+lies in the representation mismatch between these two regimes: pretrained vision-language backbones operate
+over semantically structured discrete representations, whereas robot policies must ultimately produce precise,
+continuous motor commands. Action tokenizers provide one route for bridging this gap by mapping continuous
+action chunks into discrete symbols that can be predicted by a VLM-style backbone. Yet most existing tokenizers
+are designed primarily as compression modules: they minimize reconstruction error under a fixed token budget
+and consequently produce codes that partition the geometric action space, but are not explicitly aligned with
+task semantics, visual context, or language-conditioned intent.
+This limitation is especially consequential in hybrid discrete-continuous VLA systems (13, 14, 15, 16, 17,
+18, 19, 20): the discrete action-token prediction loss is not merely an auxiliary objective but also shapes
+the shared hidden states on which a downstream continuous expert relies. If the token targets are arbitrary
+reconstruction indices, the autoregressive loss weakly supervises the pretrained VLM, pulling its hidden states
+toward geometric code patterns rather than action-relevant multimodal semantics. We therefore formulate
+action tokenization as semantic interface learning: action tokens should serve as representation-shaping targets
+arXiv:2606.14752v2  [cs.CV]  28 Jun 2026
+
+===== PAGE 2 =====
+that connect high-level vision-language reasoning with executable continuous control. Under this view, a
+useful tokenizer should satisfy two requirements. First, its discrete codes should be semantically aligned with
+the pretrained backbone so that autoregressive token prediction preserves, rather than erodes, multimodal
+grounding. Second, it should still retain sufficient low-level detail to reconstruct precise robot actions.
+Existing action tokenizers only partially satisfy these requirements. Reconstruction-oriented methods such
+as FAST (21), VQ-BeT (22), VQ-VLA (23), and FASTer (24) produce compact action codes with strong
+signal fidelity, but they are not explicitly optimized to align their token structure with visual-language
+representations. ActionCodec (25) moves toward cross-modal action representation by introducing contrastive
+supervision (26, 27, 28), but its alignment is not directly anchored to a frozen pretrained VLM representation
+space, and it does not explicitly separate semantic intent from residual execution detail along the depth of the
+quantizer.
+To instantiate semantic interface learning, we introduce X-Tokenizer, a lightweight cross-embodiment action
+tokenizer with an Encoder–Semantic Residual Quantization (SRQ)–Decoder architecture, pretrained on 2.4M
+trajectories comprising 2.0B action frames across 17 arm families. Its core design, Semantic Residual
+Quantization (SRQ), imposes an asymmetric structure on residual vector quantization (29): the first RVQ
+level is trained with Masked Action Modeling (MAM) (30), a masked-prediction objective over action
+tokens, to form a discrete action language that captures coarse motion intent, while deeper RVQ levels remain
+reconstruction-oriented residuals that preserve fine-grained execution details. To further inject multimodal
+semantics, X-Tokenizer uses two additional pretraining signals: contrastive alignment to the representation
+space of a frozen foundation model and prediction of next-frame vision-language features. These auxiliary
+heads are used only during tokenizer pretraining and removed afterward, so they introduce no online visual-
+feature extraction or dynamics-rollout cost. During downstream VLA co-training, the frozen X-Tokenizer
+provides multi-level action tokens as autoregressive supervision, acting as a semantic scaffold for the VLM
+backbone while a continuous Flow Matching expert is conditioned on the resulting hidden states to regress
+executable action trajectories.
+Empirically, X-Tokenizer improves the coupling between multimodal grounding and continuous control. Across
+RoboTwin 2.0 simulation, real-robot tabletop tasks, and multimodal VQA evaluation, it achieves strong
+simulation performance and the best real-world aggregate among the evaluated action interfaces. Compared
+with the reconstruction-only tokenizer FAST, X-Tokenizer improves multimodal grounding by a +13.5% relative
+margin (75.7→85.9) and long-horizon task performance by a +8.25 absolute margin (61.0→69.25). These
+results support the view that action tokenizers can function as reusable semantic interfaces for VLA pretraining,
+rather than merely as internal action-compression modules.
+2
+Related Work
+2.1
+Action Space Design in Robotic Foundation Models
+Modern Vision-Language-Action (VLA) models adopt different action-space parameterizations, trading off
+semantic grounding and control fidelity. Discrete autoregressive heads (31, 32) inherit the token-level
+modeling interface of pretrained VLMs, but require long action-token sequences and suffer from discretization
+error. Continuous generative heads (4, 33, 3) preserve smooth, fine-grained control, but their regression or
+generative objectives are less directly aligned with language-token training. Hybrid heads (13, 17) combine
+both interfaces, yet their benefit depends on whether the discrete branch provides semantically meaningful
+supervision rather than arbitrary action indices. This motivates a structured action tokenizer: an interface that
+converts continuous actions into discrete supervisory signals capable of shaping multimodal representations
+while retaining sufficient information for precise continuous control.
+2.2
+Action Tokenizers for Robotics Foundation Models
+Existing action tokenizers mainly differ in how their codebooks are supervised. Reconstruction-oriented
+methods, such as FAST (21), VQ-BeT (22), VQ-VLA (23), FASTer (24), and OAT (34), treat tokenization
+primarily as action compression. While they preserve trajectory geometry, their tokens are not explicitly aligned
+2
+
+===== PAGE 3 =====
+Self-Attn
+MLP
+LN
+ℒ#$
+x N
+MLP
+FFN
+LN
+Self-Attn
+Cross-Attn
+x N
+K,V
+Cross-Attn
+x N
+ℒ*+
+K,V
+LN
+MLP
+Self-Attn
+Action Chunk
+Action
+Token
+⊕
+Context
+⊕
+Context
+ℒ%&'()
+Action Encoder
+1
+Action Decoder
+3
+Semantic Residual Quantization
+2
+Next-Feature 
+Prediction
+4
+(#×d/0)
+r × #"
+K,V  : Key, Value
+⊕ Add
+Downstream tasks
+VLA
+WAM
+Qwen2.5VL
+MLP
+Multi-View Fusion 
+Adaptive AvgPooling
+Instruction: 
+Package the 
+co+ee box
+Sub 
+Instruction: 
+Use the right 
+arm to place the 
+co+ee box into 
+the packaging 
+carton.
+VLM
+Token
+❄
+r × #"
+Robot id (Multi Embodiments)
+State
+Context
+…
+⊕
+Context
+⊕
+Context
+!!
+!"
+!"
+!!
+!"
+!#
+Infer
+Top Layer(q%)
+Layer(q&)
+Layer(q')
+Layer(q()
+ 
+ 
+ …
+…
+…
+…
+ 
+ 
+ 
+…
+Masked Action Token Prediction
+SoftMax
+Transformer
+Pred Mask
+Action token
+ℒ)*)
+Future VLM Feature
+T sequent length
+r = ⁄
++ , , where c is ratio
+Masked Token
+d/0 input dim
+d2 latent dim
+Figure 1 Overview of X-Tokenizer. Inference uses only modules 1O Action Encoder, 2O SRQ, and 3O Action Decoder;
+pretraining additionally uses module 4O Next-Feature Prediction and the VLM stream.
+with visual context, language-conditioned intent, or task semantics, making them less effective as supervision
+for pretrained multimodal backbones. ActionCodec (25) introduces cross-modal contrastive supervision, but
+its alignment space is learned internally rather than anchored to a frozen pretrained VLM, and its hierarchy
+does not explicitly separate semantic intent from execution residuals. Concurrent work CLAP (35) similarly
+uses contrastive alignment to bridge action and visual latents, but operates on visual dynamics features.
+Another concurrent route, UniT (36), jointly embeds action, visual, and fused features into a unified codebook.
+However, such a coupled formulation enforces tight multimodal dependencies during inference; mapping an
+action trajectory to its discrete codes requires both the images and actions to pass through a computationally
+heavy multi-stream encoder, which limits its flexibility as a plug-and-play action interface.
+We formulate action tokenization as semantic interface learning. X-Tokenizer combines asymmetric residual
+quantization, frozen-VLM contrastive alignment, and next-frame vision-language feature prediction, so the first
+RVQ level captures semantic action intent while deeper levels encode residual control detail. These objectives
+are used only during tokenizer pretraining and removed at deployment, yielding a lightweight interface that
+regularizes VLA hidden states without additional perception or dynamics-model cost.
+3
+Method
+3.1
+Overview
+X-Tokenizer learns a discrete action space that is both reconstructive and semantically aligned with the VLM
+that consumes it (Fig. 1). Its key design principle is to separate semantic motion intent from execution residuals
+across RVQ depth, rather than treating all levels uniformly.
+Given an action chunk a𝑡:𝑡+𝑇−1 ∈ℝ𝑇×𝐷(33), the tokenizer defines
+a𝑡:𝑡+𝑇−1
+𝐸𝜃
+−−→ℎ1:𝑀
+𝑄𝜓
+−−→τ1:𝑀
+𝐷𝜙
+−−→ˆa𝑡:𝑡+𝑇−1,
+(1)
+where 𝐸𝜃encodes the action chunk into 𝑀continuous latents, 𝑄𝜓is the Semantic Residual Quantization (SRQ)
+bottleneck that maps each latent to a multi-level discrete token, and 𝐷𝜙reconstructs executable actions. SRQ
+3
+
+===== PAGE 4 =====
+maps each latent ℎ𝑖to 𝑄codebook indices 𝑐(𝑞)
+𝑖
+, yielding a discrete tuple and continuous reconstruction
+τ𝑖= (𝑐(1)
+𝑖
+, . . . , 𝑐(𝑄)
+𝑖
+),
+˜z𝑖=
+𝑄
+∑︁
+𝑞=1
+e(𝑞)
+𝑐(𝑞)
+𝑖
+,
+(2)
+where e(𝑞)
+𝑗
+is the 𝑗-th codeword in the 𝑞-th codebook; the decoder reconstructs ˆa𝑡:𝑡+𝑇−1 = 𝐷𝜙(˜z1:𝑀). Pretraining
+optimizes a joint objective
+Lpre = Lrec + 𝜆mamLmam + 𝜆alignLalign + 𝜆predLpred,
+(3)
+where Lrec enforces action reconstruction, Lmam performs masked-action modeling over the top-level discrete
+codes 𝑐(1)
+1:𝑀, Lalign aligns the pre-quantization latents ℎ1:𝑀with fused VL features derived from a frozen Qwen2.5-
+VL-7B extractor, and Lpred acts on the quantized latents ˜z1:𝑀to preserve predictive VL information. This
+instantiates the SRQ asymmetry: only the first RVQ level receives discrete-level semantic supervision, while
+deeper levels (𝑞> 1) receive none.
+These auxiliary heads are used only during pretraining and removed afterward, leaving the lightweight
+encoder–SRQ–decoder core. This core encodes expert trajectories offline into discrete tokens that supervise
+downstream VLA co-training (§3.4); the downstream policy does not invoke X-Tokenizer at inference time.
+3.2
+Tokenizer Core Architecture: Encoder–SRQ–Decoder
+Encoder. The encoder maps a 𝑇-frame action chunk to 𝑀continuous latents (𝑀≪𝑇). We tokenize delta
+actions (37, 38) (per-frame offsets relative to a proprioceptive anchor 𝑜observed just before the chunk)
+rather than absolute commands: absolute commands are state-dependent and vary across embodiments,
+forcing a fixed-size codebook to waste capacity on positional offsets rather than reusable motion patterns. A
+Perceiver-style network (39) downsamples the delta-action sequence (37, 38) to 𝑀latent slots (by default
+𝑇= 64 →𝑀= 16) via cross-attention from 𝑀learnable queries: ℎ1:𝑀= Enc(𝑥1:𝑇, 𝑜, m), where 𝑥1:𝑇is the
+anchored delta-action chunk and m is a learned embodiment token with a none slot for CFG-style dropout,
+improving robustness to unseen embodiments. Each latent slot summarizes a coherent motion sub-segment,
+the semantic unit for downstream quantization.
+Semantic Residual Quantization (SRQ). SRQ is the discretization bottleneck of the pipeline. We use Residual
+Vector Quantization (RVQ) (29) with 𝑄stacked levels (Eq. 2), but supervise the levels asymmetrically. In
+standard RVQ, every level sees the same reconstruction loss, which tends to drive all levels toward near-uniform
+usage and leaves no level with a distinct interpretable role (empirically supported by the per-level perplexity
+in §4.2.2). Our asymmetric supervision reflects the natural two-fold structure of a robot trajectory—coarse
+motion intent (what the robot is doing, e.g. “move to the cup”) and fine geometric corrections (how exactly it
+does it)—and routes each into its own RVQ layer.
+Decoder. The decoder reconstructs the full-length action chunk from the requantized latent via ˆa𝑡:𝑡+𝑇−1 =
+Dec(˜z1:𝑀, 𝑜, m), using a Perceiver IO-style read-out head (40). The decoder is kept lightweight: most of the
+modelling capacity sits in the encoder and SRQ, and the decoder only translates the discrete latent back into
+executable controls. Together, the encoder, SRQ, and decoder form a compact core that remains in the loop
+after all auxiliary heads are removed at deployment, which bounds the per-call latency for offline encoding of
+expert trajectories.
+3.3
+Rich-Supervision Signals for Semantic Infusion
+The three pretraining heads are how X-Tokenizer acquires semantic tokens rather than purely geometric
+reconstruction clusters. Each targets a different aspect of what makes a token semantic: predictability over
+time (MAM), alignment with the vision-language space (contrastive alignment), and forward-awareness of
+physical consequence (next-frame VL prediction)—syntactic regularity, semantic grounding, and predictive
+physical consequence, respectively.
+4
+
+===== PAGE 5 =====
+Masked Action Modeling (MAM). We apply a BERT-style masked-prediction objective to the top-level discrete
+indices 𝑐(1)
+1:𝑀. A random subset M of positions is masked, and a small Transformer recovers them from the
+surrounding context:
+Lmam = 𝔼𝑖∈M
+h
+−log 𝑝𝜃
+ 𝑐(1)
+𝑖
+ ˜𝑐(1)
+1:𝑀
+i
+,
+(4)
+where ˜𝑐(1)
+1:𝑀is the corrupted code sequence. By requiring the top-level code stream to be predictable from its
+own context, MAM turns the top-level discrete sequence into an internal action language, while leaving the
+deeper layers free to specialize in reconstruction residuals.
+Vision-Language Contrastive Alignment. We align the encoder’s continuous latent sequence ℎ1:𝑀to fused VL
+features derived from a frozen Qwen2.5-VL-7B extractor (41). Although Lalign acts on the pre-quantization
+ℎ1:𝑀, it reshapes the encoder feature distribution so that semantically similar chunks cluster together; the first
+RVQ level’s nearest-neighbor lookup then inherits this structure, while deeper levels absorb the residual. Let
+𝑢1:𝑀denote the fused multi-view VL features derived from the frozen Qwen2.5-VL-7B extractor and temporally
+pooled to length 𝑀(App. A.3). We apply InfoNCE (42, 26) at two granularities within a batch of size 𝐵:
+Lglobal = −1
+𝐵
+𝐵
+∑︁
+𝑏=1
+log
+exp(¯ℎ𝑏· ¯𝑢𝑏/𝜅1)
+Í𝐵
+𝑏′=1 exp(¯ℎ𝑏· ¯𝑢𝑏′/𝜅1)
+,
+(5)
+Llocal = −
+1
+𝐵· 𝑀
+𝐵
+∑︁
+𝑏=1
+𝑀
+∑︁
+𝑖=1
+log
+exp(ℎ𝑏,𝑖· 𝑢𝑏,𝑖/𝜅2)
+Í𝐵
+𝑏′=1
+Í𝑀
+𝑗=1 exp(ℎ𝑏,𝑖· 𝑢𝑏′,𝑗/𝜅2)
+,
+(6)
+with ¯ℎ, ¯𝑢temporally mean-pooled trajectories, 𝜅1, 𝜅2 learnable temperatures, both terms symmetrized over the
+two directions following CLIP (27), and Lalign = 1
+2 (Lglobal + Llocal). The two granularities are complementary:
+Lglobal enforces chunk-level correspondence between the action segment and the instruction-guided visual
+context via across-chunk batch negatives, while Llocal binds each slot to its time-aligned visual moment by
+contrasting against all 𝐵𝑀−1 other (chunk, time) pairs in the batch.
+Next-Frame VL Feature Prediction. We attach a small auxiliary predictor 𝐺to the multi-level quantized latent
+˜z1:𝑀that regresses the VL feature of the frame immediately following the chunk window:
+Lpred =
+𝐺(˜z1:𝑀) −𝑢+
+
+1,
+(7)
+where 𝑢+ is the next-frame VL feature. While MAM and the contrastive head ground the codes in the present
+chunk and its current visual context, this objective adds a forward-looking signal (6): the codebook is required
+to encode the immediate physical consequence of the action rather than only the instantaneous geometry of
+the current chunk.
+3.4
+Downstream Co-training and Deployment
+X-Tokenizer is not a policy, but a training-time semantic scaffold for hybrid discrete–continuous VLA policies.
+In this setting, a causal VLM backbone shares hidden states ℎvlm with a continuous Flow Matching action
+expert. The discrete branch predicts X-Tokenizer codes autoregressively in position-major raster order (all 𝑄
+levels at position 𝑖before moving to 𝑖+1), while the continuous branch regresses action trajectories:
+Lco = −
+𝑀
+∑︁
+𝑖=1
+𝑄
+∑︁
+𝑞=1
+log 𝑝𝜓
+
+𝑐(𝑞)
+𝑖
+| ℎvlm, 𝑐(1:𝑄)
+<𝑖
+, 𝑐(<𝑞)
+𝑖
+
++ 𝜆fm𝔼𝑡,𝑥𝑡
+
+∥𝑣𝜙(𝑥𝑡, 𝑡| ℎvlm) −𝑢★
+𝑡∥2
+2
+
+.
+(8)
+The discrete loss regularizes the shared hidden states, whereas the Flow Matching branch preserves high-
+fidelity continuous control. Because X-Tokenizer codes are pretrained to align with the VLM feature space,
+their prediction imposes an action-semantic supervision signal rather than a reconstruction-only vocabulary as
+in FAST (21). This makes the discrete objective improve multimodal grounding and action conditioning for
+the continuous expert.
+Expert trajectories are encoded offline into multi-level tokens c = {𝑐(1), . . . , 𝑐(𝑄)}1:𝑀. The autoregressive branch
+predicts all 𝑄levels, where 𝑐(1) carries semantic supervision from pretraining (§3.3) and deeper levels refine
+5
+
+===== PAGE 6 =====
+1
+8
+16
+VLM slot
+1
+8
+16
+Action slot
+0.50
+0.52
+0.54
+0.56
+0.58
+0.60
+cosine similarity
+(a) Token-level alignment.
+Franka
+UR5
+Piper
+ViperX
+ARX5
+WidowX
+GoogleRobot
+X2Arm
+AgiBot
+UMI
+Realman
+Ark
+R1Lite
+AlphaBot
+MMK2
+Leju
+A2D
+VLM arm family
+Franka
+UR5
+Piper
+ViperX
+ARX5
+WidowX
+GoogleRobot
+X2Arm
+AgiBot
+UMI
+Realman
+Ark
+R1Lite
+AlphaBot
+MMK2
+Leju
+A2D
+Action arm family
+-0.3
+-0.2
+-0.1
+0.0
+0.1
+0.2
+0.3
+0.4
+cosine (centered @ 0.05)
+(b) Cross arm-family alignment.
+Figure 2 Action–vision cosine alignment at two granularities. (a) per-slot cosine on length-64 chunks (𝑀=16); (b)
+cross-arm-family cosine matrix between sequence-pooled action and VL features (centered at 0.05).
+action fidelity. At inference, both the autoregressive head and X-Tokenizer are disabled, so the policy runs as a
+single-forward continuous flow regressor with no discrete-token overhead. Additional architecture details,
+reconstruction losses, and wall-clock latency measurements are provided in App. A.
+4
+Experiments
+We pretrain X-Tokenizer on about 2.4M trajectories and about 2.0B action frames spanning 17 arm families, as-
+sembled from X Square Robot-internal data together with public academic and third-party robotic-manipulation
+datasets (full corpus, embodiment registry, and baseline tokenizer configurations in App. B). We compare
+primarily against FAST (21), the only publicly released cross-embodiment tokenizer at comparable scale;
+RDT2 VQ (43) and a non-learned 256-bin per-channel uniform quantizer serve as additional controls used in
+the noise-robustness analysis of §4.2.3 and the reconstruction-ℓ1 axis of §4.2.2.
+The remainder of this section presents four studies: a multimodal alignment analysis testing whether X-
+Tokenizer’s discrete tokens live in the same feature space as the consuming VLM (§4.1); a codebook-side
+analysis of SRQ specialization, semantic-head ablation, and deployment-time robustness and latency (§4.2); a
+controlled benchmark on RoboTwin 2.0 against published continuous-action baselines (§4.3); and a real-robot
+evaluation comparing four action interfaces under matched data and training schedule (§4.4).
+4.1
+Multimodal Alignment with the VLM
+We test whether X-Tokenizer’s latent space lives in the same multimodal manifold as the consuming VLM along
+three complementary axes: a statistical view via cosine similarities between action and VL features (§4.1.1); a
+geometric view via a joint UMAP projection (44) (§4.1.2); and a functional view that asks whether a frozen
+VL feature can drive the action decoder through the SRQ codebook (§4.1.3).
+4.1.1
+Statistical Alignment at Two Granularities
+For each validation chunk, we compare the encoder’s pre-quantization action latent with the fused VL feature
+derived from a frozen Qwen2.5-VL-7B extractor for the same episode, after pooling both to the same valid
+time slots and L2-normalizing the resulting embeddings.
+6
+
+===== PAGE 7 =====
+(a)
+(b)
+(c)
+Action
+VLM
+arm family
+Franka
+UR5
+Piper
+ViperX
+ARX5
+WidowX
+GoogleRobot
+X2Arm
+AgiBot
+UMI
+Realman
+Ark
+R1Lite
+AlphaBot
+MMK2
+Leju
+A2D
+Figure 3 Joint multimodal manifold via the alignment head. UMAP (44) of L2-normalized sequence-mean alignment
+features. (a) action features cluster by embodiment; (b) VL features of the same chunks are interleaved across arms; (c)
+overlaying both modalities (△action, ◦VLM) shows a single shared region.
+Action tokens
+VLM tokens
+(a) Per-Task · L1 ↓
+0
+0.1
+0.2
+0.3
+pour
+press
+arrange
+transfer
+storage
+pick&place
+insert
+fold
+open&close
+(b) Per-Task · cos ↑
+0
+0.5
+1
+pour
+press
+arrange
+transfer
+storage
+pick&place
+insert
+fold
+open&close
+(c) Per-Arm · L1 ↓
+0
+0.1
+0.2
+Ark
+UMI
+Piper
+ARX5
+AlphaBot
+GoogleRobot
+ViperX
+Realman
+R1Lite
+X2Arm
+Leju
+UR5
+A2D
+MMK2
+Franka
+(d) Per-Arm · cos ↑
+0
+0.5
+1
+Ark
+UMI
+Piper
+ARX5
+AlphaBot
+GoogleRobot
+ViperX
+Realman
+R1Lite
+X2Arm
+Leju
+UR5
+A2D
+MMK2
+Franka
+Figure 4 VL features as a functional surrogate. Reconstruction quality when the frozen SRQ + decoder is fed VL
+features (purple) vs. action features (blue), by task (a, b) and arm family (c, d).
+The slot-level 16×16 heatmap of Fig. 2a shows a clear diagonal band peaking mid-chunk (∼0.60 cosine)
+and weakening at the boundaries where the VL context is partial; the arm-family matrix of Fig. 2b has a
+uniformly positive diagonal centered at ∼0.05 above corpus mean, with bright off-diagonal blocks between
+morphologically related arms.
+4.1.2
+Geometric Alignment in a Shared Manifold (UMAP)
+Fig. 3 visualizes the alignment space learned by the contrastive head. Action features retain embodiment-
+dependent structure, while VL features are more interleaved across arms. When overlaid, the two modalities
+occupy the same broad region rather than forming separate modality clusters. This supports the view that
+the alignment head brings action and VL representations into a shared space while preserving task- and
+embodiment-level variation.
+7
+
+===== PAGE 8 =====
+0
+1000
+2000
+rank
+10−5
+10−4
+10−3
+10−2
+token frequency
+76.4% used
+Layer 1
+0
+1000
+2000
+rank
+93.8% used
+Layer 2
+0
+1000
+2000
+rank
+99.3% used
+Layer 3
+0
+1000
+2000
+rank
+99.8% used
+Layer 4
+Figure 5 SRQ codebook structure across the four residual levels. Sorted token frequencies (log scale) on the validation
+split; per-layer usage annotated top-right of each panel.
+4.1.3
+Functional Substitution: VLM as Action Surrogate
+The alignment evidence so far is statistical and geometric. We next ask whether the aligned VL representation
+is usable by the action codec itself. We route the fused VL feature ˆ𝑣through the same SRQ-decoder stack and
+compare the resulting cross-modal reconstruction ˆ𝑥vlm with the standard action-encoded reconstruction ˆ𝑥act
+(Fig. 4).
+The VL-driven route preserves action direction well, reaching per-task cosine similarity of 0.85–0.95 against
+the ≈0.99 action-encoded baseline, while incurring a larger 𝐿1 error. The gap is largest on fine pre-contact
+tasks such as insert/plug and press/button, suggesting that VL features capture the high-level motion family
+while the action encoder preserves millimetre-scale execution geometry.
+This functional probe shows that the learned alignment makes VL features usable by the action codebook,
+rather than merely nearby in an embedding plot. Standard action-only tokenizers such as FAST (21) or
+RDT-VQ (43) do not provide such a VL-to-codebook path.
+4.2
+Codebook Structure and Deployment Properties
+Beyond multimodal alignment, we verify that the SRQ asymmetric design behaves at the codebook level as
+predicted by §3.2 (§4.2.1), trace its dependence on each of the three semantic heads (§4.2.2), and characterize
+the deployed tokenizer’s robustness to action noise and per-call latency (§4.2.3).
+4.2.1
+SRQ Codebook Specialization
+In a reconstruction-only RVQ, all levels are optimized to reduce reconstruction error. Under SRQ (§3.2),
+the four levels instead show a clear division of labor (Fig. 5). The MAM-regularized main code (Layer 1)
+is markedly long-tailed: a small set of frequent “motion words” covers the bulk of chunks, while the tail is
+used for less frequent motion patterns. It still keeps 76.4% of the codebook active, with token frequencies
+spanning four orders of magnitude. Layers 2–4, supervised only by reconstruction, fill the codebook much
+more uniformly (93.8% / 99.3% / 99.8%) and behave as residual correction codes. The contrast between
+Layer 1 and Layers 2–4 matches the Zipf-vs-uniform pattern encouraged by SRQ, while no level shows the
+catastrophic collapse (<10% active usage) often observed in action VQ models.
+8
+
+===== PAGE 9 =====
+4.2.2
+Ablation of Semantic Heads
+Table 1 Tokenizer ablation. Reconstruction ℓ1 (Δ vs FAST) and per-level RVQ perplexity.
+Recon.
+RVQ PPL
+Method
+ℓ1 ↓
+𝚫%
+q0 ↓
+q1
+q2
+q3 ↑
+FAST
+0.01446
+–
+–
+–
+–
+–
+256-bin uniform
+0.00486 −66%
+–
+–
+–
+–
+No aux
+0.00815 −44% 751 693 756 757
+(w/o Align+Pred) 0.00830 −43% 687 904 853 793
+(w/o MAM)
+0.01564
++8%
+603 677 830 871
+X-Tokenizer (full) 0.01693 +17% 510 700 828 916
+We ablate the three pretraining-time auxiliary heads of §3.3: main-code MAM, VL contrastive alignment
+(Align), and next-frame VL feature prediction (Pred). All variants share the same tokenizer architecture and
+base reconstruction losses; only these auxiliary heads are toggled. We report reconstruction ℓ1 together with
+per-level RVQ perplexity, where lower 𝑞0 perplexity indicates a more concentrated intent codebook and higher
+deeper-level perplexity indicates broad residual usage.
+A successful SRQ should show increasing PPL across levels: low-PPL 𝑞0 captures recurring motion intents, while
+deeper levels absorb fine residual corrections. Tab. 1 shows that neither signal alone gives the full pattern. MAM
+concentrates 𝑞0 but does not organize the deeper residual levels; Align+Pred improves the deeper ordering
+but still lacks the strongest main-code compression. The full model produces the intended monotone spectrum
+(510 →700 →828 →916), at the cost of higher reconstruction ℓ1. This is the intended trade-off: the 256-bin
+baseline reconstructs well but has no learned semantic structure, whereas the downstream experiments in
+§4.3–4.4 use the structure induced by SRQ.
+4.2.3
+Noise Robustness and Deployment Latency
+Table 2 Robustness against action noise (WER; lower is better).
+𝜎
+X-Tokenizer(ours)
+FAST
+256-bin
+RDT2 VQ
+0.004
+0.313
+0.313
+0.454
+0.325
+0.006
+0.437
+0.899
+0.533
+0.439
+0.008
+0.526
+1.445
+0.597
+0.549
+We inject small Gaussian noise into physical action space before normalization or tokenization, using the same
+noisy chunks for all codecs, and report Word Error Rate (WER; Tab. 2). X-Tokenizer obtains the lowest WER
+across noise levels, while FAST degrades sharply once perturbations trigger BPE re-segmentation. Raw WER,
+however, does not capture where edits occur.
+Fig. 6 shows where those edits land. For X-Tokenizer, the top-level 𝑞0 cells are largely stable and most changes
+move into 𝑞1:3, matching the SRQ hierarchy of coarse intent plus residual execution detail. FAST instead
+changes sequence length once noise perturbs its BPE segmentation, which explains the sharp WER jump
+in Tab. 2. RDT2 VQ keeps a fixed length, but its substitutions are spread across the sequence because a
+single codebook does not separate intent from residual correction. Together, the WER table and code-shift
+visualization show that X-Tokenizer is robust not only by edit count, but also by preserving the top-level
+intent stream under small physical perturbations. This matters because the downstream autoregressive branch
+consumes the code sequence as supervision for the shared VLM hidden states: an edit in 𝑞0 changes the coarse
+action label seen by the backbone, whereas an edit in 𝑞1:3 mostly changes residual execution detail. SRQ
+therefore turns small physical noise into lower-level corrections rather than semantic token flips.
+9
+
+===== PAGE 10 =====
+(a) X-Tokenizer (ours). 24 tokens, fixed length; every four cells form one residual group, with the first cell of each group
+(dark border) corresponding to the coarsest quantizer 𝑞0.
+(b) FAST (21). BPE-based variable-length codec; small noise leaves the segmentation intact, while larger noise re-segments
+the sequence and triggers many insertions/deletions.
+(c) RDT2 VQ (43). Single-codebook VQ-VAE, fixed length; substitutions accumulate roughly proportionally to noise.
+Figure 6 Encoded code sequences before and after action-noise injection (single chunk, all tokenizers). Top row in
+each panel is the clean reference cref; following rows are chyp
+𝜎
+for the three 𝜎levels. Cells are labeled with raw codebook id
+and Levenshtein-aligned edits are highlighted: red = substitution, blue = insertion
+10
+
+===== PAGE 11 =====
+(a) Training Input Length · tokens / chunk ↓
+0
+25
+50
+75
+100
+125
+150
+175
+FAST
+RDT2-VQ
+X-Tokenizer
+(ours)
+156
+27
+30
+(b) Inference Latency · LM-tokid → action, ms ↓
+0
+250
+500
+750
+1000
+FAST
+RDT2-VQ
+X-Tokenizer
+(ours)
+332
+758
+324
+Figure 7 Deployment-time tokenizer latency. Per-chunk encoding latency of the three discrete codecs compared in
+Fig. 6 (X-Tokenizer, FAST, RDT2 VQ). For X-Tokenizer we measure only the deployed encoder–SRQ–decoder core after all
+pretraining-time auxiliary heads (§3.3) have been removed.
+Beyond robustness, the deployed X-Tokenizer is also lightweight. Fig. 7 compares per-chunk encoding latency
+of the three discrete codecs on the same hardware. For X-Tokenizer we measure only the deployed encoder–
+SRQ–decoder core, after all three pretraining-time auxiliary heads have been removed—which is what actually
+runs at deployment under the asymmetric pretrain-deploy design of §3.1.The semantic supervision used during
+pretraining therefore does not introduce extra deployment-time modules.
+4.3
+RoboTwin 2.0 Benchmark
+We evaluate on RoboTwin 2.0 (45) using the Wall-OSS (16) hybrid architecture. This benchmark comparison
+uses published continuous-action baselines; the controlled tokenizer comparison is reported in §4.4. We attach
+the frozen X-Tokenizer to a released Wall-OSS checkpoint with the full action degrees of freedom (dual arms,
+base, lift, head) and fine-tune the full system for 70k steps. The suite contains 50 dual-arm tasks with 50
+Clean and 500 Randomized demonstrations per task, and each task is evaluated with 100 rollouts under both
+Easy and Hard protocols. Full training details are provided in App. C.1.
+π0
+π0.5
+X-VLA
+Wall-OSS + X-Tokenizer (ours)
+0
+25
+50
+75
+100
+Easy
+Hard
+Avg
+65.9
+58.4
+62.1
+82.7
+76.8
+79.8
+72.9
+72.8
+72.8
+84.7
+80.9
+82.8
+Figure 8 RoboTwin 2.0 dual-arm (%).
+11
+
+===== PAGE 12 =====
+On the 50-task dual-arm suite (Fig. 8), Wall-OSS+X-Tokenizer achieves the best aggregate performance,
+improving over the strongest published baseline 𝜋0.5 in both Easy and Hard settings. The gain is larger under
+Hard randomization, suggesting that the aligned action-token interface is most useful when visual conditions
+shift. Since the published methods differ in backbone, pretraining data, and compute, we treat this as a
+benchmark comparison rather than a controlled ablation.
+Single-embodiment
+Joint (5-embodiment)
+0
+25
+50
+75
+100
+Easy
+Hard
+Avg
+70.9
+64
+67.5
+77.9
+74.4
+76.2
+Figure 9 Cross-embodiment (70k) (%).
+To probe cross-embodiment transfer (Fig. 9), we train on five single-arm embodiments and compare separate
+single-embodiment models with one joint model trained on the union, all for 70k gradient steps. This controls
+the per-model training schedule: the single-embodiment setting trains five separate models and therefore
+uses more total compute, while each model sees only its own embodiment’s data. Joint training improves
+performance from 70.9→77.9 on Easy and 64.0→74.4 on Hard, with the larger gain under harder scene
+randomization.
+This trend is consistent with the arm-family alignment in Fig. 2b: a shared action-token space can reuse motion
+structure across embodiments. Increased data diversity from joint training may also contribute, so we do not
+isolate the tokenizer as the sole cause of the gain.
+4.4
+Real-World Evaluation
+We evaluate X-Tokenizer on 7 real-world tabletop tasks (Fig. 10) using Wall-OSS (16) as a controlled mixed
+discrete-continuous VLA testbed. We compare four action interfaces: the original Wall-OSS flow head, FAST, a
+reconstruction-only 4-level RVQ tokenizer (+RVQ no-aux), and our full X-Tokenizer. All variants share the
+same Qwen2.5-VL-3B backbone initialization, training data, schedule, Flow Matching expert, and evaluation
+protocol; only the action interface changes. The X-Tokenizer itself is frozen from the 26-D pretraining
+checkpoint. This setting also tests cross-backbone transfer. X-Tokenizer is aligned during pretraining to frozen
+Qwen2.5-VL-7B features, but is consumed here by a Qwen2.5-VL-3B policy backbone. Each task is evaluated
+over 10 real-world rollouts using a stage-wise progress-rate (PR) rubric; training and scoring details are in
+App. C.2 and App. D. X-Tokenizer achieves the best aggregate performance: 85.9% VQA, 80.6% PR over five
+short-horizon manipulation tasks, 69.3% PR over two long-horizon tasks, and 77.4% average PR over all seven
+tasks. The +RVQ no-aux ablation is informative: relative to FAST, it improves VQA (75.7→79.4) but lowers
+the 7-task action average (73.0→69.1), suggesting that multi-level discrete structure alone helps the backbone
+representation but is not sufficient for action quality. Adding MAM, Align, and Pred raises both sides, reaching
+85.9% VQA and 77.4% average PR. Per-task results are consistent with this aggregate trend: X-Tokenizer is
+strongest on tasks that combine manipulation with visual grounding or multi-step instruction following, while
+its gains are smaller on tasks dominated by repetitive low-level placement. This matches the tokenizer ablation
+12
+
+===== PAGE 13 =====
+(a)
+(b)
+(c)
+(d)
+(e)
+(f)
+(g)
+Manipulation Tasks
+Long-Horizon Reasoning Tasks
+Wall-OSS
++ FAST
++ RVQ (no-aux)
++ X-Tokenizer (ours)
+0
+25
+50
+75
+100
+Pick Up
+Cup
+Push
+Towel
+Distribute
+Blocks
+Stack
+Bottle
+Place
+Tape
+Arrange
+Flowers
+Turn On
+Light Switch
+VQA
+Avg
+58
+80
+100
+80
+73
+100
+80
+100
+68.5
+70
+85.9
+77.4
+Figure 10 Real-world setup and evaluation. (Top) 7 tabletop tasks: five short-horizon manipulation tasks (pick-up-cup, push-towel,
+distribute-blocks, stack-bottle, place-tape) and two long-horizon reasoning tasks (arrange-flowers, turn-on-light-switch). (Bottom) Per-task
+performance across four variants on the 7 tasks, plus held-out point-grounding VQA and the 7-task average; the star (★) marks the best (or
+tied-best) variant per column. +RVQ (no-aux) ablates X-Tokenizer’s three semantic heads (MAM, Align, Pred). Per-task PR is a 10-rollout
+mean.
+in §4.2.2: semantic supervision improves downstream grounding and long-horizon behavior, while paying a
+modest reconstruction cost.
+5
+Conclusion and Future Work
+This paper argues that action tokenization for VLA pretraining should be designed with the multimodal context
+in which the tokens are consumed, rather than optimized only as action compression. Reconstruction-driven
+codecs preserve trajectory geometry, but their code structure is not explicitly aligned with the hidden states of a
+multimodal backbone. X-Tokenizer addresses this with Semantic Residual Quantization and three pretraining-
+time supervision heads (MAM, Align, Pred) that shape the top-level action codes toward multimodal semantics
+while leaving deeper levels to preserve execution detail. These heads are removed after pretraining, so the
+deployed tokenizer remains the lightweight encoder–SRQ–decoder core. Pretrained once on 2.4M trajectories
+(2.0B action frames) across 17 arm families, a single frozen X-Tokenizer can be reused across downstream
+VLA settings without tokenizer-side retraining.
+The experiments support this semantic-interface view. Codebook analyses show the intended separation
+between a concentrated top-level code and broad residual levels; alignment probes show that action and fused
+VL features occupy a shared representation space; and downstream results show consistent gains in multimodal
+grounding and long-horizon behavior. The reconstruction-only RVQ ablation is especially informative: hierarchy
+alone improves VQA but does not recover the full action performance, whereas adding semantic supervision
+improves both grounding and the aggregate real-world task score. The transfer from a tokenizer aligned with
+Qwen2.5-VL-7B features to a Qwen2.5-VL-3B policy backbone further suggests that the learned interface is not
+tied to a single consuming backbone.
+Two directions extend this view. First, the current design anchors each action chunk in end-effector space;
+generalizing to dexterous hands and joint-space control would broaden the tokenizer to embodiments without
+a canonical end-effector anchor. Second, the SRQ depth schedule fixes a static reconstruction–semantics
+balance that could instead be adaptive across tasks. Broadly, context-guided compression may be useful for
+other discrete interfaces between foundation models and downstream predictors, such as world-model latents.
+13
+
+===== PAGE 14 =====
+References
+[1] Johan Bjorck, Fernando Castañeda, Nikita Cherniadev, Xingye Da, Runyu Ding, Linxi Fan, Yu Fang, Dieter Fox,
+Fengyuan Hu, Spencer Huang, et al. Gr00t n1: An open foundation model for generalist humanoid robots. arXiv
+preprint arXiv:2503.14734, 2025.
+[2] Jinliang Zheng, Jianxiong Li, Zhihao Wang, Dongxiu Liu, Xirui Kang, Yuchun Feng, Yinan Zheng, Jiayin Zou, Yilun
+Chen, Jia Zeng, et al. X-vla: Soft-prompted transformer as scalable cross-embodiment vision-language-action model.
+arXiv preprint arXiv:2510.10274, 2025.
+[3] Kevin Black, Noah Brown, Danny Driess, Adnan Esmail, Michael Equi, Chelsea Finn, Niccolo Fusai, Lachy Groom,
+Karol Hausman, Brian Ichter, et al. 𝜋0: A vision-language-action flow model for general robot control. arXiv preprint
+arXiv:2410.24164, 2024.
+[4] Cheng Chi, Zhenjia Xu, Siyuan Feng, Eric Cousineau, Yilun Du, Benjamin Burchfiel, Russ Tedrake, and Shuran Song.
+Diffusion policy: Visuomotor policy learning via action diffusion. The International Journal of Robotics Research, 44
+(10-11):1684–1704, 2025.
+[5] Puhao Li, Yingying Wu, Ziheng Xi, Wanlin Li, Yuzhe Huang, Zhiyuan Zhang, Yinghan Chen, Jianan Wang, Song-Chun
+Zhu, Tengyu Liu, et al. Controlvla: Few-shot object-centric adaptation for pre-trained vision-language-action models.
+arXiv preprint arXiv:2506.16211, 2025.
+[6] Mido Assran, Adrien Bardes, David Fan, Quentin Garrido, Russell Howes, Matthew Muckley, Ammar Rizvi, Claire
+Roberts, Koustuv Sinha, Artem Zholus, et al. V-jepa 2: Self-supervised video models enable understanding, prediction
+and planning. arXiv preprint arXiv:2506.09985, 2025.
+[7] Hongzhe Bi, Hengkai Tan, Shenghao Xie, Zeyuan Wang, Shuhe Huang, Haitian Liu, Ruowen Zhao, Yao Feng,
+Chendong Xiang, Yinze Rong, et al. Motus: A unified latent action world model. arXiv preprint arXiv:2512.13030,
+2025.
+[8] Dongxiu Liu, Haoyi Niu, Zhihao Wang, Jinliang Zheng, Yinan Zheng, Zhonghong Ou, Jianming Hu, Jianxiong Li, and
+Xianyuan Zhan. Efficient robotic policy learning via latent space backward planning. arXiv preprint arXiv:2505.06861,
+2025.
+[9] Lucas Maes, Quentin Le Lidec, Damien Scieur, Yann LeCun, and Randall Balestriero. Leworldmodel: Stable end-to-end
+joint-embedding predictive architecture from pixels. arXiv preprint arXiv:2603.19312, 2026.
+[10] Jun Cen, Chaohui Yu, Hangjie Yuan, Yuming Jiang, Siteng Huang, Jiayan Guo, Xin Li, Yibing Song, Hao Luo, Fan
+Wang, et al. Worldvla: Towards autoregressive action world model. arXiv preprint arXiv:2506.21539, 2025.
+[11] Shalfun Li, Victor Yao, Charles Yang, Truth Qu, Regis Cheng, Ryan Yu, Howard Lu, Newton Von, Vincent Chen,
+Yohann Tang, Maeve Zhang, Ellie Ma, Gody Li, Sage Yang, Lorien Shu, J. W. Gao, Ethan Chen, Colin Ye, Yu Sun,
+Elise Mon, PS Zhang, Neo Li, Lily Li, James Wang, Ping Yang, Chris Pan, Lucy Liang, Hang Su, Roy Gan, Hao Wang,
+and Qian Wang. Wall-wm: Carving world action modeling at the event joints, 2026. URL https://arxiv.org/
+abs/2606.01955.
+[12] Lin Li, Qihang Zhang, Yiming Luo, Shuai Yang, Ruilin Wang, Fei Han, Mingrui Yu, Zelin Gao, Nan Xue, Xing Zhu,
+et al. Causal world modeling for robot control. arXiv preprint arXiv:2601.21998, 2026.
+[13] Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail, Michael Robert Equi,
+Chelsea Finn, Niccolo Fusai, Manuel Y Galliker, et al.
+𝜋0.5 : a vision-language-action model with open-world
+generalization. In 9th Annual Conference on Robot Learning, 2025.
+[14] Physical Intelligence, Bo Ai, Ali Amin, Raichelle Aniceto, Ashwin Balakrishna, Greg Balke, Kevin Black, George
+Bokinsky, Shihao Cao, Thomas Charbonnier, Vedant Choudhary, Foster Collins, Ken Conley, Grace Connors, James
+Darpinian, Karan Dhabalia, Maitrayee Dhaka, Jared DiCarlo, Danny Driess, Michael Equi, Adnan Esmail, Yunhao Fang,
+Chelsea Finn, Catherine Glossop, Thomas Godden, Ivan Goryachev, Lachlan Groom, Haroun Habeeb, Hunter Hancock,
+Karol Hausman, Gashon Hussein, Victor Hwang, Brian Ichter, Connor Jacobsen, Szymon Jakubczak, Rowan Jen, Tim
+Jones, Gregg Kammerer, Ben Katz, Liyiming Ke, Mairbek Khadikov, Chandra Kuchi, Marinda Lamb, Devin LeBlanc,
+Brendon LeCount, Sergey Levine, Xinyu Li, Adrian Li-Bell, Vladislav Lialin, Zhonglin Liang, Wallace Lim, Yao Lu,
+Enyu Luo, Vishnu Mano, Nandan Marwaha, Aikys Mongush, Liam Murphy, Suraj Nair, Tyler Patterson, Karl Pertsch,
+Allen Z. Ren, Gavin Schelske, Charvi Sharma, Baifeng Shi, Lucy Xiaoyang Shi, Laura Smith, Jost Tobias Springenberg,
+Kyle Stachowicz, Will Stoeckle, Jiaming Tang, Jimmy Tanner, Shalom Tekeste, Marcel Torne, Kyle Vedder, Quan
+Vuong, Anna Walling, Haohuan Wang, Jason Wang, XuDong Wang, Chris Whalen, Samuel Whitmore, Blake Williams,
+Charles Xu, Sukwon Yoo, Lili Yu, Wuming Zhang, Zhuoyang Zhang, and Ury Zhilinsky. 𝜋0.7: a steerable generalist
+robotic foundation model with emergent capabilities, 2026. URL https://arxiv.org/abs/2604.15483.
+[15] Ryan Yu, Pushi Zhang, Starrick Liu, Brae Liu, Miracle Kang, Shalfun Li, Lights Shi, Ellie Ma, Ping Yang, Chris Pan,
+et al. Wall-oss-0.5 technical report. arXiv preprint arXiv:2605.30877, 2026.
+14
+
+===== PAGE 15 =====
+[16] Andy Zhai, Brae Liu, Bruno Fang, Chalse Cai, Ellie Ma, Ethan Yin, Hao Wang, Hugo Zhou, James Wang, Lights Shi,
+et al. Igniting vlms toward the embodied space. arXiv preprint arXiv:2509.11766, 2025.
+[17] Jiaming Liu, Hao Chen, Pengju An, Zhuoyang Liu, Renrui Zhang, Chenyang Gu, Xiaoqi Li, Ziyu Guo, Sixiang Chen,
+Mengzhen Liu, et al. Hybridvla: Collaborative diffusion and autoregression in a unified vision-language-action model.
+arXiv preprint arXiv:2503.10631, 2025.
+[18] Jinliang Zheng, Jianxiong Li, Dongxiu Liu, Yinan Zheng, Zhihao Wang, Zhonghong Ou, Yu Liu, Jingjing Liu, Ya-Qin
+Zhang, and Xianyuan Zhan. Universal actions for enhanced embodied foundation models. In Proceedings of the
+Computer Vision and Pattern Recognition Conference, pages 22508–22519, 2025.
+[19] Tao Jiang, Tianyuan Yuan, Yicheng Liu, Chenhao Lu, Jianning Cui, Xiao Liu, Shuiqi Cheng, Jiyang Gao, Huazhe Xu,
+and Hang Zhao. Galaxea open-world dataset and g0 dual-system vla model. arXiv preprint arXiv:2509.00576, 2025.
+[20] Wei Wu, Fan Lu, Yunnan Wang, Shuai Yang, Shi Liu, Fangjing Wang, Qian Zhu, He Sun, Yong Wang, Shuailei Ma,
+et al. A pragmatic vla foundation model. arXiv preprint arXiv:2601.18692, 2026.
+[21] Karl Pertsch, Kyle Stachowicz, Brian Ichter, Danny Driess, Suraj Nair, Quan Vuong, Oier Mees, Chelsea Finn, and
+Sergey Levine. Fast: Efficient action tokenization for vision-language-action models. arXiv preprint arXiv:2501.09747,
+2025.
+[22] Seungjae Lee, Yibin Wang, Haritheja Etukuru, H Jin Kim, Nur Muhammad Mahi Shafiullah, and Lerrel Pinto. Behavior
+generation with latent actions. arXiv preprint arXiv:2403.03181, 2024.
+[23] Yating Wang, Haoyi Zhu, Mingyu Liu, Jiange Yang, Hao-Shu Fang, and Tong He. Vq-vla: Improving vision-language-
+action models via scaling vector-quantized action tokenizers. In Proceedings of the IEEE/CVF International Conference
+on Computer Vision, pages 11089–11099, 2025.
+[24] Yicheng Liu, Shiduo Zhang, Zibin Dong, Baijun Ye, Tianyuan Yuan, Xiaopeng Yu, Linqi Yin, Chenhao Lu, Junhao Shi,
+Luca Jiang-Tao Yu, et al. Faster: Toward efficient autoregressive vision language action modeling via neural action
+tokenization. arXiv preprint arXiv:2512.04952, 2025.
+[25] Zibin Dong, Yicheng Liu, Shiduo Zhang, Baijun Ye, Yifu Yuan, Fei Ni, Jingjing Gong, Xipeng Qiu, Hang Zhao,
+Yinchuan Li, et al. Actioncodec: What makes for good action tokenizers. arXiv preprint arXiv:2602.15397, 2026.
+[26] Jianxiong Li, Jinliang Zheng, Yinan Zheng, Liyuan Mao, Xiao Hu, Sijie Cheng, Haoyi Niu, Jihao Liu, Yu Liu, Jingjing
+Liu, et al. Decisionnce: Embodied multimodal representations via implicit preference learning. arXiv preprint
+arXiv:2402.18137, 2024.
+[27] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda
+Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervision. In
+International conference on machine learning, pages 8748–8763. PmLR, 2021.
+[28] Kaiming He, Haoqi Fan, Yuxin Wu, Saining Xie, and Ross Girshick. Momentum contrast for unsupervised visual
+representation learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages
+9729–9738, 2020.
+[29] Doyup Lee, Chiheon Kim, Saehoon Kim, Minsu Cho, and Wook-Shin Han. Autoregressive image generation using
+residual quantization. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages
+11523–11532, 2022.
+[30] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. Bert: Pre-training of deep bidirectional
+transformers for language understanding. In Proceedings of the 2019 conference of the North American chapter of
+the association for computational linguistics: human language technologies, volume 1 (long and short papers), pages
+4171–4186, 2019.
+[31] Brianna Zitkovich, Tianhe Yu, Sichun Xu, Peng Xu, Ted Xiao, Fei Xia, Jialin Wu, Paul Wohlhart, Stefan Welker, Ayzaan
+Wahid, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In Conference on Robot
+Learning, pages 2165–2183. PMLR, 2023.
+[32] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan
+Foster, Grace Lam, Pannag Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv preprint
+arXiv:2406.09246, 2024.
+[33] Tony Z Zhao, Vikash Kumar, Sergey Levine, and Chelsea Finn. Learning fine-grained bimanual manipulation with
+low-cost hardware. arXiv preprint arXiv:2304.13705, 2023.
+[34] Chaoqi Liu, Xiaoshen Han, Jiawei Gao, Yue Zhao, Haonan Chen, and Yilun Du. Oat: Ordered action tokenization. In
+Proceedings of Robotics: Science and Systems, 2026.
+[35] Chubin Zhang, Jianan Wang, Zifeng Gao, Yue Su, Tianru Dai, Cai Zhou, Jiwen Lu, and Yansong Tang. Clap:
+Contrastive latent action pretraining for learning vision-language-action models from human videos. arXiv preprint
+arXiv:2601.04061, 2026.
+15
+
+===== PAGE 16 =====
+[36] Boyu Chen, Yi Chen, Lu Qiu, Jerry Bai, Yuying Ge, and Yixiao Ge. UniT: Toward a unified physical language for
+human-to-humanoid policy learning and world modeling. arXiv preprint arXiv:2604.19734, 2026.
+[37] Yuchun Feng, Jinliang Zheng, Zhihao Wang, Dongxiu Liu, Jianxiong Li, Jiangmiao Pang, Tai Wang, and Xianyuan
+Zhan. Demystifying action space design for robotic manipulation policies. arXiv preprint arXiv:2602.23408, 2026.
+[38] Yinan Zheng, Tianyi Tan, Bin Huang, Enguang Liu, Ruiming Liang, Jianlin Zhang, Jianwei Cui, Guang Chen, Kun Ma,
+Hangjun Ye, et al. Unleashing the potential of diffusion models for end-to-end autonomous driving. arXiv preprint
+arXiv:2602.22801, 2026.
+[39] Andrew Jaegle, Felix Gimeno, Andy Brock, Oriol Vinyals, Andrew Zisserman, and Joao Carreira. Perceiver: General
+perception with iterative attention. In International Conference on Machine Learning, pages 4651–4664. PMLR, 2021.
+[40] Andrew Jaegle, Sebastian Borgeaud, Jean-Baptiste Alayrac, Carl Doersch, Catalin Ionescu, David Ding, Skanda
+Koppula, Daniel Zoran, Andrew Brock, Evan Shelhamer, et al. Perceiver IO: A general architecture for structured
+inputs and outputs. In International Conference on Learning Representations, 2022.
+[41] Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai Dang, Peng Wang, Shijie Wang, Jun
+Tang, Humen Zhong, Yuanzhi Zhu, Mingkun Yang, Zhaohai Li, Jianqiang Wan, Pengfei Wang, Wei Ding, Zheren Fu,
+Yiheng Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng, Hang Zhang, Zhibo Yang, Haiyang Xu, and Junyang Lin.
+Qwen2.5-vl technical report, 2025. URL https://arxiv.org/abs/2502.13923.
+[42] Evgenia Rusak, Patrik Reizinger, Attila Juhos, Oliver Bringmann, Roland S. Zimmermann, and Wieland Brendel.
+Infonce: Identifying the gap between theory and practice, 2025. URL https://arxiv.org/abs/2407.00143.
+[43] Songming Liu, Bangguo Li, Kai Ma, Lingxuan Wu, Hengkai Tan, Xiao Ouyang, Hang Su, and Jun Zhu. Rdt2: Exploring
+the scaling limit of umi data towards zero-shot cross-embodiment generalization. arXiv preprint arXiv:2602.03310,
+2026.
+[44] Leland McInnes, John Healy, and James Melville. Umap: Uniform manifold approximation and projection for
+dimension reduction. arXiv preprint arXiv:1802.03426, 2018.
+[45] Tianxing Chen, Zanxin Chen, Baijun Chen, Zijian Cai, Yibin Liu, Zixuan Li, Qiwei Liang, Xianliang Lin, Yiheng Ge,
+Zhenyu Gu, et al. Robotwin 2.0: A scalable data generator and benchmark with strong domain randomization for
+robust bimanual robotic manipulation. arXiv preprint arXiv:2506.18088, 2025.
+[46] Robert Gray. Vector quantization. IEEE Assp Magazine, 1(2):4–29, 1984.
+[47] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. BERT: Pre-training of deep bidirectional
+transformers for language understanding. In Proceedings of the 2019 Conference of the North American Chapter of the
+Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers), pages
+4171–4186. Association for Computational Linguistics, 2019.
+[48] Yanpei Shi and Thomas Hain. Contextual joint factor acoustic embeddings. In 2021 IEEE Spoken Language Technology
+Workshop (SLT), pages 750–757. IEEE, 2021.
+[49] Huiwen Chang, Han Zhang, Lu Jiang, Ce Liu, and William T. Freeman. MaskGIT: Masked generative image transformer.
+In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 11315–11325, 2022.
+[50] Thorsten Hempel, Ahmed A Abdelrahman, and Ayoub Al-Hamadi. 6d rotation representation for unconstrained head
+pose estimation. In 2022 IEEE International Conference on image processing (ICIP), pages 2496–2500. IEEE, 2022.
+[51] Wei Mao, Miaomiao Liu, Mathieu Salzmann, and Hongdong Li. Learning trajectory dependencies for human motion
+prediction. In Proceedings of the IEEE/CVF international conference on computer vision, pages 9489–9497, 2019.
+[52] Qingwen Bu, Jisong Cai, Li Chen, Xiuqi Cui, Yan Ding, Siyuan Feng, Xindong He, Xu Huang, et al. Agibot world
+colosseo: A large-scale manipulation platform for scalable and intelligent embodied systems. In 2025 IEEE/RSJ
+International Conference on Intelligent Robots and Systems (IROS). IEEE, 2025.
+[53] AgiBot World Team.
+Agibot world 2026.
+https://huggingface.co/datasets/agibot-world/
+AgiBotWorld2026, 2026.
+[54] Alexander Khazatsky, Karl Pertsch, Suraj Nair, Ashwin Balakrishna, Sudeep Dasari, Siddharth Karamcheti, Soroush
+Nasiriany, Mohan Kumar Srirama, Lawrence Yunliang Chen, Kirsty Ellis, Peter David Fagan, Joey Hejna, Masha
+Itkina, Marion Lepert, Yecheng Jason Ma, Patrick Tree Miller, Jimmy Wu, Suneel Belkhale, Shivin Dass, Huy Ha,
+Arhan Jain, Abraham Lee, Youngwoon Lee, Marius Memmel, Sungjae Park, Ilija Radosavovic, Kaiyuan Wang, Albert
+Zhan, Kevin Black, Cheng Chi, Kyle Beltran Hatch, Shan Lin, Jingpei Lu, Jean Mercat, Abdul Rehman, Pannag R
+Sanketi, Archit Sharma, Cody Simpson, Quan Vuong, Homer Rich Walke, Blake Wulfe, Ted Xiao, Jonathan Heewon
+Yang, Arefeh Yavary, Tony Z. Zhao, Christopher Agia, Rohan Baijal, Mateo Guaman Castro, Daphne Chen, Qiuyu
+Chen, Trinity Chung, Jaimyn Drake, Ethan Paul Foster, Jensen Gao, Vitor Guizilini, David Antonio Herrera, Minho
+Heo, Kyle Hsu, Jiaheng Hu, Muhammad Zubair Irshad, Donovon Jackson, Charlotte Le, Yunshuang Li, Kevin Lin,
+Roy Lin, Zehan Ma, Abhiram Maddukuri, Suvir Mirchandani, Daniel Morton, Tony Nguyen, Abigail O’Neill, Rosario
+16
+
+===== PAGE 17 =====
+Scalise, Derick Seale, Victor Son, Stephen Tian, Emi Tran, Andrew E. Wang, Yilin Wu, Annie Xie, Jingyun Yang,
+Patrick Yin, Yunchu Zhang, Osbert Bastani, Glen Berseth, Jeannette Bohg, Ken Goldberg, Abhinav Gupta, Abhishek
+Gupta, Dinesh Jayaraman, Joseph J Lim, Jitendra Malik, Roberto Martín-Martín, Subramanian Ramamoorthy, Dorsa
+Sadigh, Shuran Song, Jiajun Wu, Michael C. Yip, Yuke Zhu, Thomas Kollar, Sergey Levine, and Chelsea Finn. Droid:
+A large-scale in-the-wild robot manipulation dataset. 2024.
+[55] Kun Wu, Chengkai Hou, Jiaming Liu, Zhengping Che, Xiaozhu Ju, Zhuqin Yang, Meng Li, Yinuo Zhao, Zhiyuan Xu,
+Guang Yang, et al. Robomind: Benchmark on multi-embodiment intelligence normative data for robot manipulation.
+arXiv preprint arXiv:2412.13877, 2024.
+[56] Chengkai Hou, Kun Wu, Jiaming Liu, Zhengping Che, Di Wu, Fei Liao, Guangrun Li, Jingyang He, Qiuxuan Feng,
+Zhao Jin, et al. Robomind 2.0: A multimodal, bimanual mobile manipulation dataset for generalizable embodied
+intelligence. arXiv preprint arXiv:2512.24653, 2025.
+[57] Shihan Wu, Xuecheng Liu, Shaoxuan Xie, Pengwei Wang, Xinghang Li, Bowen Yang, Zhe Li, Kai Zhu, Hongyu Wu,
+Yiheng Liu, et al. Robocoin: An open-sourced bimanual robotic data collection for integrated manipulation. arXiv
+preprint arXiv:2511.17441, 2025.
+[58] RoboChallenge.ai. RoboChallenge Table30 v2 Dataset. https://huggingface.co/datasets/RoboChallenge/
+Table30v2, 2025. Accessed: 2026-05-07.
+[59] GenRobot AI. 10Kh RealOmni-Open DataSet. https://www.genrobot.ai/data/open-dataset, 2025. Ac-
+cessed: 2026-05-07.
+[60] Homer Rich Walke, Kevin Black, Tony Z Zhao, Quan Vuong, Chongyi Zheng, Philippe Hansen-Estruch, Andre Wang
+He, Vivek Myers, Moo Jin Kim, Max Du, et al. Bridgedata v2: A dataset for robot learning at scale. In Conference on
+Robot Learning, pages 1723–1736. PMLR, 2023.
+[61] Anthony Brohan, Noah Brown, Justice Carbajal, Yevgen Chebotar, Joseph Dabis, Chelsea Finn, Keerthana Gopalakr-
+ishnan, Karol Hausman, Alex Herzog, Jasmine Hsu, et al. RT-1: Robotics transformer for real-world control at scale.
+In Robotics: Science and Systems (RSS), 2023.
+[62] Eric Jang, Alex Irpan, Mohi Khansari, Daniel Kappler, Frederik Ebert, Corey Lynch, Sergey Levine, and Chelsea Finn.
+Bc-z: Zero-shot task generalization with robotic imitation learning. In conference on Robot Learning, pages 991–1002.
+PMLR, 2022.
+[63] Minho Heo, Youngwoon Lee, Doohyun Lee, and Joseph J Lim. Furniturebench: Reproducible real-world benchmark
+for long-horizon complex manipulation. The International Journal of Robotics Research, 44(10-11):1863–1891, 2025.
+[64] Abby O’Neill, Abdul Rehman, Abhiram Maddukuri, Abhishek Gupta, Abhishek Padalkar, Abraham Lee, Acorn Pooley,
+Agrim Gupta, Ajay Mandlekar, Ajinkya Jain, et al. Open x-embodiment: Robotic learning datasets and rt-x models:
+Open x-embodiment collaboration 0. In 2024 IEEE International Conference on Robotics and Automation (ICRA),
+pages 6892–6903. IEEE, 2024.
+17
+
+===== PAGE 18 =====
+A
+X-Tokenizer Implementation Details
+This appendix documents the X-Tokenizer architecture, the vision-language feature extraction pipeline, and
+the implementation of every loss term used in pretraining. The three semantic supervisions of the main text
+(MAM, VL contrastive alignment, next-frame VL prediction) are documented in App. A.4–A.6; the remaining
+reconstruction-side losses (rotation geodesic, frequency-domain, temporal smoothness) are auxiliary stability
+regularizers and are documented in App. A.7–A.8.
+A.1
+Delta-Action Backbone
+Delta action and per-channel choices. We tokenize delta actions—per-frame motion offsets relative to
+the proprioceptive anchor 𝑜observed just before the chunk—rather than absolute commands; the 𝐷=26
+channel layout and per-channel choice of Δ are listed in Tab. 3. The choice of Δ follows physical meaning:
+end-effector position and 6D rotation are configuration-space quantities for which the chunk anchor provides
+a natural reference; gripper opening, lift, and head pitch/yaw are state-like signals whose absolute value is
+what downstream control consumes; base velocity is already a temporal derivative, so an additional Δ would
+be ill-posed.
+Table 3 The 𝐷=26 channel layout and per-channel choice of Δ.
+Channel group
+Dim
+Δ type
+Reason
+Left/right end-effector position
+3 + 3 = 6
+Euclidean subtraction
+Cartesian position, anchorable to 𝑜
+Left/right 6D rotation
+6 + 6 = 12
+SO(3) composition
+Orientation lives on a manifold
+Left/right gripper
+1 + 1 = 2
+Identity
+State-like (open/close)
+Base velocity
+3
+Identity
+Already a temporal derivative
+Lift / height
+1
+Identity
+State-like
+Head pitch + yaw
+2
+Identity
+State-like (yaw/pitch absolute angles)
+Total
+26
+Per-channel normalization. Per-channel MinMax statistics from a dataset-level table—using the 0.1%/99.9%
+quantile range to define a robust min/max for each channel—normalize each channel to [−1, 1]. The same
+table is later used to recover physical deltas for the rotation geodesic loss (App. A.7).
+Encoder. The encoder Enc ingests the delta-action chunk 𝑥1:𝑇together with the proprioceptive anchor 𝑜and
+the embodiment token m, and outputs 𝑀continuous latents ℎ1:𝑀with hidden dim 𝐻=1024 at compression
+ratio 𝑟=4 (so 𝑀=𝑇/𝑟). Concretely:
+1. Input projection. A linear projection followed by LayerNorm, GELU and dropout maps 𝑥1:𝑇from ℝ𝐷to ℝ𝐻.
+2. Embodiment conditioning. An encoder-side embedding vector m∈ℝ𝐻, looked up from a learnable registry
+of 1024 slots (one of which is a special learnable “none” slot used under CFG-style dropout), is added
+broadcast over time.
+3. RoPE positional encoding. Rotary position embeddings on the time dimension with base 104.
+4. Self-attention stack. A 12-layer Transformer encoder (8 heads, GELU FFN of width 4𝐻, dropout 0.1)
+processes the projected sequence with the chunk’s padding mask.
+5. Optional state cross-attention. When 𝑜is provided (i.e., not CFG-dropped), a single cross-attention block
+uses the linearly projected 𝑜as key and value while the time series acts as query, followed by residual +
+LayerNorm.
+6. Latent query cross-attention. 𝑀max=16 learnable latent queries q1:𝑀are equipped with their own RoPE
+encoding, expanded across the batch, and cross-attend to the encoded sequence to extract a length-𝑀
+summary.
+7. Position-wise FFN. A final FFN with residual + LayerNorm.
+18
+
+===== PAGE 19 =====
+Decoder. The decoder Dec ingests the quantized latent ˜z1:𝑀together with 𝑜and m, and outputs the recon-
+structed delta-action sequence ˆ𝑥1:𝑇; the final action chunk ˆa𝑡:𝑡+𝑇−1 is recovered by re-anchoring ˆ𝑥1:𝑇to 𝑜. We
+allocate 𝑇max=64 learnable position queries p1:𝑇with RoPE; a decoder-side embodiment embedding (indepen-
+dent from the encoder’s) is added to the queries. The queries first cross-attend to RoPE-positioned latents, then
+optionally to the projected state 𝑜, and the result passes through a 4-layer self-attention Transformer (8 heads,
+dropout 0.1). A linear output head produces ˆ𝑥1:𝑇, after which the DoF mask zeroes out invalid channels.
+CFG-style dropout. At training time each conditioning signal is independently corrupted: the observation 𝑜is
+zeroed with probability 𝑝𝑜=0.2; the embodiment id is dropped with probability 𝑝𝑒=0.2; with an additional
+probability 𝑝𝑛=0.1 it is replaced by the learnable “none” slot of the embodiment registry. The deployed
+tokenizer is therefore robust to missing state and to embodiments outside the registry.
+A.2
+Semantic Residual Quantization
+SRQ is the discretization bottleneck of the tokenizer: a residual vector quantizer that maps each continuous
+latent ℎ𝑖to a tuple of 𝑄codebook indices, with a top-vs-deeper asymmetry in supervision (top level exposed to
+semantic losses, deeper levels to reconstruction only). The quantization itself is standard RVQ: each level 𝑞owns
+a codebook C(𝑞)={e(𝑞)
+1 , . . . , e(𝑞)
+𝑉}, and the quantized latent is the sum of selected codewords ˜z𝑖= Í𝑄
+𝑞=1 e(𝑞)
+𝑐(𝑞)
+𝑖
+.
+We use 𝑄=4 levels and 𝑉=2048 codewords per level. Codebooks are EMA-updated (46) (decay 0.8, dead-code
+reset threshold 2), initialized by 𝑘-means with 100 iterations on the first warmed-up batch, and use Euclidean
+(not cosine) similarity for nearest-neighbor lookup. Beyond the standard commitment loss (weight 𝜆vq in
+App. A.9), deeper levels receive no auxiliary supervision.
+A.3
+Vision-Language Feature Extraction
+The VL features 𝑢1:𝑀used as targets by the contrastive alignment loss Lalign, together with the next-frame
+target 𝑢+ used by the next-frame prediction loss Lpred, are pre-extracted offline once and stored on disk; the
+deployed tokenizer never invokes Qwen2.5-VL. The extractor is built on Qwen2.5-VL-7B (41) run at bf16 with
+FlashAttention-2.
+Two-level language conditioning. Each trajectory is annotated with a global instruction 𝑙inst and a list of
+segments {(𝑡(𝑠)
+start, 𝑡(𝑠)
+end, 𝑙sub,(𝑠))} that partition the trajectory into local subtasks. The instruction fixes the global
+task semantics of the entire trajectory while the segment-level subtask disambiguates the local intent of the
+current motion. For each segment the prompt fed to the VLM is
+Task:
+𝑙inst
+Current step:
+𝑙sub,(𝑠)
+which together with the corresponding multi-view frames forms a single forward pass. Each per-frame feature
+thus reflects what the robot sees and what it is currently trying to do under the global goal. This is also what
+makes the alignment target “multimodal” rather than purely visual.
+Per-frame, per-view feature. Frames are sampled at a temporal stride of 𝑟𝑣=4, the image processor is
+configured with max_pixels=200,704 (≈448×448, ∼256 visual tokens per frame), and segments longer
+than max_segment_vl_frames=128 are split into sub-windows. For each sub-window of 𝑁frames and view
+𝑘∈{1, 2, 3} (face, left wrist, right wrist), we read the hidden states of layer −3—which we found to give cleaner
+spatial structure than the very last layer for image tokens—and split them into per-image visual tokens (using
+the model’s spatial-merge factor) and the remaining text tokens. We average the visual tokens of each frame
+to a single visual feature ¯𝑣(𝑘)
+𝑡
+∈ℝ𝐻vl, average all text tokens to a single sub-window-level feature ¯𝑤(𝑠) ∈ℝ𝐻vl
+shared across the sub-window, and define the per-frame VL feature as
+𝑢(𝑘)
+𝑡
+=
+1
+2
+ ¯𝑣(𝑘)
+𝑡
++ ¯𝑤(𝑠)
+,
+𝐻vl=3584.
+The result of one episode is a 𝑇𝑣×𝐻vl tensor per view, written to disk and indexed alongside the action chunks.
+Multi-view fusion at training time. At training time each of the three views is projected from 𝐻vl to 𝐻
+by a shared linear layer, producing {𝑢(𝑘)
+𝑡
+} ∈ℝ𝐻. The three projected streams are combined into the single
+19
+
+===== PAGE 20 =====
+fused stream 𝑢𝑡used as alignment target by a learned per-sample per-view weighting: a global vector 𝑤∈ℝ3
+of unnormalized weights is set to −∞on each sample’s missing views (so that different samples within the
+same batch may have different active view masks), then softmaxed; the fused feature is 𝑢𝑡=Í
+𝑘𝛼𝑘𝑢(𝑘)
+𝑡
+with
+𝛼= softmax(𝑤) computed per sample.
+A.4
+Masked Action Modeling (MAM) Head
+MAM is the discrete-level semantic supervision on the top RVQ codebook: random positions in the top-level
+code stream 𝑐(1)
+1:𝑀are masked, and a small Transformer predicts them from the corrupted context ˜𝑐(1)
+1:𝑀via
+cross-entropy.
+Head architecture. The main code stream 𝑐(1)
+1:𝑀∈{1, . . . , 𝑉}𝑀is fed to a 2-layer Transformer encoder (4 heads,
+dropout 0.1) with code-token and absolute-position embeddings (max length 𝑀max=16). For each chunk we
+sample the mask set M ⊆{1, . . . , 𝑀} at probability 0.15 over valid (non-padding) positions; if a sample’s mask
+comes out empty, one valid position is forced to be selected so that the masked-position cross-entropy is well
+defined. Following BERT-style corruption of discrete tokens (47, 48, 49), the masked positions are corrupted
+with 80% replacement by a learnable [MASK] embedding, 10% replacement by a uniform random codebook
+entry, and 10% unchanged. The Transformer’s classifier projects to a logit over the 𝑉codes; this defines the
+predictive distribution 𝑝𝜃(· | ˜𝑐(1)
+1:𝑀).
+Warm-up. The codebooks are still moving in the early epochs, and we find that the MAM objective is unstable
+when applied immediately. We therefore disable Lmam for the first 10 epochs and turn it on with weight
+𝜆mam=0.1 afterwards.
+A.5
+Vision-Language Contrastive Alignment
+Lalign pulls the encoder’s pre-quantization continuous latent sequence ℎ1:𝑀toward a frozen Qwen2.5-VL-7B
+feature space via InfoNCE at two granularities: a trajectory-level contrast between mean-pooled action and VL
+summaries (Lglobal), and a slot-level contrast between action and VL slots that are time-aligned within each
+chunk but contrasted against all slots across the batch (Llocal).
+Temporal alignment. The action latent length 𝑀=𝑇/𝑟and the VL length 𝑇𝑣generally differ within a chunk.
+We align them with adaptive_avg_pool1d along the time axis: if 𝑇𝑣> 𝑀, the VL stream is pooled down to
+𝑀; otherwise the action latent is pooled down to 𝑇𝑣. The aligner has no learnable parameters and produces
+˜ℎ, ˜𝑢∈ℝ𝐵×𝑀′×𝐻at a common length 𝑀′.
+InfoNCE implementation details. Both InfoNCE losses follow the CLIP recipe (27): each loss is the symmetric
+average of the action→VL direction shown in Eq. 5/6 and its reverse VL→action counterpart. The learnable
+log-scale 𝑠∈ℝis initialized to log(1/0.1) and clamped above by log 100; the effective scale is 𝛾=exp(𝑠). Features
+are L2-normalized along the last dimension. For the slot-level InfoNCE (Llocal), action and VL slots are flattened
+across the batch into a 𝐵𝑀′×𝐵𝑀′ logit matrix so that each anchor (𝑏, 𝑖) ∈[𝐵]×[𝑀′] is contrasted against all
+𝐵𝑀′−1 other (chunk, slot) pairs; rows/columns outside the valid-position set (where either modality is padded)
+are filled with −109 before the softmax and excluded from the cross-entropy targets, so the row-wise CE only
+counts valid pairs. For the trajectory-level InfoNCE (Lglobal), ¯ℎand ¯𝑢are mask-aware mean-pools over the valid
+time positions of each chunk, contrasted across the batch via a 𝐵×𝐵logit matrix. The temperature target is
+𝜅=0.1 and the per-direction weights are 𝜆local=𝜆global=0.25, which together with the averaged main-text form
+Lalign=1
+2 (Lglobal + Llocal) at 𝜆align=0.5 (Eq. 3) yields a total alignment contribution of 0.25(Lglobal + Llocal).
+A.6
+Next-Frame VL Prediction
+Lpred asks the codebook to encode the immediate physical consequence of the current chunk: a small predictor
+𝐺takes the multi-level quantized latent ˜z1:𝑀and outputs a vector matching the VL feature of the next frame,
+with ℓ1 loss.
+The predictor is a 2-layer Transformer encoder (4 heads, dropout 0.1) that processes the latent sequence;
+we read out the last position ˜zout
+𝑀∈ℝ𝐻and project it by LayerNorm→Linear(𝐻, 𝐻vl) to produce the predicted
+20
+
+===== PAGE 21 =====
+next-step VL feature in ℝ𝐻vl. The prediction target 𝑢+ is the next VL feature after the chunk’s VL stream 𝑢1:𝑇𝑣
+(i.e., the VL feature at the chunk’s next time step in the same view stream), taken from the same view used
+during chunk extraction with priority face over the wrist views; if the face view is missing for a chunk, we
+fall back to a randomly chosen view that is present. The loss weight is 𝜆pred=0.2.
+A.7
+Rotation Geodesic Loss
+This and the next subsection (App. A.8) cover auxiliary regularizers that stabilize reconstruction quality without
+contributing to codebook semantics.
+Geodesic loss. For rotational channels we implement an SO(3)-aware geodesic constraint:
+Lgeo = 𝔼𝑡∈V𝑅
+"
+1
+𝜋arccos
+ tr 𝑅⊤
+𝑡,pred 𝑅𝑡,gt
+ −1
+2
+!#
+,
+(9)
+where V𝑅⊆{1, . . . , 𝑇} indexes valid rotational timesteps and 𝑅𝑡,pred, 𝑅𝑡,gt ∈SO(3) are recovered from the 6D
+representation via Gram–Schmidt (50, 43):
+𝑏1 = d
+𝑟1:3,
+𝑏2 =
+
+𝑟4:6 −(𝑏⊤
+1 𝑟4:6) 𝑏1,
+𝑏3 = 𝑏1 × 𝑏2,
+𝑅= [𝑏1 𝑏2 𝑏3],
+whereb· denotes L2 normalization. The geodesic uses the numerically stable clamp arccos(clamp(−1+𝜖, 1−𝜖) (·))
+with 𝜖=10−7 to prevent gradient explosion near the boundaries. The 1/𝜋prefactor normalizes the angular
+distance from [0, 𝜋] radians to [0, 1], matching the numerical scale of the translational ℓ1 term in Lrec.
+Why physical-space evaluation. If we left the predicted and target 6D vectors in the normalized [−1, 1]
+range before Gram–Schmidt, arccos(·) would be a function of the normalization scale rather than of an actual
+angular error: different channels are scaled by different per-channel ranges, so the recovered “rotation matrix”
+would not correspond to any physical rotation. We therefore undo the per-channel MinMax scaling defined in
+App. A.1 on the rotation 6D segments before recovering 𝑅pred, 𝑅gt, so the recovered angle is a true physical
+rotation in radians (then scaled to [0, 1] by the 1/𝜋factor of Eq. 9). The loss weight is 𝜆geo=0.2.
+A.8
+Frequency-Domain and Temporal Smoothness Regularizers
+Frequency-domain regularizer (Ldct). A reconstructed action chunk can have low time-domain ℓ1 error per
+frame and still contain high-frequency jitter that is invisible to a frame-wise loss but harmful at deployment time.
+Following motion-modeling work that uses DCT to factor a trajectory into a small number of low-frequency
+components (51), we add a DCT-domain ℓ1:
+Ldct =
+ Φ(ˆ𝑥) −Φ(𝑥)
+
+1,
+(10)
+where Φ is the Type-II DCT with orthogonal normalization, implemented via the standard FFT trick: re-
+order the input as [𝑥0, 𝑥2, . . . , 𝑥𝑛−1, 𝑥𝑛−2, . . . , 𝑥3, 𝑥1], apply the FFT along time, multiply by the twiddle factor
+exp(−𝑖𝜋𝑘/2𝑛), take the real part, and rescale by 1/√𝑛for 𝑘=0 and
+√︁
+2/𝑛otherwise. Padding positions are
+zeroed before the transform. The loss is a DoF-mask-aware ℓ1; the weight is 𝜆dct=0.5.
+Temporal smoothness regularizer (Lsmooth). We match the per-frame velocity (first-order temporal differ-
+ences) between prediction and target, so that the reconstructed trajectory reproduces the local dynamics of
+the ground truth rather than only its instantaneous positions:
+Lsmooth = 𝔼𝑡∈V𝑆
+(ˆ𝑥𝑡+1 −ˆ𝑥𝑡) −(𝑥𝑡+1 −𝑥𝑡)
+
+1
+
+,
+(11)
+where V𝑆⊆{1, . . . , 𝑇−1} indexes positions whose adjacent frames 𝑡, 𝑡+1 are both valid under the DoF and
+padding masks. Rotation channels are excluded via a static dimension mask: their first-order difference in the
+6D representation is not a clean physical quantity, and Eq. 9 already covers them. The objective therefore acts
+on positional, gripper, base-velocity, lift, and head channels. The weight is 𝜆smooth=0.3.
+21
+
+===== PAGE 22 =====
+A.9
+Training Schedule and Loss Weights
+We pretrain for 100 epochs on chunks sampled uniformly in 𝑇∈[8, 64], with batch size 256. The optimizer
+is AdamW (learning rate 5×10−5, weight decay 0.01, 𝛽=(0.9, 0.999), gradient clipping 1.0), under a cosine
+schedule with 200-step linear warm-up and minimum learning rate 10−7.
+The global pretraining objective is
+Lpre = Lrec + 𝜆mam Lmam + 𝜆align Lalign + 𝜆pred Lpred,
+where Lrec aggregates the translational ℓ1 loss, the rotation geodesic loss Lgeo (Eq. 9), the VQ commitment
+loss, and the two stability regularizers Ldct (Eq. 10) and Lsmooth (Eq. 11). The per-term weights, grouped by
+role, are:
+• Semantic supervisions (App. A.4, A.5, A.6): MAM 𝜆mam=0.1 (active after the 10-epoch warm-up of
+App. A.4); VL contrastive 𝜆local=𝜆global=0.25 (summing to 𝜆align=0.5, applied to the averaged form Lalign=1
+2 (Lglobal+
+Llocal) of Eq. 3) at temperature target 𝜅=0.1; next-frame VL prediction 𝜆pred=0.2.
+• Reconstruction (within Lrec; App. A.1, A.7): translational ℓ1 𝜆l1=1.0; rotation geodesic 𝜆geo=0.2; VQ
+commitment 𝜆vq=0.25.
+• Stability regularizers (within Lrec; App. A.8): frequency-domain DCT 𝜆dct=0.5; temporal smoothness
+𝜆smooth=0.3.
+A.10
+Downstream Co-training Objectives
+When X-Tokenizer is used as the discrete supervision interface for a hybrid discrete-continuous VLA policy (a
+causal VLM backbone with hidden states ℎvlm, co-trained with a continuous Flow Matching action expert with
+velocity field 𝑣𝜙), the downstream co-training loss combines two terms that together yield the main-text Eq. 8.
+With c = {𝑐(1), . . . , 𝑐(𝑄)}1:𝑀extracted by the frozen X-Tokenizer, the VLM backbone is optimized by autoregres-
+sive cross-entropy over multi-level tokens generated in position-major raster order (all 𝑄levels at position 𝑖
+before moving to 𝑖+1):
+Lvlm = −
+𝑀
+∑︁
+𝑖=1
+𝑄
+∑︁
+𝑞=1
+log 𝑝𝜓
+ 𝑐(𝑞)
+𝑖
+ ℎvlm, 𝑐(1:𝑄)
+<𝑖
+, 𝑐(<𝑞)
+𝑖
+
+,
+(12)
+where predicting 𝑐(𝑞)
+𝑖
+thus conditions on all codes at strictly earlier positions 𝑐(1:𝑄)
+<𝑖
+and on the outer-level
+codes at the same position 𝑐(<𝑞)
+𝑖
+(teacher-forcing). The Flow Matching expert is conditioned on ℎvlm to regress
+continuous trajectories 𝑥1:𝑇at a randomly sampled time 𝑡∈[0, 1]:
+Lfm = 𝔼𝑡,𝑥𝑡
+h𝑣𝜙(𝑥𝑡, 𝑡| ℎvlm) −𝑢★
+𝑡
+2
+2
+i
+,
+(13)
+where 𝑢★
+𝑡is the target Flow Matching velocity. The two terms are combined with relative weight 𝜆fm to form
+the co-training loss Lvlm + 𝜆fm Lfm (i.e., the right-hand side of Eq. 8).
+B
+Pretraining Datasets and Embodiments
+B.1
+Pretraining Corpus
+The pretraining mixture is assembled from X2Robot-internal data, public academic datasets, and third-party
+releases, all converted to the 26-D delta-action layout of App. A.1. Tab. 4 lists the sources we draw from.
+Trajectories from different sources are not reweighted at sampling time—each chunk is sampled uniformly from
+the union after filtering—so high-volume sources carry proportionally more weight in the gradient. For every
+source we drop trajectories with fewer than 𝑇min=8 valid action frames, missing all camera views, or corrupted
+action streams (NaN/out-of-range values, broken proprio–control alignment); per-channel normalization
+quantiles (𝑞0.1% and 𝑞99.9%) are computed per robot_type on the raw streams; chunks are extracted at chunk
+22
+
+===== PAGE 23 =====
+length sampled uniformly in [𝑇min, 𝑇max] with 𝑇max=64, anchored to the chunk-level reference 𝑜defined in
+App. A.1. After filtering, the union contains ∼2.4M trajectories and ∼2.0B valid action frames.
+Table 4 Pretraining corpus. Source datasets grouped by provenance; “#Robots” counts the distinct robot_type entries
+with data in the current mixture.
+Source
+Description
+#Robots
+Ref.
+X2Robot internal
+X2Robot (in-house)
+—
+11
+(16)
+Large cross-embodiment academic releases
+AgiBotWorld
+humanoid dual-arm manipulation
+1
+(52, 53)
+DROID
+in-the-wild Franka tabletop
+1
+(54)
+RoboTwin 2.0
+sim,
+dual-arm
+benchmark
+(Alo-
+ha/Arx5/Franka/Piper/UR5)
+5
+(45)
+Multi-platform third-party corpora
+RoboMind/V2
+Franka/UR5/Agilex/Ark (V1+V2)
+11
+(55, 56)
+RoboCoin
+bimanual collection (Cobot/Aloha/Alpha-bot-
+2/MMK2/Leju/Realman/A2D)
+7
+(57)
+RoboChallenge
+competition tasks (Franka/UR5/Aloha/Arx5)
+4
+(58)
+R1Lite
+Galaxea R1-Lite humanoid
+1
+(19)
+RealOmni
+open multi-modal robot dataset
+1
+(59)
+Single-embodiment / per-task releases
+Bridge-V2
+WidowX low-cost manipulation
+1
+(60)
+Fractal-RT
+Google EveryDay Robot (RT-1 corpus)
+1
+(61)
+BC-Z
+Google EveryDay Robot, BC-Z
+1
+(62)
+FurnitureBench
+long-horizon assembly (Franka)
+1
+(63)
+Open-X subsets
+Stanford (hydra, kuka-multimodal); UT-Austin
+(buds, sailor, sirius, mutex); Berkeley (autolab-
+ur5, cable-routing, fanuc-manipulation)
+9
+(64)
+Total
+54
+B.2
+Embodiment Coverage
+X-Tokenizer is pretrained on data from 54 robot_type entries drawn from the corpora listed in App. B.1.
+These 54 robot_types are mapped to 17 arm families by the hardware lookup used in our cross-embodiment
+analyses; Tab. 5 lists the 17 families, grouped by manipulator type. Our robot_types registry additionally
+declares roughly 15 further embodiments that share the same delta-action layout (App. A.1) but are not yet
+present in the current training mixture, for a total of more than 70 predefined embodiments.
+23
+
+===== PAGE 24 =====
+Table 5 The 17 arm families represented in the X-Tokenizer pretraining corpus, grouped by manipulator type. Each
+robot_type in our registry is mapped to exactly one of these 17 families.
+Family
+Description
+Single-arm collaborative manipulators
+Franka
+Franka Emika Panda 7-DoF arm.
+UR5
+Universal Robots UR5 6-DoF collaborative arm.
+Lightweight research / low-cost arms
+Piper
+Realman ultra-light biomimetic arm.
+ViperX
+Trossen Robotics Dynamixel-based arm (Aloha series).
+ARX5
+ARX 5–6 DoF arm.
+WidowX
+Trossen Robotics compact arm.
+X2Arm
+X2Robot internal arm (16).
+High-DoF research arms
+Realman
+Realman 7-DoF series.
+Ark
+Ark arm series.
+Humanoid and mobile platforms
+AgiBot
+AgiBot (Yuanzheng) humanoid robot (dual-arm).
+Leju
+Leju (Kurui) humanoid robot.
+R1Lite
+Galaxea R1-Lite humanoid.
+AlphaBot
+RoboCoin Alpha Bot 2 dual-arm platform.
+MMK2
+Composite mobile manipulator.
+GoogleRobot
+Google mobile manipulation platform (RT-1 / RT-2).
+Specialized devices
+UMI
+Universal Manipulation Interface (handheld gripper
+data).
+A2D
+RoboCoin RuanTong A2D specialized arm.
+B.3
+Baseline Tokenizer Implementation
+The two learned baselines are loaded from their public checkpoints without retraining or per-channel re-
+fitting, so the comparison reflects the same artifacts already deployed by the community. FAST (21) is loaded
+via the Hugging Face AutoProcessor interface; encoding maps a normalized action chunk in [−1, 1] to a
+variable-length integer sequence, and decoding inverts it back to the original 𝑇×𝐷shape. The RDT2 VQ (43)
+single-codebook VQ-VAE is used only in the noise probe of §4.2.3 as a control for “what does a single-level
+VQ buy you under noise” and is not part of the downstream ablation. The non-learned 256-bin per-channel
+uniform quantizer partitions each channel of the normalized action into 256 equal bins on [−1, 1] and maps
+each value to its bin centre; it carries no learned structure and only anchors the reconstruction-ℓ1 axis in
+§4.2.2. Other learned tokenizers are not directly compared in our protocol: VQ-BeT (22) has no released
+cross-embodiment checkpoint at the scale of FAST, so a head-to-head run would conflate “tokenizer” with
+“training corpus”; FASTer (24) has not released public weights at the time of writing; and ActionCodec (25)
+targets the purely-discrete autoregressive setting structurally incompatible with our mixed discrete-continuous
+co-training (§4.4).
+24
+
+===== PAGE 25 =====
+C
+Downstream Training Configurations
+C.1
+RoboTwin 2.0 Training
+We start from a publicly released Wall-OSS (16) VLA policy checkpoint with full degrees of freedom (dual arms,
+base, lift, head) trained for 400k pretraining steps. The frozen X-Tokenizer is attached to this backbone in place
+of the discrete action interface; all other modules of Wall-OSS are inherited from the public checkpoint without
+modification. On the standard 50 dual-arm task suite, each task contributes 50 Clean and 500 Randomized
+demonstrations, for a total of ∼27.5k trajectories; the cross-embodiment co-training experiment (Agilex / Arx5
+/ Franka / Piper / UR5) uses the same per-task counts shared across the five embodiments. We fine-tune the
+full system for 70k steps with global batch size 128, AdamW (lr 5×10−5, weight decay 0.01, 𝛽=(0.9, 0.999),
+gradient clipping 1.0), and a cosine learning-rate schedule with 200-step linear warm-up and minimum
+learning rate 10−7; action chunks are sampled with the same length distribution as the X-Tokenizer pretraining
+(𝑇∈[8, 64]). Each task is rolled out 100 times under Easy (Clean) and Hard (Randomized, with strong domain
+randomization over background clutter, lighting, table height, and distractor objects); the per-task success rate
+is averaged over the 50 tasks for the Avg column.
+Table 6 Per-task RoboTwin 2.0 success rates for the Wall-OSS+X-Tokenizer run in Fig. 8. Each entry is measured over
+100 rollouts.
+Task
+Easy
+Hard
+adjust_bottle
+100.00%
+100.00%
+beat_block_hammer
+88.00%
+78.00%
+blocks_ranking_rgb
+86.00%
+90.00%
+blocks_ranking_size
+46.00%
+46.00%
+click_alarmclock
+80.00%
+88.00%
+click_bell
+90.00%
+88.00%
+dump_bin_bigbin
+91.00%
+93.00%
+grab_roller
+100.00%
+100.00%
+handover_block
+81.00%
+76.00%
+handover_mic
+94.00%
+92.00%
+hanging_mug
+31.00%
+20.00%
+lift_pot
+90.00%
+92.00%
+move_can_pot
+96.00%
+100.00%
+move_pillbottle_pad
+96.00%
+87.00%
+move_playingcard_away
+97.00%
+90.00%
+move_stapler_pad
+89.00%
+78.00%
+open_laptop
+96.00%
+86.00%
+open_microwave
+69.00%
+60.00%
+pick_diverse_bottles
+82.00%
+65.00%
+pick_dual_bottles
+94.00%
+73.00%
+place_a2b_left
+85.00%
+77.00%
+place_a2b_right
+84.00%
+80.00%
+place_bread_basket
+77.00%
+83.00%
+place_bread_skillet
+82.00%
+84.00%
+place_burger_fries
+94.00%
+96.00%
+place_can_basket
+84.00%
+72.00%
+place_cans_plasticbox
+99.00%
+97.00%
+place_container_plate
+97.00%
+97.00%
+place_dual_shoes
+93.00%
+87.00%
+place_empty_cup
+100.00%
+99.00%
+place_fan
+86.00%
+80.00%
+place_mouse_pad
+56.00%
+53.00%
+Continued on next page
+25
+
+===== PAGE 26 =====
+Task
+Easy
+Hard
+place_object_basket
+95.00%
+80.00%
+place_object_scale
+79.00%
+69.00%
+place_object_stand
+95.00%
+85.00%
+place_phone_stand
+82.00%
+74.00%
+place_shoe
+97.00%
+94.00%
+press_stapler
+93.00%
+92.00%
+put_bottles_dustbin
+58.00%
+76.00%
+put_object_cabinet
+73.00%
+77.00%
+rotate_qrcode
+89.00%
+84.00%
+scan_object
+77.00%
+72.00%
+shake_bottle
+100.00%
+100.00%
+shake_bottle_horizontally
+100.00%
+100.00%
+stack_blocks_three
+87.00%
+87.00%
+stack_blocks_two
+97.00%
+94.00%
+stack_bowls_three
+81.00%
+61.00%
+stack_bowls_two
+92.00%
+88.00%
+stamp_seal
+62.00%
+66.00%
+turn_switch
+45.00%
+38.00%
+Average
+84.70%
+80.88%
+C.2
+Real-World Training and Evaluation
+Data and training schedule. Real-robot supervision is collected on the 7 tabletop tasks of Fig. 10 with
+∼500 teleoperated trajectories per task, totalling ∼3.5k trajectories; the 7 tasks cover both short-horizon
+manipulation (e.g., pick-up-cup, push-towel, place-tape) and long-horizon reasoning (arrange-flowers, turn-on-
+light-switch). Action data are mixed with ∼480k multimodal grounding samples so that grounding samples
+occupy 25% of each batch, fixed throughout training; the same 480k samples are used across all four variants
+and are held out from the VQA evaluation set. Grounding samples cover four sub-types at comparable scale:
+(i) point grounding, (ii) bounding-box grounding, (iii) end-effector grounding, and (iv) trajectory grounding
+chunks. Training uses AdamW (lr 1×10−4, weight decay 0.01, 𝛽=(0.9, 0.999), gradient clipping 1.0) for 500k
+steps with batch size 8 per GPU and gradient accumulation 2 (effective batch size 16/GPU), under a 500-step
+linear warm-up and cosine decay to minimum learning rate 10−6.
+Evaluation protocol. Real-robot tasks are each rolled out 10 times on the physical platform; per-task progress
+rate (PR) is human-scored stage-by-stage on the rubric of App. D, with absolute values systematically lower
+than binary success rates because the rubric awards credit for partial completions. VQA grounding accuracy
+is evaluated on x2-grounding-point-object (𝑁=107 held-out samples from our internal point-grounding
+annotations), with a prediction counted correct iff the model’s predicted ⟨𝑥, 𝑦⟩point falls inside the ground-truth
+segmentation mask.
+Interpreting the real-world ablation.
+The four action-interface variants in Fig. 10 separate several effects.
+First, replacing the original continuous flow interface with FAST introduces a token-level action interface,
+which is better matched to the language-token training signal used by the VLM backbone and coincides with a
+large VQA gain. We therefore view the Wall-OSS→FAST jump mainly as an interface-level effect rather than
+as evidence about X-Tokenizer specifically.
+Second, FAST→RVQ (no-aux) isolates the effect of a multi-level discrete codebook without semantic auxiliary
+heads. This improves VQA (75.7→79.4), suggesting that the hierarchy provides a richer discrete supervision
+signal to the backbone, but it lowers manipulation and long-horizon PR. Thus reconstruction-only RVQ improves
+the representation side but is not sufficient for action quality.
+Third, adding MAM, Align, and Pred yields the full X-Tokenizer. This raises VQA to 85.9%, increases the
+short-horizon manipulation aggregate from 73.0 to 80.6, and improves long-horizon PR from 59.5 to 69.25
+26
+
+===== PAGE 27 =====
+relative to RVQ (no-aux). These gains are consistent with the intended role of semantic supervision: it turns
+the multi-level codebook into an action interface that is easier for the VLM backbone to use.
+Finally, the main per-task regression appears on distribute-blocks-by-color, a repetitive placement task where
+stage credit depends heavily on low-level placement accuracy. This is consistent with the reconstruction
+trade-off in §4.2.2, but the aggregate manipulation and long-horizon results remain higher for X-Tokenizer.
+Table 7 Step-wise scoring rules for the real-world tasks of §4.4 (max 10 pts per task; PR = accumulated score / 10,
+averaged over 10 rollouts, on 0–100 scale).
+Task Name
+Scoring Rule (Max 10 pts)
+Manipulation Tasks
+Pick up cup
+Push plate (3), upright cup (2), pick up (2), place (2),
+retract (1)
+Push towel
+Successfully push the red long towel onto the target posi-
+tion (10)
+Distribute blocks (by color)
+3 pts per correct block placement; 3 blocks (9), retract
+(1)
+Stack bottle
+Fully nest one bottle into another (10)
+Place tape
+Grasp the wide tape (5) + place into the plate (5)
+Long-Horizon Reasoning Tasks
+Arrange flowers
+Per flower: grasp (1.5) + place into vase (1.5); 3 flowers
+(9), retract (1)
+Turn on light switch
+Move to switch position (3), press switch (4), retract (3)
+D
+Scoring Rubric for Real-World Tasks
+We follow the per-task progress-rate (PR) scoring protocol introduced in the Wall-OSS technical report (16):
+each task is decomposed into key manipulation stages with stage-wise partial credit summing to a maximum
+of 10 points, and the PR for one rollout is the accumulated score divided by 10 (reported on a 0–100 scale
+in our main tables). Compared with binary success/failure, this rubric makes the metric sensitive to where
+a policy fails—e.g., whether the cup is reachable, gripped, lifted, but dropped during placement—which is
+essential for diagnosing long-horizon reasoning tasks where partial completion is common. The full design
+rationale and per-stage credit philosophy are documented in (16); we adopt the same protocol verbatim and
+list our per-task rules in Tab. 7.
+27

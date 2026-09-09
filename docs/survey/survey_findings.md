@@ -140,3 +140,29 @@ GAP-04）[paper_019](https://arxiv.org/abs/2401.12963), [paper_021](https://arxi
 - GAP-11 agent 运营 VLA 数据处理管线——系统组合空白，组件先例齐全。
 - 另有 GAP-01（DTW 现代实践）、GAP-04（成本报告）、GAP-06（曲率重采样对应物）、
   GAP-07（语义切分粒度影响）。
+
+
+## 7 动作模态对齐首轮发现（RQ4，2026-09-08 收束后）
+
+> 收束决策见 design/problems_and_requirements.md §0：北星 = 三模态对齐，
+> action 序列视作一种模态。本组为一手实验证据（8 篇）。
+
+**动作编码为可对齐模态的两条路线：**
+
+1. **显式编码**（tokenizer/码本）：X-Tokenizer 用 SRQ 非对称量化 + 三头语义
+   对齐，把 action 序列编码进 vision/text 共同空间 [paper_036](https://arxiv.org/abs/2606.14752)；
+   UAT 用 256x128 离散码本统 28 本体动作空间，新本体微调仅 0.8% 参数
+   [paper_042](https://arxiv.org/abs/2501.10105)。
+2. **潜表示对齐**（不显式量化）：UVAM 联合视频-动作潜表示 + 解耦扩散
+   [paper_037](https://arxiv.org/abs/2503.00200)；Behavior-Aligned 以 EE 轨迹对齐行为表征实现跨本体迁移
+   [paper_040](https://arxiv.org/abs/2607.27549)；MOTIF 用进度感知 InfoNCE + 本体对抗 GRL 逐 VQ 聚类出
+   "动作母题" [paper_041](https://arxiv.org/abs/2602.13764)；CLAM 连续潜在动作 + 联合解码器（连续+联合
+   74% vs 离散+非联合 16%）[paper_043](https://arxiv.org/abs/2505.04999)。
+
+**几何/结构侧：** GAM 把动作 token 与几何 token 放同一个 GFM 潜序列联合
+解码 [paper_038](https://arxiv.org/abs/2606.17046)；DiLA 用预测瓶颈把动作潜在空间解耦为 content-structure
+（连续 dz=256；流形扭曲对比）[paper_039](https://arxiv.org/abs/2605.15725)。
+
+**首轮结论（对本路线）**：跨本体 / sim-实 对齐迁移已有成熟证据（040/041/042）；
+"行动连续性"是与显式离散化的关键分歧（043）；对齐度量本身（RQ4.4）与
+时序保真（RQ4.6）仍空缺，是第二轮方向。
