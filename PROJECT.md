@@ -86,7 +86,7 @@ Do not record token values or other secrets here.
   （抽取）、`synthesis/`（证据矩阵与综述）、`logs/`、`scripts/`。
   `docs/` 按用途分层：`docs/survey/`（调研定义与综述定稿）、
   `docs/reports/`（报告）、`docs/design/`（设计框架）。未验证的设计草稿
-  在 `design/`（不属 world model）。
+  在 `design/`（未验证，不进 `docs/`）。
 - 文献检查脚本只做观测型输出，不写 pass/fail。
 - 版本控制：GitHub remote 见 Credentials。`g2-orion05-resample-training.zip`
   与 `papers/raw/*.pdf` 不入库——zip 是协作分发物（解压参照在 `reference/`）；

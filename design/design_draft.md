@@ -1,6 +1,6 @@
 # 数据处理 Agent 设计草稿（L5+）
 
-> 状态：草稿（draft），未验证，不属于 `docs/`（verified world model）。
+> 状态：草稿（draft），未验证，不属于 `docs/`（verified 文档区）。
 > 基于 `../docs/design/design_framework.md` 展开具体设计。
 > 所有待定处标 **TBD**。
 > 文件吸收策略：优先复用 `../../reference/g2-orion05-resample-training/` 现有脚本，

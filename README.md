@@ -36,7 +36,7 @@ agent4data/
 ├── issues.md ────────────────── 现状 未决问题（001 次优 / 002 观测 gap / 003 终态歧义）
 ├── opportunities.md ─────────── 设计 机会候选（OPT-001 语义旋钮 / OPT-002 real2sim 捷径）
 │
-├── docs/                        ── 已接受的世界模型（verified）
+├── docs/                        ── 已验证的长期文档（verified）
 │   ├── reports/
 │   │   ├── [top_level_view.md](docs/reports/top_level_view.md) ─ 地图 五面思维地图（问题怎么归属）
 │   │   └── [main_report.md](docs/reports/main_report.md) ───── 过程 完整论证（背景档案）
@@ -48,7 +48,7 @@ agent4data/
 │   └── design/
 │       └── [design_framework.md](docs/design/design_framework.md) ─ 设计 L0–L4 设计框架
 │
-├── design/                     ── 未验证区（草稿，不属 world model）
+├── design/                     ── 未验证区（草稿，不进 docs/）
 │   ├── [problems_and_requirements.md](design/problems_and_requirements.md) ─ ★现状 现状综述：
 │   │     问题 → 方案局限 → 必需功能与接口 → 证据分级（见下）
 │   └── [design_draft.md](design/design_draft.md) ─────────────────── 设计 具体设计草稿（TBD）
