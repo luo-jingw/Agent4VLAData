@@ -59,7 +59,7 @@ agent4data/
 - [综述定稿](docs/survey/survey_findings.md) — 全部文献结论与引用
 - [证据矩阵](synthesis/evidence_matrix.md) / [缺口清单](synthesis/gap_list.md) — (论文, 研究问题) 证据等级；11 缺口含 blocking
 - [调研范围与证据标准](docs/survey/research_questions.md) · [术语表](docs/survey/glossary.md)
-- [agent 入门教学](docs/survey/agent_basics_tutorial.md) — 零基础读者
+- [agent 入门教学](docs/survey/agent_basics_tutorial.md) · [社区共性问题综述](docs/survey/community_issue_survey.md) — 零基础教学；GitHub issues 社区证据
 - [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 35 篇
 
 **设计与机会**

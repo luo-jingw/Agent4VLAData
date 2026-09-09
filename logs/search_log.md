@@ -78,3 +78,15 @@ Data Scaling Laws 未找到，替换为 LLM Trainer（更贴近调研主题）�
 
 结论记录：'agent 运营 VLA 数据处理管线'严格口径不存在 → GAP-11。
 检索词：data curation+agent / agentic / data pipeline+LLM / VLA+curation（均 cs.RO）。
+
+
+### 社区轮（2026-09-07，GitHub issues）
+
+- 覆盖 repository：physical-intelligence/openpi、huggingface/lerobot、
+  huggingface/smolvla、NVIDIA/gr00t、openvla/openvla、real-stanford/diffusion_policy、
+  TonyZhao/act、kscalelabs/smolvla。
+- 工具：scripts/gh_issue_search.py（匿名 GitHub issues search API）。
+- 关键词：data quality / dataset cleaning / missing frames / camera timestamp /
+  episode filtering / resample keyframe / train-test split / augmentation crop /
+  gripper suction / validation split。
+- 产出：docs/survey/community_issue_survey.md（6 个主题聚类，含精确 issue 链接）。
