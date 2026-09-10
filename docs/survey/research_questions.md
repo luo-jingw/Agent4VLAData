@@ -66,9 +66,10 @@ agentic synthetic data、LLM-as-judge、DSPy/TextGrad 类自动优化、
 ## RQ4 动作模态对齐（2026-09-08 收束后的主动研究方向）
 
 **背景（收束决策，见 `logs/decision_log.md` 2026-09-08）**：总目标 = vision /
-language / action 三模态对齐，action 序列视作一种模态。纯几何重采样会破坏
-对齐（跳帧、压低必要停顿）；研究方向转为"找到与 vision / 文本 prompt 对齐
-的 action 模态增强方式"。本组问题取代 RQ2（agent 方向，标记为 superseded）。
+language / action 三模态对齐，action 序列视作一种模态。纯几何方法**可能**
+破坏模态对齐（例如跳帧，或者必要的停顿被忽略）；总体路线 = 找到与 vision /
+文本 prompt 对齐（或更好对齐）的 action 模态增强方式。本组问题取代 RQ2
+（agent 方向，标记为 superseded）。
 
 **RQ4.1 跨模态对齐方法**：vision-text、text-action、vision-action 及其它模态
 （本体感受、真空反馈）的对齐学习范式；action 作为模态的跨模态表征学习
@@ -78,9 +79,10 @@ language / action 三模态对齐，action 序列视作一种模态。纯几何�
 （tokenizer / 量化 / embedding / latent）；动作本身低秩而 action 序列高维的
 含义（subspace / 流形维度）。
 
-**RQ4.3 动作模式结构**：可识别模式——流形、聚类、函数簇；"一条指令对应
-一类同构 action 序列簇"的证据；指令-模式对应（语言条件切分/事件边界，
-衔接 [paper_035](https://arxiv.org/abs/2309.00743) / [paper_011](https://arxiv.org/abs/2603.01465)）。
+**RQ4.3 动作模式结构**：可识别模式——流形、聚类、函数簇；pick 指令与一类
+同模式 action 序列对应的可能性与证据（簇是举例，不一定显式）；指令-模式
+对应（语言条件切分/事件边界，衔接 [paper_035](https://arxiv.org/abs/2309.00743) /
+[paper_011](https://arxiv.org/abs/2603.01465)）。
 
 **RQ4.4 对齐度量**：如何度量 action 模态与 text/vision 的对齐（互信息、
 InfoNCE 类、DTW 类时序相似度、表征对齐）；与既有 H(ℓ|v)（可见的跨模态

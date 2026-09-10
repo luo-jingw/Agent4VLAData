@@ -75,7 +75,7 @@ agent4data/
 | C5 sim/跨本体数据合法化 | [BAR](https://arxiv.org/abs/2607.27549)、[UAT](https://arxiv.org/abs/2501.10105)、[FlowWAM](https://arxiv.org/abs/2607.13017)、[MOTIF](https://arxiv.org/abs/2602.13764) | EE 轨迹对齐行为表征最有效（BAR）；通用动作 256x128 码本统 28 本体，新本体微调仅 0.8% 参数（UAT） |
 | C6 数据效率 | [Learning to Discern](https://arxiv.org/abs/2310.14196) | 偏好 + 表示学习处理异构演示。action 侧信息论论证空缺 |
 | C7 执行效率度量 | [Embodied Efficiency](https://arxiv.org/abs/2603.19131) | 指标集：任务时间/EE 路径/关节路径/能耗代理 + 成功率，把"执行更快"变成可测（可直接复用） |
-| C8 老问题边界（次优/停顿/关键帧/歧义） | 无直接文献 | 对齐视角下：次优≈低效端、停顿≈对齐证据——待自证 |
+| C8 老问题边界（次优/停顿/关键帧/歧义） | 无直接文献 | 需评估各问题是否属当前框架责任范围（未评估） |
 | RQ4.6 时序保真（驻留/停顿对齐语义） | 无命中 | 多轮检索无直接工作（GAP-12 下半） |
 
 检索过程与关键词见 `logs/search_log.md`；逐篇抽取见 `notes/extractions/paper_036–048.md`。

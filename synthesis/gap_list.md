@@ -127,8 +127,8 @@ blocking 状态。
   [paper_045](https://arxiv.org/abs/2604.09824) 的 GAC InfoNCE）；
   时序保真（RQ4.6，驻留/停顿的对齐语义、时间规整）第二轮多组检索无命中。
 - 含义：这两个子问题是收束路线的核心空白——"如何度量 action 与
-  prompt/vision 对齐"是第一个设计任务（prompt↔action 互信息基线）；
-  "时序保真"支撑"必要停顿是对齐证据"这一立场（衔接 PROJECT.md 稳态假设）。
+  prompt/vision 对齐"是第一个设计任务（prompt 到 action 的互信息基线）；
+  "时序保真"的定位与必要性——未评估（旧机制与对齐的关系待判定）。
 - 补证建议：检索方向 = representation alignment metrics、temporal warping
   in imitation learning、video-action contrastive loss；或接受可借形态并
   在本项目自行定义（第一条可测步骤）。
