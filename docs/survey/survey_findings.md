@@ -172,6 +172,11 @@ GAP-04）[paper_019](https://arxiv.org/abs/2401.12963), [paper_021](https://arxi
 **补充（模态组合，1 篇）：** GR-2 视频+动作联合输出、文本条件，约 1/8 数据
 73.9% [paper_051](https://arxiv.org/abs/2410.06158)——"行为模态（视频+动作）-文本"组合的可行证据。
 
+**动作表征的连续化路线（2 篇）：** Streaming Flow Policy 把 action 轨迹直接
+视为 flow 轨迹（连续表征绕过离散化）[paper_049](https://arxiv.org/abs/2505.21851)；
+FlowWAM 用光流作统一动作表征（视觉轨迹与动作在表征层合一）
+[paper_050](https://arxiv.org/abs/2607.13017)。
+
 **第二轮（RQ4.4/4.6 缺口补充，2 篇）：**
 
 - CLASS（DTW 动作序列相似度监督的 Soft InfoNCE，把视觉表示拉向动作序列；
