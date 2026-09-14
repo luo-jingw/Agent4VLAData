@@ -190,6 +190,7 @@ episode 划分防自相关泄漏"这条规则在数据集论文中几乎从不�
 | [paper_048](https://arxiv.org/abs/2310.14196) | direct | 支持 | Learning to Discern：偏好+表示两段式处理异构演示；39/50 top-good 等 | 全文 | 高 |
 
 | [paper_051](https://arxiv.org/abs/2410.06158) | direct | 支持 | GR-2：视频+动作联合输出（视频生成作动作的 planner），文本条件；38M 视频预训练；约 1/8 数据（50 轨迹/任务）73.9% | 全文 | 中 |
+| [paper_049](https://arxiv.org/abs/2505.21851) | direct | 支持 | Streaming Flow Policy：action 轨迹视为 flow 轨迹（连续表征绕过离散化） | 全文 | 高 |
 | [paper_050](https://arxiv.org/abs/2607.13017) | direct | 支持 | FlowWAM：光流作为统一动作表征，把视觉轨迹与动作在表征层合一 | 全文 | 高 |
 
 **首轮结论**：动作模态对齐有两条实证路线——显式编码（tokenizer/码本，036/042）与

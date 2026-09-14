@@ -787,3 +787,37 @@ papers:
     and others}, year={2024}, eprint={2410.06158}}'
   status: downloaded
   screening_relevance: high
+- id: paper_049
+  title: 'Streaming Flow Policy: Simplifying diffusion/flow-matching policies by treating
+    action trajectories as flow trajectories'
+  authors:
+  - Sunshine Jiang
+  - Xiaolin Fang
+  - Nicholas Roy
+  - Tomas Lozano-Perez
+  year: 2025
+  venue: arXiv
+  source_id: '2505.21851'
+  pdf_path: papers/raw/2505.21851.pdf
+  bibtex: '@article{jiang2025sfp, title={Streaming Flow Policy: Simplifying diffusion/flow-matching
+    policies by treating action trajectories as flow trajectories}, author={Jiang,
+    Sunshine and others}, year={2025}, eprint={2505.21851}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_050
+  title: 'FlowWAM: Optical Flow as a Unified Action Representation for World Action
+    Models'
+  authors:
+  - Yixiang Chen
+  - Peiyan Li
+  - Yuan Xu
+  - Qisen Ma
+  year: 2026
+  venue: arXiv
+  source_id: '2607.13017'
+  pdf_path: papers/raw/2607.13017.pdf
+  bibtex: '@article{chen2026flowwam, title={FlowWAM: Optical Flow as a Unified Action
+    Representation for World Action Models}, author={Chen, Yixiang and others}, year={2026},
+    eprint={2607.13017}}'
+  status: downloaded
+  screening_relevance: high

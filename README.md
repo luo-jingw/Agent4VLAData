@@ -6,7 +6,7 @@ VLA（Vision-Language-Action）动作模态数据增强框架的调研与设计�
   已训练部署）；
 - 目标：通用 VLA 遥操动作模态**数据增强框架**——对齐约束下重构/强化 action
   序列，数据效率与执行效率双目标；
-- 当前状态：方向调研中（48 篇文献；RQ4 动作模态对齐为主轴），框架部分定稿，
+- 当前状态：方向调研中（51 篇文献；RQ4 动作模态对齐为主轴），框架部分定稿，
   实验未启动。
 
 ## 目录分工
@@ -19,7 +19,7 @@ VLA（Vision-Language-Action）动作模态数据增强框架的调研与设计�
 | `design/` | 设计草稿（未验证） |
 | `synthesis/` | 证据矩阵、缺口清单、评审记录 |
 | `papers/` | 文献库：候选/元数据/bibtex/raw 文本 |
-| `notes/extractions/` | 48 篇论文的逐篇抽取笔记 |
+| `notes/extractions/` | 51 篇论文的逐篇抽取笔记 |
 | `scripts/` | 文献检索/下载/检查脚本（观测型，无 pass/fail） |
 | `logs/` | 搜索、下载、决策记录 |
 | `reference/` | 现有方法包（只读参照，勿改） |
@@ -62,7 +62,7 @@ agent4data/
 - [证据矩阵](synthesis/evidence_matrix.md) / [缺口清单](synthesis/gap_list.md) — (论文, 研究问题) 证据等级；11 缺口含 blocking
 - [调研范围与证据标准](docs/survey/research_questions.md) · [术语表](docs/survey/glossary.md) · [RQ4 动作模态对齐](docs/survey/research_questions.md)（主动研究方向）
 - [社区共性问题综述](docs/survey/community_issue_survey.md) — GitHub issues 社区证据
-- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 48 篇
+- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 51 篇
 
 **研究网格（对齐方向，2026-09-08/09 两轮）**
 
@@ -78,7 +78,7 @@ agent4data/
 | C8 老问题边界（次优/停顿/关键帧/歧义） | 无直接文献 | 需评估各问题是否属当前框架责任范围（未评估） |
 | RQ4.6 时序保真（驻留/停顿对齐语义） | 无命中 | 多轮检索无直接工作（GAP-12 下半） |
 
-检索过程与关键词见 `logs/search_log.md`；逐篇抽取见 `notes/extractions/paper_036–048.md`。
+检索过程与关键词见 `logs/search_log.md`；逐篇抽取见 `notes/extractions/paper_036–051.md`。
 
 **设计与机会**
 
@@ -107,7 +107,7 @@ issues.md（登记新问题，如 ISSUE-003）
 
 ## 文献库使用
 
-- 元数据：`papers/metadata.yaml`（48 篇，含 arXiv ID、screening_relevance）；
+- 元数据：`papers/metadata.yaml`（51 篇，含 arXiv ID、screening_relevance）；
 - 抽取笔记：`notes/extractions/paper_NNN.md`（每篇 ≤80 行）；
 - PDF 不入库：`python scripts/arxiv_fetch.py <arxiv_id> --pdf` 按需重现；
 - 一致性检查（观测型输出，clone 后 PDF 缺失属预期）：
