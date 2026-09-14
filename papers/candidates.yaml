@@ -818,3 +818,17 @@ papers:
   keywords: []
   relevance: high
   notes: C6/C4 异构演示
+- id: paper_051
+  title: 'GR-2: A Generative Video-Language-Action Model with Web-Scale Knowledge
+    for Robot Manipulation'
+  authors:
+  - Chi-Lam Cheang
+  - Guangzeng Chen
+  year: 2024
+  source: arxiv
+  source_id: '2410.06158'
+  url: http://arxiv.org/abs/2410.06158
+  abstract: ''
+  keywords: []
+  relevance: high
+  notes: RQ4.1 视频-动作联合模态

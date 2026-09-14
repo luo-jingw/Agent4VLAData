@@ -52,3 +52,4 @@
 | 2026-09-09 16:27 | 2310.14196 | Learning to Discern: Imitating Heterogeneous Human Demonstrations with Preferenc | 1016894 B |
 | 2026-09-09 16:32 | 2505.21851 | Streaming Flow Policy: Simplifying diffusion/flow-matching policies by treating  | 16433948 B |
 | 2026-09-09 16:32 | 2607.13017 | FlowWAM: Optical Flow as a Unified Action Representation for World Action Models | 18557983 B |
+| 2026-09-14 17:01 | 2410.06158 | GR-2: A Generative Video-Language-Action Model with Web-Scale Knowledge for Robo | 16185927 B |

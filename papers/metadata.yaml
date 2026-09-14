@@ -770,3 +770,20 @@ papers:
     Sachit and others}, year={2023}, eprint={2310.14196}}'
   status: downloaded
   screening_relevance: high
+- id: paper_051
+  title: 'GR-2: A Generative Video-Language-Action Model with Web-Scale Knowledge
+    for Robot Manipulation'
+  authors:
+  - Chi-Lam Cheang
+  - Guangzeng Chen
+  - Ya Jing
+  - Tao Kong
+  year: 2024
+  venue: arXiv
+  source_id: '2410.06158'
+  pdf_path: papers/raw/2410.06158.pdf
+  bibtex: '@article{cheang2024gr2, title={GR-2: A Generative Video-Language-Action
+    Model with Web-Scale Knowledge for Robot Manipulation}, author={Cheang, Chi-Lam
+    and others}, year={2024}, eprint={2410.06158}}'
+  status: downloaded
+  screening_relevance: high
