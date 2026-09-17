@@ -36,15 +36,15 @@
    对聚类，统计跨任务后续动作一致性；关键区域行为 SNR（ISSUE-003 方法）。
 2. match 锐度达标——测：关键区域 prompt 行为 SNR 与条件互信息。
 
-## 来源讨论（本仓库归档）
+## 来源讨论（本仓库归档，总结版；原始 html 仅存本地）
 
-- [多模态对齐与同胚](../../discussions/多模态对齐与同胚.html)——
+- [多模态对齐与同胚](../../discussions/alignment-homeomorphism.md)——
   raw action 不是可对齐模态；对齐对象是 transition/outcome 级 lifted
   表征；最小充分上下文。
-- [理解 RL 与 SFT](../../discussions/理解RL与SFT.html)——
+- [理解 RL 与 SFT](../../discussions/outcome-manifold-rl-sft.md)——
   outcome manifold 取代标量回报；goal ↔ 可达结果分布的一致性匹配；
   trajectory-level outcome 反推需结构假设才可学。
-- [解释数据蒸馏插值](../../discussions/解释数据蒸馏插值.html)——
+- [条件计算与语义路由](../../discussions/semantic-routing-moe.md)——
   representation 相对 query 才成立；语义即程序（条件计算/路由）；
   理解 = 按目标构造表征的能力。
 
