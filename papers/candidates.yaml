@@ -860,3 +860,102 @@ papers:
   keywords: []
   relevance: high
   notes: C5 跨本体动作表征
+- id: paper_052
+  title: Latent Action Pretraining from Videos (LAPA)
+  authors:
+  - Seonghyeon Ye
+  - Joel Jang
+  year: 2024
+  source: arxiv
+  source_id: '2410.11758'
+  url: http://arxiv.org/abs/2410.11758
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 LAPA：latent action = 相邻视觉状态变化
+- id: paper_053
+  title: 'UniVLA: Learning to Act Anywhere with Task-centric Latent Actions'
+  authors:
+  - Qingwen Bu
+  - Yanting Yang
+  year: 2025
+  source: arxiv
+  source_id: '2505.06111'
+  url: http://arxiv.org/abs/2505.06111
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 UniVLA：task-centric latent action
+- id: paper_054
+  title: Learning Latent Plans from Play (Play-LMP)
+  authors:
+  - Corey Lynch
+  - Mohi Khansari
+  year: 2019
+  source: arxiv
+  source_id: '1903.01973'
+  url: http://arxiv.org/abs/1903.01973
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 Play-LMP：latent plan 起源
+- id: paper_055
+  title: Learning Visually Guided Latent Actions for Assistive Teleoperation
+  authors:
+  - Siddharth Karamcheti
+  - Albert J. Zhai
+  year: 2021
+  source: arxiv
+  source_id: '2105.00580'
+  url: http://arxiv.org/abs/2105.00580
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 Losey 线：visually guided latent action，controllability+consistency
+- id: paper_056
+  title: 'CLAP: Contrastive Latent Action Pretraining for Learning Vision-Language-Action
+    Models from Human Videos'
+  authors:
+  - Chubin Zhang
+  - Jianan Wang
+  year: 2026
+  source: arxiv
+  source_id: '2601.04061'
+  url: http://arxiv.org/abs/2601.04061
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 CLAP：对比 latent action，批评视觉纠缠
+- id: paper_057
+  title: 'Joint-Aligned Latent Action: Towards Scalable VLA Pretraining in the Wild'
+  authors:
+  - Hao Luo
+  - Ye Wang
+  year: 2026
+  source: arxiv
+  source_id: '2602.21736'
+  url: http://arxiv.org/abs/2602.21736
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 Joint-Aligned：任务-动作联合对齐
+- id: paper_058
+  title: 'VLA-JEPA: Enhancing Vision-Language-Action Model with Latent World Model'
+  authors:
+  - Jingwen Sun
+  - Wenyao Zhang
+  year: 2026
+  source: arxiv
+  source_id: '2602.10098'
+  url: http://arxiv.org/abs/2602.10098
+  abstract: ''
+  keywords:
+  - latent action
+  relevance: high
+  notes: RQ4.2 VLA-JEPA：latent world model 替代 latent action 锚定

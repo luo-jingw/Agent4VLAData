@@ -821,3 +821,112 @@ papers:
     eprint={2607.13017}}'
   status: downloaded
   screening_relevance: high
+- id: paper_052
+  title: Latent Action Pretraining from Videos (LAPA)
+  authors:
+  - Seonghyeon Ye
+  - Joel Jang
+  - Byeongguk Jeon
+  - Sejune Joo
+  year: 2024
+  venue: arXiv
+  source_id: '2410.11758'
+  pdf_path: papers/raw/2410.11758.pdf
+  bibtex: '@article{ye2024lapa, title={Latent Action Pretraining from Videos}, author={Ye,
+    Seonghyeon and others}, year={2024}, eprint={2410.11758}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_053
+  title: 'UniVLA: Learning to Act Anywhere with Task-centric Latent Actions'
+  authors:
+  - Qingwen Bu
+  - Yanting Yang
+  - Jisong Cai
+  - Shenyuan Gao
+  year: 2025
+  venue: arXiv
+  source_id: '2505.06111'
+  pdf_path: papers/raw/2505.06111.pdf
+  bibtex: '@article{bu2025univla, title={UniVLA: Learning to Act Anywhere with Task-centric
+    Latent Actions}, author={Bu, Qingwen and others}, year={2025}, eprint={2505.06111}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_054
+  title: Learning Latent Plans from Play (Play-LMP)
+  authors:
+  - Corey Lynch
+  - Mohi Khansari
+  - Ted Xiao
+  - Vikash Kumar
+  year: 2019
+  venue: arXiv
+  source_id: '1903.01973'
+  pdf_path: papers/raw/1903.01973.pdf
+  bibtex: '@article{lynch2019playlmp, title={Learning Latent Plans from Play}, author={Lynch,
+    Corey and others}, year={2019}, eprint={1903.01973}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_055
+  title: Learning Visually Guided Latent Actions for Assistive Teleoperation
+  authors:
+  - Siddharth Karamcheti
+  - Albert J. Zhai
+  - Dylan P. Losey
+  - Dorsa Sadigh
+  year: 2021
+  venue: arXiv
+  source_id: '2105.00580'
+  pdf_path: papers/raw/2105.00580.pdf
+  bibtex: '@article{karamcheti2021vgla, title={Learning Visually Guided Latent Actions
+    for Assistive Teleoperation}, author={Karamcheti, Siddharth and others}, year={2021},
+    eprint={2105.00580}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_056
+  title: 'CLAP: Contrastive Latent Action Pretraining for Learning Vision-Language-Action
+    Models from Human Videos'
+  authors:
+  - Chubin Zhang
+  - Jianan Wang
+  - Zifeng Gao
+  - Yue Su
+  year: 2026
+  venue: arXiv
+  source_id: '2601.04061'
+  pdf_path: papers/raw/2601.04061.pdf
+  bibtex: '@article{zhang2026clap, title={CLAP: Contrastive Latent Action Pretraining
+    for Learning Vision-Language-Action Models from Human Videos}, author={Zhang,
+    Chubin and others}, year={2026}, eprint={2601.04061}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_057
+  title: 'Joint-Aligned Latent Action: Towards Scalable VLA Pretraining in the Wild'
+  authors:
+  - Hao Luo
+  - Ye Wang
+  - Wanpeng Zhang
+  - Haoqi Yuan
+  year: 2026
+  venue: arXiv
+  source_id: '2602.21736'
+  pdf_path: papers/raw/2602.21736.pdf
+  bibtex: '@article{luo2026jala, title={Joint-Aligned Latent Action: Towards Scalable
+    VLA Pretraining in the Wild}, author={Luo, Hao and others}, year={2026}, eprint={2602.21736}}'
+  status: downloaded
+  screening_relevance: high
+- id: paper_058
+  title: 'VLA-JEPA: Enhancing Vision-Language-Action Model with Latent World Model'
+  authors:
+  - Jingwen Sun
+  - Wenyao Zhang
+  - Zekun Qi
+  - Shaojie Ren
+  year: 2026
+  venue: arXiv
+  source_id: '2602.10098'
+  pdf_path: papers/raw/2602.10098.pdf
+  bibtex: '@article{sun2026vlajepa, title={VLA-JEPA: Enhancing Vision-Language-Action
+    Model with Latent World Model}, author={Sun, Jingwen and others}, year={2026},
+    eprint={2602.10098}}'
+  status: downloaded
+  screening_relevance: high

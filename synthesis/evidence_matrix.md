@@ -193,6 +193,15 @@ episode 划分防自相关泄漏"这条规则在数据集论文中几乎从不�
 | [paper_049](https://arxiv.org/abs/2505.21851) | direct | 支持 | Streaming Flow Policy：action 轨迹视为 flow 轨迹（连续表征绕过离散化） | 全文 | 高 |
 | [paper_050](https://arxiv.org/abs/2607.13017) | direct | 支持 | FlowWAM：光流作为统一动作表征，把视觉轨迹与动作在表征层合一 | 全文 | 高 |
 
+
+| [paper_052](https://arxiv.org/abs/2410.11758) | direct | 支持 | LAPA：latent action = 相邻视觉状态变化；无标注视频预训练 VLA；ICLR 2025 | 全文 | 高 |
+| [paper_053](https://arxiv.org/abs/2505.06111) | direct | 支持 | UniVLA：task-centric latent action；跨本体统一潜动作 | 全文 | 高 |
+| [paper_054](https://arxiv.org/abs/1903.01973) | direct | 支持 | Play-LMP：latent plan 起源（自监督 play 数据 + 重建目标） | 全文 | 高 |
+| [paper_055](https://arxiv.org/abs/2105.00580) | direct | 支持 | Losey 线：visually guided latent action；明确 controllability + consistency（同一 latent action 在不同上下文产生不同 physical action） | 全文 | 高 |
+| [paper_056](https://arxiv.org/abs/2601.04061) | direct | 支持 | CLAP：对比 latent action 对齐到 Act-VAE 码本；批判视觉纠缠 | 全文 | 高 |
+| [paper_057](https://arxiv.org/abs/2602.21736) | direct | 支持 | JALA：对齐 + 逆动力学联合学习；批判重建式 FDM 噪声 | 全文 | 高 |
+| [paper_058](https://arxiv.org/abs/2602.10098) | direct | 支持 | VLA-JEPA：leakage-free 潜状态预测；批判像素锚定与 nuisance motion | 全文 | 高 |
+
 **首轮结论**：动作模态对齐有两条实证路线——显式编码（tokenizer/码本，036/042）与
 潜表示对齐（040/041/043）；"连续性"是关键分歧（CLAM 74% vs 16%）。跨本体以
 行为/母题/通用码本对齐（040/041/042），与 sim-实 对齐迁移同构（衔接 OPT-002）。

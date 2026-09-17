@@ -110,3 +110,18 @@ arXiv API（cs.RO + 短语），Semantic Scholar 因限流不可用。
 
 未命中（仍为空缺，待第二轮）：RQ4.4（对齐度量，仅 X-Tokenizer 对齐损失侧面）；
 RQ4.6（时序保真/DTW 类，无直接命中）；RQ4.7（生成增强保验证，UVAM 部分覆盖）。
+
+
+### latent action 专线（2026-09-09，7 篇）
+
+背景：评估 ChatGPT 分享的"多模态对齐与同胚"思考（用户保存于仓库根 html）。
+该思考提出"Action should be decoded, not aligned"与 lifted representation 路线。
+- arXiv API 限流（406），改用 OpenAlex API（scripts/openalex_search.py /
+  openalex_title.py / openalex_ids.py）+ curl 直链 PDF（scripts/arxiv_curl_dl.py）。
+- 命中：LAPA [2410.11758](https://arxiv.org/abs/2410.11758)、UniVLA [2505.06111](https://arxiv.org/abs/2505.06111)、Play-LMP [1903.01973](https://arxiv.org/abs/1903.01973)、
+  Visually Guided Latent Actions [2105.00580](https://arxiv.org/abs/2105.00580)、CLAP [2601.04061](https://arxiv.org/abs/2601.04061)、
+  Joint-Aligned [2602.21736](https://arxiv.org/abs/2602.21736)、VLA-JEPA [2602.10098](https://arxiv.org/abs/2602.10098)（[paper_052](https://arxiv.org/abs/2410.11758)-058）。
+- 社区检索：GitHub issues "latent action" 72 条命中但几乎全是推理延迟/控制
+  问题，latent action 表征无工程社区讨论——纯学术话题。
+- 未找到的：LatentVLA（AAAI 2026，无 arXiv ID）、LARA/LAM/ALAM（命名未在
+  OpenAlex title 检索命中，可能为 2026 年末命名或非正式命名）。

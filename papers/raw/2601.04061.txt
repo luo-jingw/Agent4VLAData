@@ -1,0 +1,2486 @@
+
+===== PAGE 1 =====
+1
+CLAP: Contrastive Latent Action Pretraining for Learning
+Vision-Language-Action Models from Human Videos
+Chubin Zhang, Jianan Wang, Zifeng Gao, Yue Su, Tianru Dai, Cai Zhou, Jiwen Lu, Fellow, IEEE,
+and Yansong Tang, Member, IEEE
+Group 1: Left hand moves to the right.
+Group 2: Right hand puts the item down.
+Group 3: Right hand grasps an item.
+Astribot S1
+AgiBot
+Ego4D
+Astribot S1
+AgiBot
+Ego4D
+Astribot S1
+AgiBot
+Ego4D
+Fig. 1: Visualization of our aligned latent action space. We show samples from clustered action tokens, demonstrating
+semantic alignment across diverse robot (Astribot, AgiBot) and human (Ego4D) domains. Groups 1–3 correspond to moving
+right, placing, and grasping, respectively. The red arrows on the Astribot S1 frames visualize the predicted 3D trajectory decoded
+from the latent action and projected onto the image plane, confirming the physical executability of the learned representations.
+Abstract—Generalist Vision-Language-Action models remain
+constrained by the scarcity of robotic data relative to the
+abundance of human video demonstrations. Existing Latent
+Action Models attempt to use video data but often suffer from
+visual entanglement, encoding noise rather than manipulation
+skills. To address this limitation, we propose Contrastive Latent
+Action Pretraining (CLAP), a framework that first uses Act-
+VAE to learn an executable action-token vocabulary from robot
+trajectories and then aligns human visual transitions with this
+vocabulary through contrastive learning. This alignment maps
+unlabeled human videos into a physically grounded latent action
+space rather than reconstructing appearance. Building on the
+aligned tokens, we train CLAP-NTP as an autoregressive VLA
+using robot demonstrations and pseudo-labeled human videos,
+preserving instruction following and object generalization. For
+deployment and target-domain adaptation, we further introduce
+a post-training strategy that combines CLAP-RF, a Rectified Flow
+action head for low-latency continuous action chunk prediction,
+with Knowledge Matching regularization to preserve pretrained
+semantic knowledge during fine-tuning. Extensive experiments
+Chubin Zhang and Jianan Wang contributed equally. Yansong Tang is the
+corresponding author. Chubin Zhang, Zifeng Gao, Tianru Dai, Jiwen Lu, and
+Yansong Tang are with Tsinghua University. Chubin Zhang, Jianan Wang, and
+Yue Su are with Astribot. Yue Su is with the University of Hong Kong. Cai
+Zhou is with Massachusetts Institute of Technology.
+The code is available at https://github.com/LinShan-Bin/OpenCLAP.
+show that CLAP achieves strong performance against competitive
+baselines while enabling effective skill transfer from human
+videos to robotic execution.
+Index Terms—Vision-Language-Action models, robotic manip-
+ulation, imitation learning, contrastive learning.
+I. INTRODUCTION
+T
+HE recent surge in Large Language Models (LLMs)
+and Vision-Language Models (VLMs) has demonstrated
+strong capabilities in semantic understanding, visual percep-
+tion, and embodied reasoning [1], [2]. These advances have
+naturally extended to robotics, giving rise to Vision-Language-
+Action (VLA) models [3]–[5] as a promising approach to
+general-purpose manipulation. By combining the semantic
+knowledge of internet-scale data with embodied control, VLAs
+aim to create agents capable of following natural language
+instructions across diverse environments and tasks.
+A primary obstacle in scaling VLA models is the lim-
+ited availability of high-quality training data. Although large-
+scale robotic datasets [3], [6]–[8] have greatly benefited the
+arXiv:2601.04061v2  [cs.RO]  14 Jun 2026
+
+===== PAGE 2 =====
+2
+(a) Conventional methods
+(b) Ours
+Robot Teleoperation Data
+VLA
+Imitation Learning
+In-domain Task
+Robot Teleoperation Data
+Human Demonstrations
+Executable Latent Action
+VLA
+Imitation Learning
+“Make a bouquet using red 
+heart and yellow sunflower.”
+In-domain Task
+Object Generalization
+“Make a bouquet using orange 
+tulip and yellow carnation.”
+“Make a bouquet using red 
+heart and yellow sunflower.”
+Fig. 2: Overview of CLAP. In contrast to (a) conventional
+methods that rely solely on limited robot teleoperation data, (b)
+CLAP learns an executable latent action space from large-scale
+human demonstrations. This enables the transfer of semantic
+knowledge to robot policies, achieving object generalization
+through human videos.
+community, robotic data still lag far behind human data in
+scale, diversity, and semantic richness. Consequently, using
+widely available unlabeled human videos has become a critical
+research direction. To address this gap, Latent Action Mod-
+els (LAMs) [9], [10] have emerged as a popular paradigm.
+Existing LAMs typically use self-supervised learning to con-
+struct a latent space through inverse dynamics, predicting the
+latent action required to transition between adjacent video
+frames. While this enables learning from video, a fundamental
+limitation remains: these methods do not explicitly align
+the latent space with the robot’s physical action space. As
+a result, the learned representation is often entangled with
+extraneous visual factors, such as background shifts and object
+deformations, rather than encoding manipulation skills. This
+entanglement requires complex post-hoc training to map visual
+latents to robot controls and severely limits direct skill transfer
+from human videos to robotic execution.
+In this work, we address this limitation by proposing
+Contrastive Latent Action Pretraining (CLAP). Specifically,
+we first introduce Act-VAE, which quantizes continuous robot
+trajectories into a compact and executable action-token vo-
+cabulary. CLAP then uses contrastive learning to align visual
+transitions from human videos with this robot-grounded vocab-
+ulary. Unlike prior approaches that define latent actions solely
+through visual reconstruction, this design encourages video-
+derived latent actions to match the physical consequences
+of robot actions rather than appearance changes alone. This
+alignment effectively filters out visual noise, ensuring that
+the latent representations extracted from human videos are
+isomorphic to executable robot commands.
+Building on this aligned representation, we instantiate a
+token-space VLA policy, CLAP-NTP (Next-Token Predic-
+tion). By modeling action tokens as a continuation of the
+language sequence, CLAP-NTP preserves the reasoning and
+instruction-following capabilities of the VLM backbone while
+learning from both robot demonstrations and pseudo-labeled
+human videos. This formulation is especially useful for object
+generalization because the policy can absorb semantic evi-
+dence from videos without requiring continuous robot actions
+for every new object.
+For deployment and target-domain adaptation, we fur-
+ther introduce a unified post-training strategy that combines
+CLAP-RF (Rectified Flow [11]) with Knowledge Matching
+(KM). CLAP-RF attaches a flow-matching action head to the
+adapted NTP backbone and predicts continuous action chunks
+with lower policy-update latency than autoregressive token
+decoding. KM regularizes adaptation against a trusted NTP
+reference, preserving pretrained semantic knowledge while the
+continuous controller is tuned on robot trajectories.
+Our main contributions are summarized as follows:
+• We introduce Act-VAE, which quantizes continuous
+robot trajectories into compact and executable action
+tokens, establishing a physically grounded action vocab-
+ulary.
+• We propose CLAP, a contrastive pretraining framework
+that aligns human visual transitions with the Act-VAE vo-
+cabulary, mitigating visual entanglement in latent action
+learning.
+• We develop CLAP-NTP, an autoregressive VLA that
+learns from robot demonstrations and pseudo-labeled
+human videos, enabling robust instruction following and
+zero-shot object generalization.
+• We present an efficient post-training strategy that com-
+bines CLAP-RF with Knowledge Matching, convert-
+ing token-space representations into low-latency contin-
+uous action chunks while preserving pretrained semantic
+knowledge during fine-tuning.
+II. RELATED WORK
+A. Imitation Learning for Manipulation
+Imitation learning, particularly Behavior Cloning (BC) [12],
+[13], has become a prevalent paradigm in robot learning.
+Classic BC formulates policy learning as supervised maximum
+likelihood estimation of actions conditioned on observations.
+Building on this objective, recent visuomotor policies [14]–
+[19] often employ expressive conditional generative models,
+such as latent-variable models [20] and diffusion models [21],
+[22], to capture multimodal observation-to-action mappings.
+These approaches have achieved remarkable success in task-
+specific manipulation settings. However, the inherent hetero-
+geneity across embodiments introduces substantial distribu-
+tional diversity in the action space, which impedes broad cross-
+embodiment generalization [23]. To bridge this gap, early
+research sought to establish embodiment-agnostic representa-
+tions such as flow [24]–[27], object poses [28], [29], or atomic
+primitives [30], thereby decoupling the policy from specific
+robot kinematics. In a parallel line of work, policy-level
+
+===== PAGE 3 =====
+3
+studies have investigated retargeting strategies for transferring
+manipulation skills from human hands to robotic systems [31],
+[32] or jointly learning human and robot manipulation for
+specific tasks [33], [34]. Nevertheless, these explicit represen-
+tations provide only marginal gains or depend on specialized
+setups, falling short of a universal solution for heterogeneous
+manipulation.
+B. Vision-Language-Action Models
+Departing from these explicit policy-level approaches,
+Vision-Language-Action (VLA) models [35]–[40] have shifted
+the field toward systematically addressing general cross-
+embodiment robotic manipulation [3], [4], [6]. Initial VLA
+approaches sought to use the strong semantic priors of
+VLMs [1], [2] to directly fit heterogeneous action distri-
+butions [5], [37], [41], [42]. However, these attempts pro-
+duced suboptimal results because cross-embodiment mapping
+is highly complex [23]. In response, many studies have mit-
+igated the issue through refined tokenization strategies [38],
+[43]–[45] or optimized action spaces [34], [46], [47], while
+others have introduced architectural enhancements such as
+embodiment-specific action heads [10], [23] and embodiment-
+related prompting mechanisms [48]. Although effective, these
+methods largely remain at the level of representation align-
+ment [49], [50]. They do not explicitly acquire primitive-level
+action representations and therefore struggle to distill complex
+behaviors into embodiment-independent quantities [51].
+C. Latent Action Learning and Tokenization
+To address these limitations in action representation, Latent
+Action Models (LAMs) [9] have emerged as a prevailing
+paradigm for unifying heterogeneous action spaces. By im-
+posing visual supervision, these methods aim to align action
+primitives across diverse embodiments within a shared latent
+manifold [52], which serves as an embodiment-agnostic action
+space [10]. This process distills high-dimensional, multimodal
+actions arising from embodiment discrepancies into invariant
+representations that encode the underlying skills, benefiting
+scalable and efficient decision-making by VLMs. Technically,
+mainstream LAMs [9], [10], [53], [54] typically employ gen-
+erative [55] or discriminative [56]–[58] encoders to compress
+action-aligned observations into a compact feature space.
+Through action-conditioned image reconstruction, they impose
+a latent structure on actions. The efficacy of this paradigm
+for downstream planning has been empirically validated by
+Agibot Go-1 [59] in large-scale training scenarios. However,
+current latent action models share a fundamental limitation:
+their latent spaces are learned from visual dynamics and are
+therefore susceptible to extraneous factors such as background
+shifts and object deformation. Consequently, the learned space
+is often entangled, necessitating post-hoc training for effective
+robotic control. This limitation prevents direct skill learning
+from human videos. A complementary line of work improves
+action tokenization itself. BEAST [60] uses B-spline control
+tokens for smooth parallel decoding, while FASTerVQ [61]
+learns compact action-chunk tokens for efficient autoregres-
+sive VLAs. Being-H0 [62] further extends tokenized motion
+modeling to human videos through explicit hand-motion rep-
+resentations. These studies highlight the value of compact
+action vocabularies, whereas LAMs emphasize learning latent
+dynamics from visual transitions. Our work connects these two
+directions by using contrastive learning to align LAM-style
+human video dynamics with robot-grounded action tokens.
+III. METHODOLOGY
+A. Problem Formulation
+We address the problem of learning a generalist, language-
+conditioned bimanual manipulation policy by unifying large-
+scale human video demonstrations with precise robotic data.
+We consider two distinct data sources:
+• Robotic Data: Let Drob = {(τi, Ii)}Nrob
+i=1 denote expert
+robot trajectories conditioned on natural language task
+instructions I. Each trajectory τ consists of a sequence of
+observations ot and actions at over a horizon T. We focus
+on a dual-arm robotic setup. The action space A ⊆R14
+is defined by concatenating the left (L) and right (R)
+arm commands. For each arm, the control input consists
+of the end-effector operational-space position p ∈R3,
+orientation (Euler angles) θ ∈R3, and gripper aperture
+g ∈R1. Thus, the joint action vector at time t is:
+at =
+
+pL
+t , θL
+t , gL
+t , pR
+t , θR
+t , gR
+t
+⊤∈R14.
+(1)
+• Human Video Data: Let Dhum = {(Vj, Ij)}Nhum
+j=1 denote
+human video demonstrations. Unlike Drob, these trajecto-
+ries contain only visual observations V = {o1, . . . , oT }
+and task annotations I, without explicit action labels at
+or kinematic state information.
+The core challenge is the domain gap: Dhum offers semantic
+diversity but lacks the kinematic grounding of A, while Drob
+provides precise dynamics but is limited in scale and diversity.
+Our goal is to learn a policy π(at|ot, I) that maximizes the
+likelihood of successful task completion by inferring a latent
+control manifold shared between human visual changes and
+robot physical actions.
+B. Framework Overview
+We formulate a unified Vision-Language-Action (VLA)
+framework that uses both the precision of robot-centric data
+and the semantic diversity of large-scale, unlabeled human
+video demonstrations. Our training pipeline is structured into
+three stages:
+• Cross-Modal Alignment via CLAP: We bridge the
+supervision gap between unlabeled human videos and
+labeled robot trajectories by establishing a shared latent
+manifold. This is achieved through Contrastive Latent
+Action Pretraining (CLAP), which grounds visual state
+transitions from human videos in a quantized, physically
+executable action space. See Section III-C for details.
+• Token-Space Policy Pretraining: We train CLAP-NTP
+with next-token prediction on robot action tokens and
+human pseudo action tokens. This allows the model
+to absorb both physical action labels from robots and
+
+===== PAGE 4 =====
+4
+Inv. Dyn. Encoder
+𝒛!,#
+$
+𝒛!,%
+$
+𝒛!,#
+&
+𝒛!,%
+&
+𝒛!,#
+'
+𝒛!,%
+'
+𝒛%
+$
+𝒛%
+&
+"𝒛!,%
+'
+𝒛!,%
+$
+⋅𝒛%
+$
+𝒛!,%
+$
+⋅𝒛%
+&
+𝒛!,%
+$
+⋅"𝒛!,%
+'
+𝒛!,%
+&
+⋅𝒛%
+$
+𝒛!,%
+&
+⋅𝒛%
+&
+𝒛!,%
+&
+⋅"𝒛!,%
+'
+𝒛!,%
+'
+⋅𝒛%
+$
+𝒛!,%
+'
+⋅𝒛%
+&
+𝒛!,%
+'
+⋅"𝒛!,%
+'
+Fwd. Dyn. Decoder
+Contrastive Loss
+Dec
+Enc
+𝒂$:$&'()
+)
+𝒂$:$&'()
+𝟐
+VLM
+Action 
+Expert
+Subtask Action tokens
+VLM
+Obs. & Instr.
+CLAP-NTP
+CLAP-RF
+(a) Contrastive Latent Action Pretraining (CLAP)
+(b) VLA frameworks
+0
+1
+2
+3
+4
+Codebook
+》
+》
+"𝒂$&'()
+)
+"𝒂$&'()
+𝟐
+𝒐!
+"
+𝒐!#$
+"
+"𝒐!#$
+"
+"𝒐!#$
+%
+"𝒐!#$
+&
+𝒐!
+%
+𝒐!#$
+%
+𝒐!
+&
+𝒐!#$
+&
+𝐾
+𝑉
+Fig. 3: The pipeline of CLAP. (a) Contrastive Latent Action Pretraining: Visual state transitions from videos are aligned with
+quantized robot actions via contrastive learning to establish a shared, physically grounded latent space. (b) VLA Frameworks:
+We introduce CLAP-NTP for discrete autoregressive planning and CLAP-RF for low-latency inference via Rectified Flow.
+semantic diversity from human videos. See Section III-D
+for details.
+• Post-Training for Continuous Control: After CLAP-
+NTP training, we optionally attach a Rectified Flow
+(RF) action head for low-latency inference. We further
+propose Knowledge Matching (KM) fine-tuning strategy,
+a regularization strategy that anchors the policy update
+within a trusted region during the fine-tuning process.
+See Section III-E for details.
+C. Contrastive Latent Action Pretraining (CLAP)
+A fundamental challenge in learning from heterogeneous
+sources is the modality mismatch: robot trajectories provide
+explicit actions a, whereas human videos only exhibit visual
+state transitions ot →ot+H. We propose CLAP to unify
+these modalities into a shared, discrete latent action space Z,
+enabling the transfer of visual priors to physical control.
+1) Semantic Action Quantization (Act-VAE): To construct
+a physically grounded motion representation, we translate
+continuous kinematic trajectories into tokenized vocabularies.
+We model the action sequence at:t+H−1 ∈RH×Da using
+a Vector-Quantized Variational Autoencoder (VQ-VAE) [63],
+which we refer to as Act-VAE.
+The Act-VAE consists of a Transformer-based encoder Eϕ
+and a decoder Dψ. The encoder first embeds the action
+trajectory into action features, concatenates them with Nq
+learnable register tokens, and applies self-attention over the
+joint sequence. The updated register tokens form Nq continu-
+ous latents ze = [ze,1, . . . , ze,Nq]. These latents are discretized
+through a learnable action codebook Cact = {ek}K
+k=1. Each
+latent vector is replaced by its nearest codebook neighbor,
+yielding a quantized latent sequence zq and the corresponding
+discrete token sequence za. The objective minimizes the re-
+construction error together with the codebook and commitment
+Algorithm 1 Action VQ-VAE (Act-VAE) Training
+Require: Dataset of action trajectories Dact, Codebook size
+K, Commitment β
+1: Initialize encoder Eϕ, decoder Dψ, action codebook Cact =
+{ek}K
+k=1
+2: while not converged do
+3:
+Sample action batch at:t+H−1 ∼Dact
+4:
+ze ←Eϕ(at:t+H−1)
+▷Encode to continuous latents
+5:
+zq ←Q(ze; Cact)
+▷Nearest-neighbor lookup
+6:
+ˆat:t+H−1 ←Dψ(zq)
+▷Reconstruct trajectory
+7:
+Compute Loss:
+8:
+Lrec ←∥at:t+H−1 −ˆat:t+H−1∥2
+2
+9:
+Lcode ←∥sg(ze) −zq∥2
+2 + β∥ze −sg(zq)∥2
+2
+10:
+LAct ←Lrec + Lcode
+11:
+Update ϕ, ψ, Cact via gradient descent on LAct
+12: end while
+losses:
+LAct = ∥a −Dψ(zq)∥2
+2 + ∥sg(Eϕ(a)) −zq∥2
+2
++ β∥Eϕ(a) −sg(zq)∥2
+2,
+(2)
+where sg(·) denotes the stop-gradient operator. By optimizing
+the codebook size K and sequence length Nq, we achieve
+a representation that balances semantic compactness with
+the granularity required for precise manipulation, effectively
+creating a “physical language” for the VLM and a latent space
+for further alignment. The frozen Act-VAE encoder used below
+is denoted as Eact.
+2) Cross-Modal Dynamics Alignment (VD-VAE): To har-
+ness unlabeled video data, we introduce the Vision-Dynamic
+VQ-VAE (VD-VAE), which infers latent actions solely from
+visual evolution. The VD-VAE functions as an inverse dynam-
+ics model, mapping the transition between frames ot and ot+H
+to the pre-established action codebook Cact. In this module,
+
+===== PAGE 5 =====
+5
+Algorithm 2 Vision-Dynamic VQ-VAE (VD-VAE) Training
+Require: Robot data Drob = {(ot, ot+H, agt)}, human video
+data Dhum = {(ot, ot+H)}, frozen visual backbone V ,
+frozen Act-VAE encoder Eact and codebook Cact, learnable
+environment codebook Cenv, EMA rate µ
+1: Initialize inverse encoder Einv and forward decoder Dfwd
+2: Initialize teacher encoder Etea
+inv ←Einv
+3: while not converged do
+4:
+Sample a mixed mini-batch B from Drob ∪Dhum
+5:
+for all s ∈B do
+6:
+Extract transition (ot, ot+H) and source flag
+7:
+ft, ft+H ←V (ot), V (ot+H)
+8:
+o′
+t, o′
+t+H ←Augment(ot, ot+H)
+9:
+f ′
+t, f ′
+t+H ←V (o′
+t), V (o′
+t+H)
+10:
+zv,a, zv,i ←Einv(f ′
+t, f ′
+t+H)
+11:
+zq,a ←Q(zv,a; Cact)
+12:
+zq,i ←Q(zv,i; Cenv)
+13:
+ˆft+H ←Dfwd(ft, zq,a, zq,i)
+14:
+Lrec ←∥ft+H −ˆft+H∥2
+2
+15:
+LVQ ←VQ(zv,a; Cact) + VQ(zv,i; Cenv)
+16:
+Lreg ←∥zv,i∥1
+17:
+if s ∈Drob then
+18:
+Read
+agt
+from
+s
+and
+compute
+z+
+a
+←
+sg(Eact(agt))
+19:
+else
+20:
+(˜zv,a, ˜zv,i) ←Etea
+inv(ft, ft+H)
+21:
+z+
+a ←sg(˜zv,a)
+22:
+end if
+23:
+Lcon(s) ←SigLIP(zv,a, z+
+a )
+24:
+L(s) ←Lrec + λvqLVQ + λconLcon(s) + λregLreg
+25:
+end for
+26:
+Lbatch ←
+1
+|B|
+P
+s∈B L(s)
+27:
+Update Einv, Dfwd, Cenv by gradient descent on Lbatch
+28:
+Update Etea
+inv ←µEtea
+inv + (1 −µ)Einv with EMA
+29: end while
+robot transitions are written as Drob = {(ot, ot+H, agt)}, while
+human video transitions are written as Dhum = {(ot, ot+H)}.
+Let ft, ft+H be visual features extracted by a frozen back-
+bone (e.g., DINO [57]). An inverse dynamics encoder decom-
+poses the transition into two disentangled latent streams: an
+action-relevant latent sequence zv,a and an action-irrelevant
+latent sequence zv,i. Crucially, we enforce that zv,a aligns
+with the robot’s control space by quantizing it using the frozen
+Act-VAE codebook Cact. Conversely, zv,i captures nuisance
+variables (e.g., background changes) using a separate learnable
+environment codebook Cenv. A forward decoder reconstructs
+the clean future feature from the current feature and the
+quantized latents, i.e., ˆft+H = Dfwd(ft, zq,a, zq,i), providing
+dense supervision in addition to contrastive alignment.
+To semantically ground the visual latent to physical actions,
+we employ a contrastive loss to align the continuous vision-
+based latent sequence zv,a with a source-specific reference ac-
+tion latent sequence z+
+a . For robot samples, z+
+a = sg(Eact(agt))
+is the stop-gradient Act-VAE encoding of the ground-truth
+action chunk. For human videos, where no robot action
+Algorithm 3 CLAP-NTP Training
+Require: Robot Data Drob, Human Videos Dhum, Trained VD-
+VAE
+1: Initialize NTP policy ϕθ
+2: while not converged do
+3:
+Sample s = (I, ot, trajectory) ∼Drob ∪Dhum
+4:
+if s ∈Drob then
+5:
+Y ←[subtask, za(trajectory)]
+6:
+else
+▷Source is Human Video
+7:
+Y ←[subtask, ˆza(trajectory)]
+8:
+end if
+9:
+Predict logits ˆyℓ= ϕθ(y<ℓ, ot, I)
+10:
+LNTP ←−PLy
+ℓ=1 log Pθ(yℓ|y<ℓ, ot, I)
+11:
+Update θ to minimize LNTP
+12: end while
+label is available, we use an EMA teacher encoder on the
+clean transition to construct a stop-gradient pseudo-positive,
+z+
+a = sg(Etea
+inv(ft, ft+H)a), while the online branch receives
+augmented features. This avoids contrasting zv,a with itself
+from the same online pass. Following CLIP-style contrastive
+representation learning [64], we utilize the Sigmoid Loss for
+Language-Image Pre-training, or SigLIP [58], which optimizes
+pairwise binary classification. For a positive pair (zv,a, z+
+a )
+and a set of M negative reference latents {z−
+a,j}M
+j=1 from other
+samples in the batch, the loss is defined as:
+Lcontrastive = −log σ
+sp −b
+τc
+
+−
+M
+X
+j=1
+log
+
+1 −σ
+sn,j −b
+τc
+
+,
+(3)
+where sp = sim(zv,a, z+
+a ) and sn,j = sim(zv,a, z−
+a,j) are
+cosine similarities, τc is the contrastive temperature, and b is
+a learnable bias.
+Moreover, to enforce the desired disentanglement and avoid
+unnecessary usage of action-irrelevant latents, we apply L1
+regularization to the action-irrelevant latent sequence, Lreg =
+∥zv,i∥1, encouraging sparsity and forcing it to capture only
+nuisance information and leave most action-relevant infor-
+mation in zv,a. The total objective combines dynamics re-
+construction, VQ constraints, contrastive alignment and L1
+regularization of the action-irrelevant latent:
+LVD =Lrec(ˆft+H) + λvqLVQ
++ λconLcontrastive + λreg∥zv,i∥1,
+(4)
+where Lrec
+= ∥ft+H −ˆft+H∥2
+2, and λreg, λvq, and λcon
+are hyperparameters weighting the regularization, VQ, and
+contrastive terms, respectively. After VD-VAE training, we
+denote the discrete pseudo action tokens inferred from human
+video transitions as ˆza.
+D. CLAP-NTP: Token-Space Policy Learning
+Building on the aligned latent space, we first train CLAP-
+NTP as a token-space generalist policy.
+
+===== PAGE 6 =====
+6
+Policy
+Model
+Action 
+Expert
+》
+》
+Reference
+Model
+ℒ!"
+ℒ#$
+𝐾
+𝑉
+Fig. 4: Knowledge Matching algorithm. Gray blocks rep-
+resent the input observations and instructions. Blue blocks
+denote the subtask and discrete action tokens, where LKL
+constrains the policy distribution. Green blocks represent the
+continuous actions, trained via LRF.
+CLAP-NTP exploits the reasoning capabilities of VLMs
+to decompose complex instructions I into intermediate sub-
+goals and discrete action tokens. Modeled as an autoregressive
+generator with parameters θ, it predicts the joint sequence
+of sub-tasks and action indices Y = [ysub, za] from current
+observations. We train CLAP-NTP via next-token prediction:
+LNTP = −
+Ly
+X
+ℓ=1
+log Pθ(yℓ|y<ℓ, ot, I).
+(5)
+Here ℓindexes the autoregressive token position in the VLM
+output sequence of length Ly. This stage unifies robot demon-
+strations (using ground-truth za) and human videos (using
+VD-VAE pseudo action tokens ˆza) for training. Since the
+NTP model shares the training paradigm of the base VLM, it
+preserves the model’s reasoning faculties, enabling direct robot
+control with robust instruction following. After this stage, the
+trained NTP policy is denoted as ϕpre for post-training.
+E. Efficient Post-Training Strategy
+After CLAP-NTP has been trained in token space, we
+use two complementary post-training components for target-
+domain adaptation. CLAP-RF denotes the Rectified Flow
+action head that converts NTP representations into low-latency
+continuous action chunks, while Knowledge Matching (KM)
+regularizes the trainable token policy against a frozen NTP
+reference. We first define these two components and then
+summarize the post-training procedure in Algorithm 4.
+1) CLAP-RF: Flow Matching Head for Fast Inference:
+Autoregressive token decoding is inherently slow for deploy-
+ment. CLAP-RF takes the CLAP-NTP as an understanding
+backbone and attaches a Diffusion Transformer (DiT)-based
+RF action head [65], denoted f a, to predict continuous action
+chunks. The RF action head queries the NTP backbone’s
+internal representations by attending to its key-value cache
+via cross-attention. The RF action head is trained by mini-
+mizing a rectified flow loss on robot trajectories. For a given
+robot action chunk at:t+H−1, we first create a noised version
+aρ
+t:t+H−1 = ρat:t+H−1 + (1 −ρ)ϵ, where ϵ ∼N(0, I) and
+ρ ∈[0, 1] is the flow time. The model is trained to predict the
+vector field v = at:t+H−1 −ϵ. The loss function is defined
+as:
+LRF = EDrob,ρ,ϵ
+h(at:t+H−1 −ϵ) −f a(aρ
+t:t+H−1, ρ, ht)
+2i
+(6)
+where ht is the RF conditioning representation obtained
+from the NTP backbone. Thus, CLAP-RF receives continuous
+supervision from robot trajectories and benefits from human-
+video pretraining through the NTP representations that condi-
+tion the RF head.
+2) Knowledge Matching: Regularized Adaptation: Fine-
+tuning pretrained policies on specific embodiments often leads
+to catastrophic forgetting of the pretrained priors. We address
+this via Knowledge Matching (KM), a regularization strategy
+that anchors the token-policy update within a trusted region.
+KM operates on the autoregressive token policy that condi-
+tions the RF action head. Let ϕref denote a frozen reference
+NTP policy and ϕpolicy denote the trainable token-policy branch
+used during RF post-training. The token-level conditioning
+context is defined as cℓ
+=
+(y<ℓ, ot, I). KM is applied
+to autoregressive distributions over discrete tokens using a
+reverse KL term:
+LKL =
+Ly
+X
+ℓ=1
+DKL
+ pϕpolicy(yℓ| cℓ) ∥pϕref(yℓ| cℓ)
+
+,
+Lpost = LRF + αLKL.
+(7)
+where yℓis a discrete token at autoregressive position ℓand
+LRF trains the CLAP-RF head on continuous robot action
+chunks.
+This regularization allows the RF controller to adapt to the
+target embodiment while keeping the trainable token policy
+close to the trusted NTP reference.
+3) Post-Training Procedure: Algorithm 4 summarizes the
+complete target-domain procedure. Starting from the pre-
+trained CLAP-NTP policy ϕpre, Stage 1 optionally adapts the
+NTP policy on all tokenized target data, including robot action
+tokens from Dnew
+rob and human pseudo action tokens from Dnew
+hum.
+The adapted NTP policy is then frozen as ϕref. In Stage 2, we
+initialize the trainable policy branch ϕpolicy and the RF action
+head from this adapted model, and train them only on robot
+trajectories because continuous action chunks are available
+only in Dnew
+rob . Human videos influence CLAP-RF through the
+token-space NTP adaptation and the KM reference used during
+robot-only RF post-training.
+IV. MODEL TRAINING DETAILS
+In this section, we describe the dataset construction and
+training schedule for the proposed CLAP framework. Detailed
+model parameters are provided in Table IX.
+A. Dataset
+To align with our objective of learning generalist manip-
+ulation policies from heterogeneous sources, we pretrain our
+latent action model using a combination of labeled bimanual
+robotic data and unlabeled human video demonstrations. The
+composite dataset comprises the following sources:
+
+===== PAGE 7 =====
+7
+Algorithm 4 Post-training with RF and Knowledge Matching
+Require: Pretrained NTP policy ϕpre, target robot data Dnew
+rob ,
+target human videos Dnew
+hum, trained Act-VAE and VD-VAE,
+KM weight α
+1: Initialize ϕNTP ←ϕpre
+Stage 1: all-data NTP adaptation
+2: while NTP adaptation not converged do
+3:
+Sample s ∼Dnew
+rob ∪Dnew
+hum
+4:
+if s ∈Dnew
+rob then
+5:
+Build target tokens Y from Act-VAE robot action
+tokens
+6:
+else
+7:
+Build target tokens Y from VD-VAE pseudo action
+tokens
+8:
+end if
+9:
+Update ϕNTP by minimizing LNTP(Y )
+10: end while
+11: Set frozen reference ϕref ←ϕNTP
+12: Initialize RF action head f a and trainable policy branch
+ϕpolicy ←ϕNTP
+Stage 2: robot-only RF post-training with KM
+13: while RF post-training not converged do
+14:
+Sample (I, ot, at:t+H−1) ∼Dnew
+rob
+15:
+Compute RF conditioning representation ht from
+ϕpolicy(ot, I)
+16:
+Compute LRF on continuous robot chunk at:t+H−1
+17:
+Build robot action-token context cℓ= (y<ℓ, ot, I)
+18:
+Compute reverse KL regularization LKL
+19:
+Lpost ←LRF + αLKL
+20:
+Update f a and ϕpolicy to minimize Lpost
+21: end while
+1) Curated AgiBot World Beta [59]: This large-scale
+robotic manipulation dataset contains approximately 1
+million trajectories (∼3,000 hours) spanning 217 tasks
+and 106 scenes (e.g., domestic, industrial, and retail
+environments). Data were collected using AgiBot G1
+dual-arm humanoids equipped with 7-DoF arms and
+dexterous end-effectors. For our experiments, we use
+a curated subset to ensure high-quality supervision.
+We filter out mobile manipulation, cooperative tasks,
+dexterous hand data, and tasks with semantic ambiguity.
+The resulting subset comprises approximately 100,000
+episodes, totaling 1,500 hours of high-quality bimanual
+interaction data.
+2) Self-collected Astribot S1 Data: To facilitate cross-
+embodiment adaptation, we introduce a dataset collected
+on the Astribot S1 platform [66]. The robot features two
+7-DoF arms with parallel-jaw grippers and a perception
+suite consisting of an Orbbec Femto Bolt head camera,
+an Orbbec Gemini 335 torso camera, and wrist-mounted
+Intel Realsense D401 cameras. Expert demonstrations
+were acquired via VR teleoperation (Meta Quest 3S),
+with the head camera actively tracking the workspace
+center. We focus primarily on pick-and-place tasks in-
+volving 90 distinct objects. This dataset contains 27,000
+Head camera
+(Orbbec Femto Bolt)
+Wrist camera
+(Intel Realsense D401)
+7-DoF arms with grippers
+Robot Configuration
+VR Teleoperation
+Fig. 5: Experimental setup. The Robot Configuration (top)
+features the Astribot S1 with dual 7-DoF arms and a multi-
+camera perception suite. VR Teleoperation (bottom) is per-
+formed using a Meta Quest 3S headset to collect human
+demonstration data.
+episodes, amounting to approximately 50 hours of data
+recorded at 30 Hz.
+3) DROID [8]: DROID is a large-scale in-the-wild robot
+manipulation dataset containing approximately 76,000
+demonstration trajectories, totaling 350 hours of video
+data collected across diverse real-world environments.
+We incorporate DROID to improve single-arm manipu-
+lation performance with additional robot supervision. To
+fit our unified dual-arm action format, we treat DROID
+trajectories as right-arm demonstrations and zero-pad the
+left-arm action channels.
+4) Ego4D [67] Human Data: To use large-scale human
+priors, we employ Ego4D, a massive egocentric video
+dataset covering diverse daily activities. Specifically,
+we use the subset provided by UniVLA [10], which
+consists of 90 hours of curated trajectories relevant to
+manipulation tasks.
+B. Cross-Modal Alignment via CLAP
+For the Act-VAE, we adopt the Transformer-based encoder-
+decoder architecture from [68], which is optimized for mod-
+eling long-horizon kinematic sequences. A critical aspect of
+this stage is to balance token expressiveness with the learning
+difficulty of the downstream VLM. Larger Nq or K improves
+reconstruction fidelity by increasing latent capacity, but it also
+increases the token sequence length or vocabulary size that the
+policy must model. We therefore use a rate-distortion analysis
+over Nq and K, with the rate r defined as:
+r =
+Nq · log2(K)
+Na · Da · log2(
+R
+√
+MSE),
+(8)
+
+===== PAGE 8 =====
+8
+0.050
+0.075
+0.100
+0.125
+0.150
+0.175
+0.200
+0.225
+Compression Rate (r)
+15
+20
+25
+30
+35
+40
+45
+PSNR (dB)
+Selected param.
+FAST tokenizer
+Fig. 6: Rate-distortion analysis of Act-VAE. We select
+hyperparameters near the elbow point to balance semantic
+compactness with reconstruction fidelity.
+where Nq is the latent sequence length, K is the codebook
+size, Na is the action chunk size, Da is the action dimen-
+sion, and R represents the dynamic range of the normalized
+action data. The numerator measures the capacity of the
+discrete latent sequence, while the denominator estimates the
+information needed to represent the normalized continuous
+action chunk at the achieved reconstruction precision. Since
+actions are normalized to [−1, 1],
+√
+MSE approximates this
+precision. We also report PSNR = 20 log10(R/
+√
+MSE) as the
+reconstruction-fidelity metric. We analyze PSNR against vary-
+ing compression levels (see Fig. 6) and select hyperparameters
+near the elbow point to preserve high reconstruction fidelity
+while keeping the latent representation compact enough for
+token-space policy learning.
+For VD-VAE training, we use two architectural choices to
+ensure robust dynamics learning. First, to mitigate the noise
+inherent in pixel-space supervision [10], [69], we compute
+losses in feature space using patch-level embeddings extracted
+from DINOv3 [57]. Second, we employ a factorized attention
+mechanism: the inverse-dynamics encoder uses spatiotemporal
+attention to capture motion cues, while the forward-dynamics
+decoder uses spatial attention. This design significantly re-
+duces the GPU memory footprint while preserving essential
+spatiotemporal relationships. We also use [70] for a memory-
+efficient distributed contrastive loss implementation.
+C. Policy Pretraining and Post-training
+We implement our VLA models using Qwen3VL-4B [71]
+as the foundational VLM, selected for its strong embodied
+reasoning capabilities. The policy training schedule follows the
+method in Section III: CLAP-NTP is trained in token space
+during pretraining, while RF and KM are used only during
+post-training and target-domain adaptation.
+1) CLAP-NTP Training: For the high-level planner, we
+adapt the Qwen3VL-4B tokenizer by initializing new tokens
+corresponding to the discrete action codebook C derived from
+Act-VAE. The model is trained using a next-token prediction
+objective on robot action tokens and VD-VAE pseudo tokens
+from human videos for a total of 150,000 steps. We use a peak
+learning rate of 5 × 10−5 with a linear warmup over the first
+1,000 steps. To ensure stable convergence, we apply a cosine
+decay schedule after 100,000 steps, reducing the learning rate
+to a minimum of 5 × 10−6.
+2) CLAP-RF and KM Post-training:
+For target-domain
+post-training, we use the two-stage procedure in Algorithm 4.
+In Stage 1, we fine-tune the NTP policy on all available tok-
+enized target data, including robot tokens and human pseudo
+tokens, for three epochs over the dataset. This stage uses a
+learning rate of 2×10−5 with a 1,000-step linear warmup and
+no learning-rate decay.
+The continuous action expert is trained using the Rectified
+Flow objective [11]. To improve the model’s robustness to
+noise, we sample the time step t from the distribution p(t) =
+Beta( s−t
+s ; 1.5, 1.0), following the methodology introduced in
+π0 [37]. In Stage 2, we initialize the RF action head from
+the tuned NTP backbone and train the action expert with KM
+using only robot trajectories for five epochs over the dataset.
+The action expert uses a learning rate of 1 × 10−4 with a
+1,000-step linear warmup and cosine decay.
+To achieve faster inference, we make the action expert
+shallower than the VLM. Therefore, it cannot use all hidden
+features from the VLM. We found that the depth of feature ex-
+traction significantly affects performance. Empirically, fusing
+features from the early and middle layers of the VLM yields
+better results. This multi-scale feature aggregation allows the
+diffusion transformer to use both low-level visual details and
+mid-level semantic abstractions for precise action generation.
+V. EVALUATION
+In this section, we present an extensive evaluation of the
+proposed CLAP framework. We validate our method through
+experiments on both a real-world robotic platform and sim-
+ulation environments using LIBERO [72]. Beyond standard
+performance metrics, we analyze the learned latent action
+space to quantify the alignment between visual dynamics
+and physical control. Our evaluation addresses the following
+research questions:
+1) Performance & Precision: Can CLAP-NTP and CLAP-
+RF effectively execute complex bimanual manipulation
+tasks, and does the hierarchical design enable high-
+precision control? We study this in Section V-A.
+2) Generalizability: Does the model robustly adapt to
+unseen objects, varying environmental conditions, and
+new embodiments? We evaluate this in Sections V-A
+and V-B.
+3) Cross-Modal Alignment: How effective is the learned
+latent space in bridging the domain gap between hu-
+man videos and robotic data? We analyze this in Sec-
+tion V-A5.
+A. Real-world Robot Deployment
+1) Experimental Setup: We conducted real-world experi-
+ments on the Astribot S1, a high-precision dual-arm robot.
+To match the pretraining data distribution, we lock the robot
+chassis and torso and control only the 14-DoF dual arms
+
+===== PAGE 9 =====
+9
+Pick and Place
+Pack the Doll
+Fold T-shirt
+Make Bouquets
+Fig. 7: Visualization of the real-world deployment task processes.
+TABLE I: Detailed performance of CLAP and baselines in real-world tasks under the original setup. The best and
+second-best results within each category are highlighted.
+Method
+Pick and Place
+PnP (OOD)
+Pack the Doll
+Fold T-shirt
+Make Bouquets
+Task Mean
+Pick (%) Place (%) Pick (%) Place (%) P&P (%) Close (%)
+Succ. (%)
+C-1 (%) C-2 (%)
+π0 [37]
+85
+75
+65
+60
+80
+60
+40
+40
+30
+54.0
+π0.5 [38]
+90
+80
+80
+75
+80
+60
+50
+30
+40
+60.0
+UniVLA [10]
+75
+60
+65
+50
+70
+30
+10
+30
+20
+35.0
+CLAP-NTP
+90
+80
+85
+85
+80
+70
+30
+30
+40
+58.7
+CLAP-RF
+95
+85
+85
+70
+90
+70
+40
+40
+50
+62.7
+and grippers. The policy receives RGB streams from a head-
+mounted camera centered on the workspace and two wrist-
+mounted cameras.
+2) Task Design: We designed five tasks to evaluate capa-
+bilities ranging from basic manipulation to semantic reasoning
+and deformable-object interaction. Fig. 7 shows the task pro-
+cedures.
+1) Pick and Place (Seen): Evaluates basic manipulation.
+We use 10 objects seen during pretraining and test each
+object in two trials, giving 20 episodes per model.
+2) Pick and Place (OOD): Tests generalization to novel
+geometries and textures. We use 10 objects unseen in
+the training data and run 20 trials per model.
+3) Pack the Doll: Requires long-horizon, multi-stage plan-
+ning: picking up a doll, placing it precisely into a box,
+and closing the lid. This task tests precise geometric
+reasoning. We collected 200 teleoperated demonstrations
+for fine-tuning and evaluated each model over 10 trials.
+4) Fold
+T-shirt: Tests bimanual manipulation of de-
+formable objects. Starting from a flat T-shirt, the robot
+must execute a folding sequence with coordinated dual-
+arm motion. We use 200 fine-tuning demonstrations and
+evaluate each policy over 10 trials.
+5) Make Bouquets: Tests instruction following and se-
+mantic grounding. The scene contains five wool flowers;
+the robot must identify two flowers specified by natural
+language and place them in a vase. We collected 100
+demonstrations for each of two flower combinations and
+evaluated each model 10 times per combination.
+3) Baselines: We compare our approach with three strong
+baselines:
+• π0 and π0.5 [37], [38]: State-of-the-art generalist VLA
+policies trained on large public and private robotics
+datasets. They serve as strong references for large-scale
+transfer learning.
+• UniVLA [10]: A recent VLA approach that also uses
+latent action tokens. This comparison helps isolate the
+benefits of our CLAP alignment and hierarchical control
+
+===== PAGE 10 =====
+10
+Human Demonstration Capturing
+Robot Execution
+10
+5
+10
+10
+45
+0
+10
+20
+30
+40
+50
+PnP (OOD)
+𝜋!.#
+UniVLA
+CLAP-RF
+Finetune with
+human video
+75
+50
+55
+70
+85
+40
+50
+60
+70
+80
+90
+Make Bouquets (OOD)
+𝜋!.#
+UniVLA
+CLAP-RF
+Fig. 8: Comparison of generalization capability when incorporating human egocentric video data.
+TABLE II: Results on robustness evaluations under environmental perturbations. The best and second-best results within
+each category are highlighted.
+Method
+Original Setting
+Background Change
+Lighting Variation
+Novel Object
+Mean
+P&P (%) Close (%) P&P (%) Close (%) P&P (%) Close (%) P&P (%) Close (%)
+π0 [37]
+80
+60
+70
+50
+60
+40
+60
+50
+46.7
+π0.5 [38]
+80
+60
+80
+60
+80
+50
+70
+60
+56.7
+UniVLA [10]
+70
+30
+60
+20
+50
+10
+50
+20
+16.7
+CLAP-RF
+90
+70
+80
+70
+70
+70
+80
+70
+70.0
+Original Setting
+Background Change
+Novel Object
+Lighting Variation
+Fig. 9: Setup for generalizability evaluations.
+strategy.
+4) Results and Analysis: Table I summarizes the real-world
+evaluation. The results support four observations.
+CLAP-RF achieves strong performance on the platform.
+CLAP-RF achieves the highest mean success rate among the
+evaluated methods at 62.7%, compared with π0 at 54.0%
+and π0.5 at 60.0%. This result supports the effectiveness of
+the post-trained RF controller under the evaluated real-world
+setting. Since CLAP differs from UniVLA in multiple aspects,
+including backbone, data recipe, alignment objective, and post-
+training strategy, we use the component ablations in Table VII
+to isolate these factors rather than attributing the performance
+gap to a single component.
+Precision and planning across variants. Across the two
+variants, CLAP-RF performs better on tasks that require high
+precision. In Pack the Doll, CLAP-RF improves the pick-
+and-place stage from 80% to 90% and matches CLAP-NTP
+on the tight-tolerance “Close” sub-task at 70%. In Fold T-
+shirt, which requires smooth bimanual coordination, CLAP-
+RF raises success from 30% to 40%. This supports our
+hypothesis that the discrete NTP model benefits high-level
+perception and reasoning, while the RF expert is better suited
+to complex dynamics and fine-grained motor control due to
+the continuous representation formulation.
+Robust generalization to OOD objects. On Pick and Place
+(OOD), CLAP-NTP maintains high performance, with 85%
+success for both pick and place. This matches or exceeds
+its performance on seen objects, indicating that the visual
+encoder and aligned latent space learn generalized manipu-
+lability rather than memorizing object instances. CLAP-RF
+drops slightly on OOD placement to 70%, suggesting that
+the continuous diffusion policy is more sensitive to visual
+distribution shifts than the discrete token predictor, while still
+remaining competitive.
+Semantic understanding and instruction following. Make
+Bouquets stresses language-conditioned object selection. Both
+CLAP-NTP and CLAP-RF perform strongly, reaching up to
+50% success and matching or exceeding the large-scale π0 and
+π0.5 baselines.
+Overall, the real-world experiments show that CLAP adapts
+VLMs to physical robot control, with CLAP-NTP excelling in
+instruction following and CLAP-RF providing the precision
+needed for complex, contact-rich manipulation.
+5) Generalization via Human Demonstrations: We further
+evaluate whether the shared latent action space in Section III-C
+enables the model to use human video demonstrations for
+object generalization.
+Experimental Design. We use Make Bouquets (OOD) and
+PnP (OOD) as object-generalization testbeds. For Make Bou-
+quets, the initial teleoperation dataset contains only two flower
+
+===== PAGE 11 =====
+11
+TABLE III: Failure-case analysis on OOD real-world tasks.
+We categorize failed trials into three mutually exclusive failure
+modes over 20 attempts per setting: attempt failure, where the
+policy attempts to grasp an incorrect target object; pick failure,
+where the correct object is targeted but the grasp or lift is
+unsuccessful; and place failure, where the object is picked but
+not placed at the specified goal location.
+Setting
+PnP (OOD)
+Make Bouquets (OOD)
+Attempt
+Pick
+Place
+Attempt
+Pick
+Place
+w/ Human Data
+1
+2
+0
+0
+2
+9
+w/o Human Data
+4
+2
+0
+8
+3
+7
+combinations, such as “red heart and yellow sunflower.” Pre-
+liminary experiments showed that policies trained only on
+these data overfit severely and failed to generalize to novel
+combinations such as “orange tulip and red rose.”
+Human-video collection follows the same egocentric proto-
+col across the OOD tasks. We used a head-mounted GoPro 9
+to capture video from a viewpoint close to the robot head
+camera. During collection, the human operator used their
+hands to mimic the robot gripper, performing simple open
+and close motions while avoiding complex grasping dynamics.
+Fig. 8 shows examples. For Make Bouquets, we collected
+three additional settings with 100 episodes each, covering all
+five seen flower types. For PnP (OOD), we used the same
+protocol and collected 20 human-video trajectories for each
+OOD object.1
+Comparative Analysis. We compare CLAP-RF with π0.5 and
+UniVLA.
+• π0.5: Trained only on teleoperation data.
+• UniVLA: For a fair comparison, we trained UniVLA
+with its provided visual tokenizer and then fine-tuned it
+with an additional action head using teleoperation data.
+• CLAP-RF: Evaluated before and after fine-tuning with
+pseudo-labeled human videos generated by our VD-VAE.
+Results. Fig. 8 presents the results. On Make Bouquets (OOD),
+models trained only on teleoperation data overfit to the training
+distribution, and all models stayed at or below 10% success
+on unseen flower collections.
+After fine-tuning with human data, CLAP-RF improves
+from 10% to 45% on Make Bouquets (OOD) and from 70% to
+85% on PnP (OOD). In contrast, UniVLA improves only from
+5% to 10% on Make Bouquets (OOD) and from 50% to 55%
+on PnP (OOD). These results support our claim that CLAP’s
+alignment mechanism enables effective transfer of semantic
+object knowledge from unlabeled human videos to robotic
+control.
+Failure-Case Analysis. To separate semantic grounding errors
+from execution failures, we categorize unsuccessful OOD trials
+in Table III for settings with and without human video data. All
+counts are computed over 20 attempts per setting. An attempt
+failure means that the policy initiates a grasp toward the
+wrong object, directly reflecting object-selection or language-
+grounding errors. A pick failure means that the policy selects
+1Video data collected for this study were fully anonymized and contained
+no personally identifiable information.
+TABLE IV: Results on the LIBERO benchmark. We
+compare success rates (%) across different evaluation suites.
+The table is categorized into methods that train separate
+models for each suite (top) and generalist models trained once
+across all suites (bottom). The best and second-best results
+in each column are highlighted. Note that ∗LAPA results are
+reproduced by UniVLA authors using Prismatic-7B, and π0
+(PaliGemma) is initialized from PaliGemma-3B [73] without
+VLA pretraining.
+Method
+Spatial
+Object
+Goal
+Long
+Average
+Separate models for each task suite
+LAPA∗[9]
+73.8
+74.6
+58.8
+55.4
+65.7
+Diffusion Policy [14]
+78.3
+92.5
+68.3
+50.5
+72.4
+Octo [74]
+78.9
+85.7
+84.6
+51.1
+75.1
+OpenVLA (7B) [5]
+84.7
+88.4
+79.2
+53.7
+76.5
+UniVLA [10]
+96.5
+96.8
+95.6
+92.0
+95.2
+OpenVLA-OFT [41]
+97.6
+98.4
+97.9
+94.5
+97.1
+Generalist models trained once
+SmolVLA [75]
+93.0
+94.0
+91.0
+77.0
+88.8
+FLOWER [76]
+97.5
+99.1
+96.1
+94.9
+96.9
+π0 (PaliGemma) [37]
+87.0
+63.0
+89.0
+48.0
+71.8
+π0 [37]
+90.0
+86.0
+95.0
+73.0
+86.0
+π0.5 [38]
+98.8
+98.2
+98.0
+92.4
+96.9
+X-VLA [48]
+98.2
+98.6
+97.8
+97.6
+98.1
+CLAP-RF
+98.6
+99.2
+98.0
+93.0
+97.2
+the intended target but fails to stably grasp or lift it. A place
+failure occurs after a successful pick when the object is not
+delivered to the specified goal region.
+The failure distribution confirms that human video data
+provides effective semantic supervision. With human data,
+attempt failures decrease from 4 to 1 on OOD Pick-and-Place
+and from 8 to 0 on OOD Make Bouquets. These reductions
+indicate that human videos help the policy choose the correct
+object and follow the instruction across unseen object and task
+combinations.
+6) Robustness Evaluation: To evaluate robustness under
+environmental perturbations, we conducted stress tests with
+three variations shown in Fig. 9: Background Change, which
+introduces a patterned tablecloth; Lighting Variation, which
+changes illumination intensity and color temperature; and
+Novel Object, which replaces the target with an unseen
+instance or introduces distractors.
+As shown in Table II, CLAP-RF achieves the best ro-
+bustness among the evaluated methods, with a mean success
+rate of 70.0%, compared with π0.5 at 56.7% and UniVLA
+at 16.7%. CLAP-RF remains strong under background shifts,
+reaching 80% on Pick & Place and 70% on Close. Together
+with the ablation in Table VII, this robustness is consistent
+with CLAP reducing sensitivity to action-irrelevant visual
+factors. UniVLA is more brittle to these shifts, likely because
+its reconstruction-based objective encodes extraneous visual
+details. Although π0.5 remains competitive under lighting
+variation due to its large-scale pretraining, CLAP-RF performs
+better on the precision-heavy Close task, with 70% success
+versus 50%.
+
+===== PAGE 12 =====
+12
+B. Simulation Results
+Experiment Setup. To evaluate our method in a controlled
+environment, we use the LIBERO benchmark [72], a standard
+suite designed for lifelong robotic learning. Our evaluation fo-
+cuses on supervised fine-tuning, where policies are trained via
+behavioral cloning on expert demonstrations. The benchmark
+consists of four distinct task suites, each containing 10 tasks
+with 50 human-teleoperated demonstrations per task:
+• LIBERO-Spatial: Tests the agent’s ability to reason
+about spatial relationships and geometric configurations,
+such as precise placement.
+• LIBERO-Object: Evaluates generalization across differ-
+ent object instances while maintaining consistent scene
+layouts.
+• LIBERO-Goal: Challenges the agent with diverse task
+objectives within consistent layouts, assessing goal-
+conditioned adaptability.
+• LIBERO-Long: Focuses on long-horizon, multi-stage
+manipulation tasks, requiring complex planning across
+heterogeneous objects and layouts.
+Following the protocol established in OpenVLA [5], we
+filter out failure cases from the training data. We adopt a
+challenging generalist training setting: rather than training
+separate experts for each suite, we train a single CLAP-RF
+policy across all four task subsets simultaneously. The model
+is fine-tuned for 30k steps with a batch size of 128. We
+employ our proposed Knowledge Matching algorithm during
+fine-tuning to preserve pretrained priors. We report the average
+success rate over 500 trials per task suite, with 50 trials per
+task.
+Baselines. We compare our approach against state-of-the-art
+methods, categorized into two groups based on their training
+paradigms as shown in Table III:
+• Specialist Models: These methods train separate models
+for each task suite, simplifying the learning problem.
+These baselines include LAPA [9], Diffusion Policy [14],
+Octo [74], OpenVLA [5], UniVLA [10], and OpenVLA-
+OFT [41].
+• Generalist Models: These methods, like ours, train a
+single model across all suites, requiring the policy to
+handle diverse distributions simultaneously. These base-
+lines include the PaliGemma-based π0 [37], the full
+π0 [37], π0.5 [38], SmolVLA [75], X-VLA [48], and
+FLOWER [76].
+Results. The quantitative results on the LIBERO benchmark
+are summarized in Table IV. CLAP-RF achieves a strong
+average success rate of 97.2% in the generalist setting, out-
+performing SmolVLA at 88.8%, π0 at 86.0%, π0.5 at 96.9%,
+and FLOWER at 96.9%, while remaining close to X-VLA at
+98.1%. It also slightly exceeds the specialist OpenVLA-OFT
+baseline at 97.1% despite using a single policy across all four
+suites.
+C. Ablation Study
+We conduct ablation studies to validate the architectural
+decisions of our framework, focusing on the quantization
+TABLE V: Rate-distortion analysis of Act-VAE. We evaluate
+the trade-off between semantic compactness and reconstruc-
+tion fidelity by varying the latent sequence length (Nq) and
+codebook size (K). The selected configuration (highlighted)
+balances high reconstruction quality (PSNR) with a compact
+token rate (r).
+Nq
+K
+MSE
+PSNR (dB)
+Rate (r)
+12
+128
+0.0023
+32.40
+0.070
+12
+256
+0.0010
+36.02
+0.072
+12
+512
+0.0007
+37.57
+0.077
+36
+256
+0.0002
+43.01
+0.175
+20
+256
+0.0003
+41.25
+0.104
+16
+256
+0.0004
+40.00
+0.086
+8
+256
+0.0041
+29.89
+0.058
+4
+256
+0.1022
+15.93
+0.054
+TABLE VI: Post-training strategy ablation across simula-
+tion and real-world tasks. We evaluate feature selection and
+fine-tuning strategies on the four LIBERO suites and Pick-
+and-Place (PnP) tasks under ID and OOD object settings.
+Configuration
+LIBERO
+PnP
+Spatial
+Object
+Goal
+Long
+Avg.
+ID
+OOD
+Feature Level Analysis
+w/ high-level feats
+94.8
+97.5
+91.3
+89.9
+93.4
+70
+65
+w/ low-level feats
+97.2
+98.8
+97.6
+90.6
+96.1
+75
+60
+Fine-tuning Strategy Analysis
+w/ KI [77]
+90.4
+97.4
+85.6
+79.8
+88.3
+75
+65
+ft. VLM
+97.9
+99.2
+97.6
+90.0
+96.2
+85
+60
+Full Configuration
+low+mid-level feats + KM
+98.6
+99.2
+98.0
+93.0
+97.2
+85
+70
+dynamics of Act-VAE and the structural strategies of the
+CLAP-RF policy.
+1) Rate-Distortion Trade-off in Act-VAE: We analyze the
+trade-off between semantic compactness and reconstruction
+fidelity through an information-theoretic lens. The information
+capacity of a latent trajectory is governed by the product
+Nq · log(K). Reconstruction quality measured by PSNR is
+positively correlated with this capacity, as high-frequency
+motion details, which typically contain greater information
+density, require a larger latent space to be accurately preserved.
+As detailed in Table V, increasing Nq or K naturally
+improves PSNR but also increases the latent token capacity
+that the downstream VLM must model. For the policy, learn-
+ing difficulty scales with both the sequence length Nq and
+vocabulary size K. Excessive sequence lengths or vocabulary
+sizes dilute attention and hinder the model’s ability to capture
+semantic dependencies. Consequently, we aim to maximize
+fidelity without sacrificing the compactness required for effec-
+tive VLM training. We identify the highlighted configuration
+Nq = 16, K = 256 as the optimal “elbow point”. This
+setting preserves high reconstruction fidelity while keeping the
+latent representation compact enough for token-space policy
+learning.
+2) Backbone and Data Recipe: We perform an ablation
+study on CLAP-NTP in Table VII to validate the effects
+of the model backbone, data recipe, pseudo-positive labels,
+contrastive alignment, and human video data.
+
+===== PAGE 13 =====
+13
+TABLE VII: Ablation study on cross-modal alignment,
+backbone, and data sources. We evaluate the impact of
+the backbone, data recipe, pseudo-positive labels, contrastive
+alignment loss, and inclusion of human video data on in-
+distribution (ID) and out-of-distribution (OOD) generalization.
+Performance is reported as success rates (%) on real-world
+tasks.
+Method
+Pick & Place
+Make Bouquets
+Average
+ID
+OOD
+ID
+OOD
+Backbone and Data Recipe
+UniVLA baseline [10]
+60
+50
+25
+10
+36.3
++ Qwen3VL
+65 (+5)
+60 (+10)
+25 (+0)
+10 (+0)
+40.0 (+3.7)
++ our data recipe
+75 (+15)
+65 (+15)
+30 (+5)
+10 (+0)
+45.8 (+9.5)
+Contrastive Learning and Human Data
+CLAP-NTP (Full)
+90
+80
+35
+35
+60.0
+w/o Pseudo Positive Label
+85 (-5)
+80 (0)
+35 (0)
+35 (0)
+58.8 (-1.2)
+w/o Contrastive
+85 (-5)
+75 (-5)
+35 (0)
+20 (-15)
+53.8 (-6.2)
+w/o Human Data
+80 (-10)
+75 (-5)
+30 (-5)
+5 (-30)
+47.5 (-12.5)
+w/ Prismatic-7B [1]
+90 (0)
+75 (-5)
+35 (0)
+25 (-10)
+56.3 (-3.7)
+Backbone and training recipe. We first isolate the effect of
+the model backbone and data recipe. Replacing the UniVLA-
+style Prismatic-7B backbone with Qwen3VL improves the
+average success rate from 36.3% to 40.0%, even though
+Qwen3VL is smaller, suggesting that the newer backbone
+contributes stronger visual-language representations. Incorpo-
+rating our data recipe further improves the average success
+rate to 45.8%, with clear gains on Pick-and-Place ID/OOD
+settings. This indicates that the richer and more diverse
+training mixture improves object-level and OOD manipulation
+robustness. Nevertheless, these factors alone do not explain
+the full performance: CLAP-NTP (Full) reaches 60.0%, and
+CLAP-NTP with the UniVLA-style Prismatic-7B backbone
+still achieves 56.3%. These results show that modern back-
+bones and diverse data are beneficial, but the proposed CLAP
+training mechanism remains the primary source of the remain-
+ing improvement.
+3) Contrastive Learning and Human Data: To validate the
+effects of the pseudo-positive labels, contrastive alignment,
+and human video data, we also perform an ablation study on
+the key components of our method.
+Contrastive alignment. Removing the pseudo-positive labels
+causes a modest drop from 60.0% to 58.8%, indicating that
+the EMA-based target provides useful alignment supervision
+for human-video transitions. Removing the full contrastive
+objective causes a larger degradation to 53.8%, especially on
+Make Bouquets (OOD), confirming that contrastive alignment
+is important for shaping the latent distribution and improving
+generalization.
+Human video data. Excluding human video data causes
+severe degradation, dropping the average success rate by
+12.5%. Make bouquets (OOD) performance collapses to 5%,
+confirming that large-scale human data is indispensable for
+semantic generalization beyond robotic data.
+4) Post-Training Strategy: We further evaluate post-training
+strategies across both the LIBERO benchmark and real-world
+Pick-and-Place tasks in Table VI.
+Feature selection. Using high-level features alone gives
+93.4% average success on LIBERO, while low-level features
+improve the average to 96.1%. This suggests that continuous
+action generation benefits more from geometry- and motion-
+sensitive representations than from purely semantic embed-
+dings. The full model further combines low-level and mid-
+level features, so the RF head can use both local control cues
+and intermediate semantic abstractions.
+Post-training strategy. KI is too restrictive for target-domain
+adaptation, yielding only 88.3% average success on LIBERO.
+Direct VLM fine-tuning improves LIBERO performance to
+96.2%, but reduces PnP OOD success to 60%, indicating
+weaker generalization after unconstrained updates. In contrast,
+the Full configuration reaches 97.2% on LIBERO and 70%
+on PnP OOD. These results show that KM improves target-
+domain adaptation while preserving the generalization ability
+of the pretrained token policy.
+D. More Analysis
+Action latent space. To qualitatively validate the alignment
+between visual dynamics and physical control, we visualize
+retrieved video clips corresponding to learned latent represen-
+tations in Fig. 1. Given the high dimensionality and diversity
+of the 256-entry codebook, exact token matches across hetero-
+geneous datasets are sparse. We therefore cluster the action
+tokens into 32 semantic groups and visualize samples from
+the same cluster. As shown, the learned latent space exhibits
+strong semantic consistency across domains. For instance,
+Group 1 captures the “move right” primitive, while Group
+2 captures “put down”, regardless of whether the agent is
+a human from Ego4D or a robot from Astribot/AgiBot. To
+verify that these latents encode precise motion rather than only
+high-level semantics, we decode the latent codes back into
+3D trajectories using the action decoder. We project these 3D
+points onto the 2D image plane, visualized as red arrows in the
+Astribot S1 frames. The tight alignment between the projected
+arrows and the actual object manipulation confirms that our
+contrastive pretraining effectively grounds visual changes in
+physically executable actions. We visualize trajectories only
+for the self-collected Astribot dataset, as the accurate camera
+extrinsics required for 3D-to-2D projection were unavailable
+for the AgiBot and Ego4D datasets.
+We further compare the learned VD-VAE feature distribu-
+tion with and without contrastive learning in Fig. 10. Follow-
+ing the teaser visualization, we manually select three semantic
+action categories, each containing 20 paired examples, and
+apply t-SNE to the encoded features. With contrastive learning,
+features from the same semantic action form more compact
+clusters, whereas removing the contrastive loss leads to more
+dispersed and overlapping distributions. This indicates that the
+contrastive objective improves the organization of the action
+latent space beyond reconstructing visual dynamics alone.
+Human data. To better understand whether human videos
+mainly transfer task semantics or low-level dexterous actions,
+we conduct a controlled ablation on the Make Bouquets task.
+The total training budget is fixed to 500 episodes, and we
+vary the proportion of human videos in this mixture, with the
+remaining episodes drawn from robot teleoperation. We further
+construct an estimated-pose baseline using WiLoR [78], an off-
+the-shelf monocular 3D hand localization and reconstruction
+
+===== PAGE 14 =====
+14
+With Contrastive Loss
+Without Contrastive Loss
+Left hand right
+Right hand down
+Right hand grasps
+Fig. 10: t-SNE visualization of VD-VAE action features.
+We manually select three semantic action categories, with 20
+matched video pairs per category, and encode them using VD-
+VAE. Compared with the variant trained without the con-
+trastive loss, CLAP produces more compact feature clusters
+for actions with the same semantics.
+3
+2
+5
+5
+6
+9
+15
+11
+0
+5
+10
+15
+20
+0%
+60%
+100%
+60%
++ Est. Pose
+Human Data Ratio
+Failure Count
+Dexterous Failure
+Semantic Failure
+Fig. 11: Human-data and estimated-pose ablation on Make
+Bouquets. We fix the training set to 500 episodes and vary
+the proportion of human videos, including an estimated-
+pose variant. Semantic failures reflect task or object-selection
+errors, whereas dexterous failures reflect inaccurate grasping
+or placement motions.
+method. For this baseline, the palm position is used as a proxy
+for the end-effector position, and the distance between the
+index fingertip and thumb fingertip is linearly mapped to the
+gripper width.
+The results in Fig. 11 show that human videos effec-
+tively reduce semantic failures, indicating that they help
+the policy learn object selection and instruction-conditioned
+task structure. However, without additional localization or
+tracking hardware, directly converting human videos into
+robot actions through estimated hand pose remains unreliable
+for embodiment-specific dexterous control. The estimated-
+pose variant introduces substantial localization noise and can
+even degrade the policy, as reflected by increased failures.
+This supports our design choice: since CLAP is intended to
+exploit large-scale unlabeled internet videos where accurate
+hardware-instrumented hand poses are unavailable, learning
+latent actions from visual dynamics provides a more scalable
+supervision signal than directly regressing robot end-effector
+trajectories from noisy human pose estimates.
+Inference speed. Real-time responsiveness is essential for
+dynamic manipulation. We benchmark the inference latency
+of our models against representative baselines on a single
+NVIDIA H100 GPU using the LIBERO dataset; see Ta-
+ble VIII. For a fair comparison, all models are evaluated
+with a single 224 × 224 image as input. The autoregressive
+CLAP-NTP model, while strong in reasoning, exhibits a higher
+latency of 382.0 ms due to the sequential nature of token
+generation. In contrast, CLAP-RF reduces latency to 70.1 ms.
+This performance is slower than the highly optimized and
+smaller π0 at 45.8 ms, but substantially faster than OpenVLA
+at 219.8 ms and FAST at 412.8 ms.
+TABLE VIII: Inference speed and GPU memory compari-
+son. All results are measured on a single NVIDIA H100 with
+one 224 × 224 input image.
+Method
+# params. (B)
+Latency (ms)
+Memory (G)
+π0 [37]
+3.5
+45.8
+7.6
+FAST [44]
+3.0
+412.8
+7.5
+OpenVLA [5]
+7.5
+219.8
+14.8
+CLAP-NTP
+4.5
+382.0
+9.2
+CLAP-RF
+6.0
+70.1
+12.1
+VI. CONCLUSION
+In this work, we addressed the challenge of data scarcity
+in robotic manipulation by using large-scale, unlabeled hu-
+man video demonstrations. We identified that existing Latent
+Action Models often suffer from visual entanglement, where
+learned representations capture extraneous visual noise rather
+than manipulation skills. To overcome this, we proposed
+Contrastive Latent Action Pretraining (CLAP), a framework
+that explicitly aligns the visual latent space derived from
+human videos with a physically executable latent action space
+derived from robot trajectories. By enforcing this isomorphism
+through contrastive learning, we ensure that visual transitions
+are mapped to a quantized codebook grounded in physical
+control.
+Building on these aligned representations, we introduced
+a dual-formulation VLA framework comprising CLAP-NTP,
+an autoregressive planner for semantic reasoning and in-
+struction following, and CLAP-RF, a Rectified Flow-based
+policy designed for low-latency inference. In addition, our
+proposed Knowledge Matching (KM) regularization strategy
+mitigates catastrophic forgetting during fine-tuning. Extensive
+experiments across real-world bimanual tasks and the LIBERO
+simulation benchmark demonstrate that CLAP achieves com-
+petitive performance among baselines, enabling robust object
+generalization and precise control through the transfer of
+human visual priors.
+Despite these advances, several limitations remain and
+suggest directions for future research. First, while CLAP
+successfully generalizes to novel objects within known tasks,
+generalizing to entirely new tasks solely from human videos
+remains a significant challenge. The current alignment captures
+high-level planning logic but may struggle to infer precise lo-
+cal dynamics for unseen activities without at least some robotic
+
+===== PAGE 15 =====
+15
+grounding. Second, the morphological discrepancy between
+human hands and robotic grippers introduces inherent ambi-
+guity in the latent space. Although our contrastive approach
+aligns these modalities, complex dexterous human motions
+do not always have a direct mapping to parallel-jaw grip-
+per actions, potentially limiting performance in fine-grained
+manipulation. In our flower-manipulation human videos, the
+demonstrator intentionally used hand motions that resemble a
+parallel-jaw gripper, which reduces this ambiguity but also
+indicates that broader dexterous hand motions remain an
+important limitation. Finally, our framework relies on a multi-
+stage training pipeline involving separate training for the
+VQ-VAEs, contrastive alignment, and policy heads. Future
+work will focus on unifying these stages into an end-to-
+end learning paradigm to reduce engineering complexity and
+further improve the efficiency of cross-embodiment transfer.
+REFERENCES
+[1] S. Karamcheti, S. Nair, A. Balakrishna, P. Liang, T. Kollar, and
+D. Sadigh, “Prismatic vlms: Investigating the design space of visually-
+conditioned language models,” in Proceedings of International Confer-
+ence on Machine Learning (ICML), 2024.
+[2] A. Yang, B. Yang, B. Hui, B. Zheng, B. Yu, C. Zhou, C. Li, C. Li,
+D. Liu, F. Huang et al., “Qwen2 technical report,” arXiv preprint
+arXiv:2407.10671, 2024.
+[3] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn,
+K. Gopalakrishnan, K. Hausman, A. Herzog, J. Hsu et al., “Rt-1:
+Robotics transformer for real-world control at scale,” in Robotics:
+Science and Systems (RSS), 2023.
+[4] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen, K. Choroman-
+ski, T. Ding, D. Driess, A. Dubey, C. Finn et al., “Rt-2: Vision-language-
+action models transfer web knowledge to robotic control,” arXiv preprint
+arXiv:2307.15818, 2023.
+[5] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair,
+R. Rafailov, E. Foster, G. Lam, P. Sanketi et al., “Openvla: An open-
+source vision-language-action model,” in Conference on Robot Learning
+(CoRL), 2024.
+[6] A. O’Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, A. Lee,
+A. Pooley, A. Gupta, A. Mandlekar, A. Jain et al., “Open x-embodiment:
+Robotic learning datasets and rt-x models: Open x-embodiment collabo-
+ration 0,” in IEEE International Conference on Robotics and Automation
+(ICRA), 2024.
+[7] H. Walke, K. Black, A. Lee, M. J. Kim, M. Du, C. Zheng, T. Zhao,
+P. Hansen-Estruch, Q. Vuong, A. He, V. Myers, K. Fang, C. Finn, and
+S. Levine, “Bridgedata v2: A dataset for robot learning at scale,” in
+Conference on Robot Learning (CoRL), 2023.
+[8] A. Khazatsky, K. Pertsch, S. Nair, A. Balakrishna, S. Dasari, S. Karam-
+cheti, S. Nasiriany, M. K. Srirama, L. Y. Chen, K. Ellis et al., “Droid:
+A large-scale in-the-wild robot manipulation dataset,” arXiv preprint
+arXiv:2403.12945, 2024.
+[9] S. Ye, J. Jang, B. Jeon, S. Joo, J. Yang, B. Peng, A. Mandlekar, R. Tan,
+Y.-W. Chao, B. Y. Lin et al., “Latent action pretraining from videos,”
+arXiv preprint arXiv:2410.11758, 2024.
+[10] Q. Bu, Y. Yang, J. Cai, S. Gao, G. Ren, M. Yao, P. Luo, and H. Li,
+“Univla: Learning to act anywhere with task-centric latent actions,” in
+Robotics: Science and Systems (RSS), 2025.
+[11] X. Liu, C. Gong, and Q. Liu, “Flow straight and fast: Learning
+to generate and transfer data with rectified flow,” in Proceedings of
+International Conference on Learning Representations (ICLR), 2022.
+[12] E. Jang, A. Irpan, M. Khansari, D. Kappler, F. Ebert, C. Lynch,
+S. Levine, and C. Finn, “BC-z: Zero-shot task generalization with robotic
+imitation learning,” in Conference on Robot Learning (CoRL), 2021.
+[13] S. Levine, C. Finn, T. Darrell, and P. Abbeel, “End-to-end training of
+deep visuomotor policies,” J. Mach. Learn. Res., vol. 17, pp. 39:1–39:40,
+2015.
+[Online].
+Available:
+https://api.semanticscholar.org/CorpusID:
+7242892
+[14] C. Chi, S. Feng, Y. Du, Z. Xu, E. Cousineau, B. Burchfiel, and S. Song,
+“Diffusion policy: Visuomotor policy learning via action diffusion,” in
+Robotics: Science and Systems (RSS), 2023.
+TABLE IX: Model and training hyperparameters. Training
+time is estimated using a single NVIDIA A100 80G GPU.
+Hyperparameter
+Value
+Global Settings
+Action Chunk Size
+32
+Act-VAE
+Total Training Steps
+100,000
+VAE Learning Rate
+2 × 10−5
+Codebook Learning Rate
+1 × 10−3
+Commitment Weight (β)
+1.0
+Warmup Steps
+1,000
+Architecture (Enc / Dec)
+15 / 15 layers
+Codebook Size
+[256, 128]
+Number of Codes
+8 per arm
+Parameters
+150 M
+Batch Size
+4,096
+Training Time
+∼190 hours
+VD-VAE
+Total Training Steps
+100,000
+VAE Learning Rate
+2 × 10−4
+Codebook Learning Rate
+1 × 10−4
+Commitment Weight (β)
+1.0
+Consistency Weight (λcon)
+0.1
+Regularization Weight (λreg)
+0.5
+Warmup Steps
+1,000
+Architecture (Enc / Dec)
+12 / 12 layers
+Task-irrelevant Codes
+2
+Parameters
+200 M
+Batch Size
+256
+Training Time
+∼380 hours
+CLAP-NTP
+Total Training Steps
+150,000
+Peak Learning Rate
+5 × 10−5
+Min Learning Rate
+5 × 10−6
+Warmup Steps
+1,000
+LR Schedule
+Cosine Decay (after 100k)
+Batch Size
+512
+Training Time
+∼3,800 hours
+Post-training (NTP + CLAP-RF/KM)
+Stage 1 Objective
+NTP adaptation
+Stage 1 Training Epochs
+3
+Stage 1 Learning Rate
+2 × 10−5
+Stage 1 Warmup Steps
+1,000
+Stage 1 LR Schedule
+No decay
+Stage 2 Objective
+RF action expert + KM
+Stage 2 Training Epochs
+5
+Stage 2 Learning Rate
+1 × 10−4
+Stage 2 Warmup Steps
+1,000
+Stage 2 LR Schedule
+Cosine decay
+Batch Size
+128
+Training Time
+Task-dependent
+[15] Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, “3d
+diffusion policy: Generalizable visuomotor policy learning via simple
+3d representations,” in Robotics: Science and Systems (RSS), 2024.
+[16] Y. Su, X. Zhan, H. Fang, H. Xue, H.-S. Fang, Y.-L. Li, C. Lu,
+and L. Yang, “Dense policy: Bidirectional autoregressive learning of
+actions,” in Proceedings of the IEEE/CVF International Conference on
+Computer Vision (ICCV), October 2025, pp. 14 486–14 495.
+[17] Y. Su, C. Zhang, S. Chen, L. Tan, Y. Tang, J. Wang, and X. Liu,
+“Dspv2: Improved dense policy for effective and generalizable whole-
+body mobile manipulation,” 2025.
+[18] T. Z. Zhao, V. Kumar, S. Levine, and C. Finn, “Learning fine-grained
+bimanual manipulation with low-cost hardware,” in Robotics: Science
+and Systems (RSS), 2023.
+[19] D. Wang, C. Liu, F. Chang, and Y. Xu, “Hierarchical diffusion policy:
+manipulation trajectory generation via contact guidance,” IEEE Trans-
+actions on Robotics (T-RO), 2025.
+[20] D. P. Kingma and M. Welling, “Auto-encoding variational bayes,”
+2022. [Online]. Available: https://arxiv.org/abs/1312.6114
+[21] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,”
+
+===== PAGE 16 =====
+16
+in Proceedings of Advances in Neural Information Processing Systems
+(NeurIPS), 2020.
+[22] J. Song, C. Meng, and S. Ermon, “Denoising diffusion implicit models,”
+in Proceedings of International Conference on Learning Representations
+(ICLR), 2021.
+[23] L. Wang, X. Chen, J. Zhao, and K. He, “Scaling proprioceptive-visual
+learning with heterogeneous pre-trained transformers,” in Neurips, 2024.
+[24] C. Yuan, C. Wen, T. Zhang, and Y. Gao, “General flow as foundation af-
+fordance for scalable robot learning,” arXiv preprint arXiv:2401.11439,
+2024.
+[25] M. Xu, Z. Xu, Y. Xu, C. Chi, G. Wetzstein, M. Veloso, and S. Song,
+“Flow as the cross-domain manipulation interface,” 2024. [Online].
+Available: https://arxiv.org/abs/2407.15208
+[26] T. Chen, Y. Mu, Z. Liang, Z. Chen, S. Peng, Q. Chen, M. Xu, R. Hu,
+H. Zhang, X. Li, and P. Luo, “G3flow: Generative 3d semantic flow for
+pose-aware and generalizable object manipulation,” in Proceedings of
+the Computer Vision and Pattern Recognition Conference (CVPR), June
+2025, pp. 1735–1744.
+[27] C. Wen, X. Lin, J. So, K. Chen, Q. Dou, Y. Gao, and P. Abbeel, “Any-
+point trajectory modeling for policy learning,” 2023.
+[28] Y. Su, X. Zhan, H. Fang, Y.-L. Li, C. Lu, and L. Yang, “Motion
+before action: Diffusing object motion as manipulation condition,” IEEE
+Robotics and Automation Letters, vol. 10, no. 7, pp. 7428–7435, 2025.
+[29] C.-C.
+Hsu,
+B.
+Wen,
+J.
+Xu,
+Y.
+Narang,
+X.
+Wang,
+Y.
+Zhu,
+J. Biswas, and S. Birchfield, “Spot: Se(3) pose trajectory diffusion
+for object-centric manipulation,” 2025. [Online]. Available: https:
+//arxiv.org/abs/2411.00965
+[30] Y. Chen, W. Cui, Y. Chen, M. Tan, X. Zhang, D. Zhao, and
+H. Wang, “Robogpt: an intelligent agent of making embodied long-term
+decisions for daily instruction tasks,” 2024. [Online]. Available:
+https://arxiv.org/abs/2311.15649
+[31] K. Li, P. Li, T. Liu, Y. Li, and S. Huang, “Maniptrans: Efficient dexterous
+bimanual manipulation transfer via residual learning,” in Proceedings of
+the Computer Vision and Pattern Recognition Conference, 2025.
+[32] C. Yuan, R. Zhou, M. Liu, Y. Hu, S. Wang, L. Yi, C. Wen, S. Zhang,
+and Y. Gao, “Motiontrans: Human vr data enable motion-level
+learning for robotic manipulation policies,” 2025. [Online]. Available:
+https://arxiv.org/abs/2509.17759
+[33] R.-Z. Qiu, S. Yang, X. Cheng, C. Chawla, J. Li, T. He, G. Yan,
+D. J. Yoon, R. Hoque, L. Paulsen, G. Yang, J. Zhang, S. Yi, G. Shi,
+and X. Wang, “Humanoid policy
+human policy,” 2025. [Online].
+Available: https://arxiv.org/abs/2503.13441
+[34] M. Xu, H. Zhang, Y. Hou, Z. Xu, L. Fan, M. Veloso, and
+S. Song, “Dexumi: Using human hand as the universal manipulation
+interface
+for
+dexterous
+manipulation,”
+2025.
+[Online].
+Available:
+https://arxiv.org/abs/2505.21864
+[35] H. Wu, Y. Jing, C. Cheang, G. Chen, J. Xu, X. Li, M. Liu, H. Li,
+and T. Kong, “Unleashing large-scale video generative pre-training for
+visual robot manipulation,” in Proceedings of International Conference
+on Learning Representations (ICLR), 2024.
+[36] C.-L. Cheang, G. Chen, Y. Jing, T. Kong, H. Li, Y. Li, Y. Liu,
+H. Wu, J. Xu, Y. Yang et al., “Gr-2: A generative video-language-action
+model with web-scale knowledge for robot manipulation,” arXiv preprint
+arXiv:2410.06158, 2024.
+[37] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai,
+L. Groom, K. Hausman, B. Ichter et al., “π0: A vision-language-
+action flow model for general robot control, 2024,” arXiv preprint
+arXiv:2410.24164, 2025.
+[38] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess,
+A. Esmail, M. Equi, C. Finn, N. Fusai et al., “π0.5: a vision-
+language-action model with open-world generalization,” arXiv preprint
+arXiv:2504.16054, 2025.
+[39] G. Lu, W. Guo, C. Zhang, Y. Zhou, H. Jiang, Z. Gao, Y. Tang, and
+Z. Wang, “Vla-rl: Towards masterful and general robotic manipulation
+with scalable reinforcement learning,” arXiv preprint arXiv:2505.18719,
+2025.
+[40] P. Tang, S. Xie, B. Sun, B. Huang, K. Luo, H. Yang, W. Jin, and J. Wang,
+“Mind to hand: Purposeful robotic control via embodied reasoning,”
+arXiv preprint arXiv:2512.08580, 2025.
+[41] M. J. Kim, C. Finn, and P. Liang, “Fine-tuning vision-language-action
+models: Optimizing speed and success,” in Robotics: Science and
+Systems (RSS), 2025. [Online]. Available: https://arxiv.org/abs/2502.
+19645
+[42] X. Li, P. Li, M. Liu, D. Wang, J. Liu, B. Kang, X. Ma, T. Kong,
+H. Zhang, and H. Liu, “Towards generalist robot policies: What
+matters in building vision-language-action models,” arXiv preprint
+arXiv:2412.14058, 2024.
+[43] Y. Wang, H. Zhu, M. Liu, J. Yang, H.-S. Fang, and T. He, “Vq-vla:
+Improving vision-language-action models via scaling vector-quantized
+action tokenizers,” 2025. [Online]. Available: https://arxiv.org/abs/2507.
+01016
+[44] K. Pertsch, K. Stachowicz, B. Ichter, D. Driess, S. Nair, Q. Vuong,
+O. Mees, C. Finn, and S. Levine, “Fast: Efficient action tokenization for
+vision-language-action models,” arXiv preprint arXiv:2501.09747, 2025.
+[45] P. Intelligence, A. Amin, R. Aniceto, A. Balakrishna, K. Black,
+K. Conley, G. Connors, J. Darpinian, K. Dhabalia, J. DiCarlo,
+D. Driess, M. Equi, A. Esmail, Y. Fang, C. Finn, C. Glossop,
+T. Godden, I. Goryachev, L. Groom, H. Hancock, K. Hausman,
+G. Hussein, B. Ichter, S. Jakubczak, R. Jen, T. Jones, B. Katz, L. Ke,
+C. Kuchi, M. Lamb, D. LeBlanc, S. Levine, A. Li-Bell, Y. Lu, V. Mano,
+M. Mothukuri, S. Nair, K. Pertsch, A. Z. Ren, C. Sharma, L. X. Shi,
+L. Smith, J. T. Springenberg, K. Stachowicz, W. Stoeckle, A. Swerdlow,
+J. Tanner, M. Torne, Q. Vuong, A. Walling, H. Wang, B. Williams,
+S. Yoo, L. Yu, U. Zhilinsky, and Z. Zhou, “π∗
+0.6: a vla that learns from
+experience,” 2025. [Online]. Available: https://arxiv.org/abs/2511.14759
+[46] C. Chi, Z. Xu, C. Pan, E. Cousineau, B. Burchfiel, S. Feng,
+R. Tedrake, and S. Song, “Universal manipulation interface: In-the-wild
+robot teaching without in-the-wild robots,” 2024. [Online]. Available:
+https://arxiv.org/abs/2402.10329
+[47] C. Cheang, S. Chen, Z. Cui, Y. Hu, L. Huang, T. Kong, H. Li, Y. Li,
+Y. Liu, X. Ma, H. Niu, W. Ou, W. Peng, Z. Ren, H. Shi, J. Tian,
+H. Wu, X. Xiao, Y. Xiao, J. Xu, and Y. Yang, “Gr-3 technical report,”
+2025. [Online]. Available: https://arxiv.org/abs/2507.15493
+[48] J. Zheng, J. Li, Z. Wang, D. Liu, X. Kang, Y. Feng, Y. Zheng, J. Zou,
+Y. Chen, J. Zeng, Y.-Q. Zhang, J. Pang, J. Liu, T. Wang, and X. Zhan,
+“X-vla: Soft-prompted transformer as scalable cross-embodiment vision-
+language-action model,” in Proceedings of International Conference
+on
+Learning
+Representations
+(ICLR),
+2026.
+[Online].
+Available:
+https://arxiv.org/abs/2510.10274
+[49] S. Yu, S. Kwak, H. Jang, J. Jeong, J. Huang, J. Shin, and S. Xie, “Rep-
+resentation alignment for generation: Training diffusion transformers is
+easier than you think,” arXiv preprint arXiv:2410.06940, 2024.
+[50] C. Wang, C. Zhou, S. Gupta, Z. Lin, S. Jegelka, S. Bates, and
+T. Jaakkola, “Learning diffusion models with flexible representation
+guidance,” arXiv preprint arXiv:2507.08980, 2025.
+[51] L. Y. Chen, K. Hari, K. Dharmarajan, C. Xu, Q. Vuong, and K. Gold-
+berg, “Mirage: Cross-embodiment zero-shot policy transfer with cross-
+painting,” 2024.
+[52] O. Chapelle, B. Sch¨olkopf, and A. Zien, Eds., Semi-Supervised Learning.
+Cambridge, MA: MIT Press, 2006.
+[53] Y. Chen, Y. Ge, Y. Li, Y. Ge, M. Ding, Y. Shan, and X. Liu, “Moto:
+Latent motion token as the bridging language for robot manipulation,”
+arXiv preprint arXiv:2412.04445, 2024.
+[54] S. Routray, H. Pan, U. Jain, S. Bahl, and D. Pathak, “Vipra:
+Video
+prediction
+for
+robot
+actions,”
+2025.
+[Online].
+Available:
+https://arxiv.org/abs/2511.07732
+[55] P. Esser, R. Rombach, and B. Ommer, “Taming transformers for high-
+resolution image synthesis,” 2020.
+[56] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov,
+P. Fernandez, D. Haziza, F. Massa, A. El-Nouby et al., “Dinov2:
+Learning robust visual features without supervision,” Transactions on
+Machine Learning Research Journal (TMLR), 2024.
+[57] O. Sim´eoni, H. V. Vo, M. Seitzer, F. Baldassarre, M. Oquab, C. Jose,
+V. Khalidov, M. Szafraniec, S. Yi, M. Ramamonjisoa et al., “Dinov3,”
+arXiv preprint arXiv:2508.10104, 2025.
+[58] X. Zhai, B. Mustafa, A. Kolesnikov, and L. Beyer, “Sigmoid loss for lan-
+guage image pre-training,” in Proceedings of International Conference
+on Computer Vision (ICCV), 2023.
+[59] AgiBot-World-Contributors, Q. Bu, J. Cai, L. Chen, X. Cui, Y. Ding,
+S. Feng, S. Gao, X. He, X. Hu, X. Huang, S. Jiang, Y. Jiang,
+C. Jing, H. Li, J. Li, C. Liu, Y. Liu, Y. Lu, J. Luo, P. Luo, Y. Mu,
+Y. Niu, Y. Pan, J. Pang, Y. Qiao, G. Ren, C. Ruan, J. Shan, Y. Shen,
+C. Shi, M. Shi, M. Shi, C. Sima, J. Song, H. Wang, W. Wang,
+D. Wei, C. Xie, G. Xu, J. Yan, C. Yang, L. Yang, S. Yang, M. Yao,
+J. Zeng, C. Zhang, Q. Zhang, B. Zhao, C. Zhao, J. Zhao, and J. Zhu,
+“Agibot world colosseo: A large-scale manipulation platform for
+scalable and intelligent embodied systems,” 2025. [Online]. Available:
+https://arxiv.org/abs/2503.06669
+[60] H. Zhou, M. Reuss, M. R¨uhle, ¨O. E. Ya˘gmurlu, F. Otto, and R. Lioutikov,
+“Beast: Efficient tokenization of b-splines encoded action sequences for
+imitation learning,” in Proceedings of Advances in Neural Information
+Processing Systems (NeurIPS), 2025.
+
+===== PAGE 17 =====
+17
+[61] Y. Liu, Z. Mu, Z. Huang, J.-H. Luo, and L. Yi, “Faster: Toward
+efficient autoregressive vision language action modeling via neural
+action tokenization,” arXiv preprint arXiv:2512.04952, 2025.
+[62] H. Luo, J. Chen, W. Wang, M. Zhao, Z. Xu, R. Cai, K. Yan, T. Gu,
+K. Fang, Z. Xu, and Z. Su, “Being-h0: Vision-language-action pretrain-
+ing from large-scale human videos,” arXiv preprint arXiv:2507.15597,
+2025.
+[63] A. Van Den Oord, O. Vinyals et al., “Neural discrete representation
+learning,” Proceedings of Advances in Neural Information Processing
+Systems (NeurIPS), vol. 30, 2017.
+[64] A. Radford, J. W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal,
+G. Sastry, A. Askell, P. Mishkin, J. Clark et al., “Learning transferable
+visual models from natural language supervision,” in Proceedings of
+International Conference on Machine Learning (ICML).
+PmLR, 2021,
+pp. 8748–8763.
+[65] W. Peebles and S. Xie, “Scalable diffusion models with transformers,”
+in Proceedings of International Conference on Computer Vision (ICCV),
+2023.
+[66] G. Gao, J. Wang, J. Zuo, J. Jiang, J. Zhang, X. Zeng, Y. Zhu, L. Ma,
+K. Chen, M. Sheng et al., “Towards human-level intelligence via human-
+like whole-body manipulation,” arXiv preprint arXiv:2507.17141, 2025.
+[67] K. Grauman, A. Westbury, E. Byrne, Z. Chavis, A. Furnari, R. Girdhar,
+J. Hamburger, H. Jiang, M. Liu, X. Liu et al., “Ego4d: Around the world
+in 3,000 hours of egocentric video,” in Proceedings of Conference on
+Computer Vision and Pattern Recognition (CVPR), 2022, pp. 18 995–
+19 012.
+[68] X. Chen, B. Jiang, W. Liu, Z. Huang, B. Fu, T. Chen, and G. Yu,
+“Executing your commands via motion diffusion in latent space,” in
+Proceedings of Conference on Computer Vision and Pattern Recognition
+(CVPR), 2023.
+[69] D. Hafner, T. Lillicrap, I. Fischer, R. Villegas, D. Ha, H. Lee, and
+J. Davidson, “Learning latent dynamics for planning from pixels,” in
+Proceedings of International Conference on Machine Learning (ICML).
+PMLR, 2019, pp. 2555–2565.
+[70] Y. Chen, X. Qi, J. Wang, and L. Zhang, “Disco-clip: A distributed
+contrastive loss for memory efficient clip training,” in Proceedings of
+Conference on Computer Vision and Pattern Recognition (CVPR), 2023,
+pp. 22 648–22 657.
+[71] S. Bai, Y. Cai, R. Chen, K. Chen, X. Chen, Z. Cheng, L. Deng, W. Ding,
+C. Gao, C. Ge, W. Ge, Z. Guo, Q. Huang, J. Huang, F. Huang, B. Hui,
+S. Jiang, Z. Li, M. Li, M. Li, K. Li, Z. Lin, J. Lin, X. Liu, J. Liu, C. Liu,
+Y. Liu, D. Liu, S. Liu, D. Lu, R. Luo, C. Lv, R. Men, L. Meng, X. Ren,
+X. Ren, S. Song, Y. Sun, J. Tang, J. Tu, J. Wan, P. Wang, P. Wang,
+Q. Wang, Y. Wang, T. Xie, Y. Xu, H. Xu, J. Xu, Z. Yang, M. Yang,
+J. Yang, A. Yang, B. Yu, F. Zhang, H. Zhang, X. Zhang, B. Zheng,
+H. Zhong, J. Zhou, F. Zhou, J. Zhou, Y. Zhu, and K. Zhu, “Qwen3-vl
+technical report,” arXiv preprint arXiv:2511.21631, 2025.
+[72] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone, “Libero:
+Benchmarking knowledge transfer for lifelong robot learning,” Advances
+in Neural Information Processing Systems, vol. 36, pp. 44 776–44 791,
+2023.
+[73] L. Beyer, A. Steiner, A. S. Pinto, A. Kolesnikov, X. Wang, D. Salz,
+M.
+Neumann,
+I.
+Alabdulmohsin,
+M.
+Tschannen,
+E.
+Bugliarello
+et al., “Paligemma: A versatile 3b vlm for transfer,” arXiv preprint
+arXiv:2407.07726, 2024.
+[74] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees,
+S. Dasari, J. Hejna, C. Xu, J. Luo, T. Kreiman, Y. Tan, L. Y. Chen,
+P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine,
+“Octo: An open-source generalist robot policy,” in Robotics: Science
+and Systems (RSS), 2024.
+[75] M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma,
+A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti et al.,
+“Smolvla: A vision-language-action model for affordable and efficient
+robotics,” arXiv preprint arXiv:2506.01844, 2025.
+[76] M. Reuss, H. Zhou, M. R¨uhle,
+¨O. E. Ya˘gmurlu, F. Otto, and
+R. Lioutikov, “FLOWER: Democratizing generalist robot policies
+with efficient vision-language-flow models,” in Conference on Robot
+Learning (CoRL), 2025. [Online]. Available: https://openreview.net/
+forum?id=JeppaebLRD
+[77] D. Driess, J. T. Springenberg, B. Ichter, L. Yu, A. Li-Bell, K. Pertsch,
+A. Z. Ren, H. Walke, Q. Vuong, L. X. Shi et al., “Knowledge insulating
+vision-language-action models: Train fast, run fast, generalize better,”
+arXiv preprint arXiv:2505.23705, 2025.
+[78] R. A. Potamias, J. Zhang, J. Deng, and S. Zafeiriou, “Wilor: End-to-end
+3d hand localization and reconstruction in-the-wild,” in Proceedings of
+Conference on Computer Vision and Pattern Recognition (CVPR), 2025,
+pp. 12 242–12 254.

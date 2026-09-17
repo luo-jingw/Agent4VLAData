@@ -200,3 +200,23 @@ FlowWAM 用光流作统一动作表征（视觉轨迹与动作在表征层合一
   轨迹层）[paper_047](https://arxiv.org/abs/2205.02886)——C4 增强合法性的定义框架。
 - Learning to Discern（偏好+表示学习处理异构演示）[paper_048](https://arxiv.org/abs/2310.14196)——C6 多样化与
   数据效率。
+
+
+**第三轮（embodied latent action 专线，7 篇，2026-09-09）：**
+
+- 起源线：Play-LMP 用自监督 play 数据学 latent plan（重建目标）[paper_054](https://arxiv.org/abs/1903.01973)；
+  Losey 线明确 latent action 需满足 controllability + consistency——同一 latent
+  action 在不同上下文应产生不同 physical action [paper_055](https://arxiv.org/abs/2105.00580)（这正是
+  ChatGPT 思考里"action 是关系模态"的早期文献表述）。
+- VLA 线：LAPA 定义 latent action = 相邻视觉状态变化，无标注视频预训练 VLA
+  [paper_052](https://arxiv.org/abs/2410.11758)；UniVLA 用 task-centric latent action 跨本体 [paper_053](https://arxiv.org/abs/2505.06111)。
+- 批判线（2026）：CLAP 批判视觉纠缠、把 latent action 对比对齐到 Act-VAE
+  码本 [paper_056](https://arxiv.org/abs/2601.04061)；JALA 批判重建式 FDM 噪声退化 latent action，改用对齐 +
+  逆动力学联合 [paper_057](https://arxiv.org/abs/2602.21736)；VLA-JEPA 批判像素锚定与 nuisance motion，改用
+  leakage-free 潜状态预测 [paper_058](https://arxiv.org/abs/2602.10098)。
+
+**专线结论**：latent action 线的演化方向与 ChatGPT 思考一致——从"重建导向"
+（Play-LMP）→"语义/任务对齐导向"（UniVLA/CLAP/JALA）→"状态转移锚定"
+（VLA-JEPA）；Losey 的 consistency 要求是"关系模态"的早期形式。空间已挤
+（ChatGPT 思考的判断成立），新工作的差异点必须在"对齐对象选择 + 拓扑诊断"
+而非"又一个 latent action VLA"。
