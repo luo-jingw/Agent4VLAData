@@ -1,25 +1,29 @@
 # Agent4VLAData
 
-VLA（Vision-Language-Action）动作模态数据增强框架的调研与设计仓库。
+VLA（Vision-Language-Action）动作模态对齐方向的调研、想法与讨论记录仓库。
+本仓库记录思路历程，不承担实现设计。
 
 - 现有方法：纯几何曲率重采样管线（`reference/g2-orion05-resample-training/`，
   已训练部署）；
-- 目标：通用 VLA 遥操动作模态**数据增强框架**——对齐约束下重构/强化 action
-  序列，数据效率与执行效率双目标；
-- 当前状态：方向调研中（51 篇文献；RQ4 动作模态对齐为主轴），框架部分定稿，
-  实验未启动。
+- 方向（评估中）：通用 VLA 遥操动作模态数据增强——对齐约束下重构/强化
+  action 序列，数据效率与执行效率双目标；当前收敛想法见
+  `idea/conditional-action-representation/`；
+- 当前状态：调研进行中（58 篇文献；RQ4 动作模态对齐 + latent action 线），
+  无实现设计，实验未启动。
 
 ## 目录分工
 
 | 目录 | 职责 |
 |---|---|
 | `docs/survey/` | 调研定义与综述定稿 |
-| `docs/reports/` | 报告（顶层视角、综合报告） |
-| `docs/design/` | 设计框架 |
-| `design/` | 设计草稿（未验证） |
+| `docs/reports/` | 地图、论证存档 |
+| `docs/design/` | 早期设计框架（已边缘化，见 design/history/） |
+| `design/` | 现状综述；历史设计归档 |
+| `idea/` | 想法区（评估中的框架想法） |
+| `discussions/` | 外部讨论总结（原始文件仅存本地） |
 | `synthesis/` | 证据矩阵、缺口清单、评审记录 |
 | `papers/` | 文献库：候选/元数据/bibtex/raw 文本 |
-| `notes/extractions/` | 51 篇论文的逐篇抽取笔记 |
+| `notes/extractions/` | 58 篇论文的逐篇抽取笔记 |
 | `scripts/` | 文献检索/下载/检查脚本（观测型，无 pass/fail） |
 | `logs/` | 搜索、下载、决策记录 |
 | `reference/` | 现有方法包（只读参照，勿改） |
@@ -27,7 +31,7 @@ VLA（Vision-Language-Action）动作模态数据增强框架的调研与设计�
 
 ## 文件结构（目录形状）
 
-角色标注：地图 / 现状与约束 / 证据链 / 设计与机会 / 过程资产。
+角色标注：地图 / 现状与约束 / 证据链 / 想法与机会 / 过程资产。
 
 ```
 agent4data/
@@ -36,10 +40,10 @@ agent4data/
 ├── docs/                         ── 已验证的长期文档
 │   ├── reports/   地图、论证
 │   ├── survey/    调研定义、综述、教学
-│   └── design/    设计框架
-├── design/                       ── 未验证区（草稿、现状综述，不进 docs/）
+│   └── design/    早期设计（已边缘化）
+├── design/                       ── 现状综述、历史设计（未验证区，不进 docs/）
 ├── idea/                         ── 想法区（评估中的框架想法）
-├── discussions/                  ── 外部讨论归档（ChatGPT 对话 html）
+├── discussions/                  ── 外部讨论总结
 ├── synthesis/                    ── 证据与缺口
 ├── papers/ · notes/extractions/  ── 文献库与抽取笔记
 ├── scripts/ · logs/              ── 工具与记录
@@ -64,7 +68,7 @@ agent4data/
 - [证据矩阵](synthesis/evidence_matrix.md) / [缺口清单](synthesis/gap_list.md) — (论文, 研究问题) 证据等级；11 缺口含 blocking
 - [调研范围与证据标准](docs/survey/research_questions.md) · [术语表](docs/survey/glossary.md) · [RQ4 动作模态对齐](docs/survey/research_questions.md)（主动研究方向）
 - [社区共性问题综述](docs/survey/community_issue_survey.md) — GitHub issues 社区证据
-- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 51 篇
+- [文献库元数据](papers/metadata.yaml) · [抽取笔记](notes/extractions/) — 58 篇
 
 **研究网格（对齐方向，2026-09-08/09 两轮）**
 
@@ -80,10 +84,12 @@ agent4data/
 | C8 老问题边界（次优/停顿/关键帧/歧义） | 无直接文献 | 需评估各问题是否属当前框架责任范围（未评估） |
 | RQ4.6 时序保真（驻留/停顿对齐语义） | 无命中 | 多轮检索无直接工作（GAP-12 下半） |
 
-检索过程与关键词见 `logs/search_log.md`；逐篇抽取见 `notes/extractions/paper_036–051.md`。
+检索过程与关键词见 `logs/search_log.md`；逐篇抽取见 `notes/extractions/paper_036–058.md`。
 
-**设计与机会**
+**想法与机会**
 
+- [条件动作表征框架](idea/conditional-action-representation/README.md) — 当前收敛想法（评估中）：六条定义 + 三约束 + 两条可证伪前提
+- [外部讨论总结](discussions/alignment-homeomorphism.md) · [RL 与 SFT](discussions/outcome-manifold-rl-sft.md) · [语义路由](discussions/semantic-routing-moe.md) — 三份 ChatGPT 讨论总结
 - [机会候选](opportunities.md) — OPT-002 sim/跨本体 action 对齐迁移（OPT-001 已删）
 
 **过程资产**（溯源）
@@ -97,7 +103,7 @@ issues.md + PROJECT.md（问题与约束，事实登记）
         ↓
 top_level_view.md（五面定位）   survey_findings.md + evidence_matrix.md（证据侧翼）
         ↓
-opportunities.md（候选方向）
+idea/（收敛想法，评估中）  +  opportunities.md（候选方向）
         ↓ 新发现回流
 issues.md（登记新问题，如 ISSUE-003）
 ```
