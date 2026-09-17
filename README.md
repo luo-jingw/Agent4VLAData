@@ -38,6 +38,8 @@ agent4data/
 │   ├── survey/    调研定义、综述、教学
 │   └── design/    设计框架
 ├── design/                       ── 未验证区（草稿、现状综述，不进 docs/）
+├── idea/                         ── 想法区（评估中的框架想法）
+├── discussions/                  ── 外部讨论归档（ChatGPT 对话 html）
 ├── synthesis/                    ── 证据与缺口
 ├── papers/ · notes/extractions/  ── 文献库与抽取笔记
 ├── scripts/ · logs/              ── 工具与记录
