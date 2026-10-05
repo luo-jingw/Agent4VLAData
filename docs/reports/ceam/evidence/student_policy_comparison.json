@@ -1,0 +1,258 @@
+{
+  "cells": [
+    {
+      "condition": "original",
+      "seed": 0,
+      "successes": 454,
+      "episodes": 500,
+      "success_rate": 0.908,
+      "task_successes": [
+        48,
+        36,
+        42,
+        49,
+        48,
+        48,
+        38,
+        49,
+        46,
+        50
+      ],
+      "heldout_init_successes": 91,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.91
+    },
+    {
+      "condition": "original",
+      "seed": 1,
+      "successes": 446,
+      "episodes": 500,
+      "success_rate": 0.892,
+      "task_successes": [
+        47,
+        31,
+        43,
+        48,
+        47,
+        49,
+        36,
+        49,
+        46,
+        50
+      ],
+      "heldout_init_successes": 85,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.85
+    },
+    {
+      "condition": "original",
+      "seed": 2,
+      "successes": 434,
+      "episodes": 500,
+      "success_rate": 0.868,
+      "task_successes": [
+        48,
+        31,
+        44,
+        47,
+        47,
+        49,
+        33,
+        42,
+        43,
+        50
+      ],
+      "heldout_init_successes": 83,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.83
+    },
+    {
+      "condition": "random",
+      "seed": 0,
+      "successes": 434,
+      "episodes": 500,
+      "success_rate": 0.868,
+      "task_successes": [
+        45,
+        36,
+        33,
+        48,
+        49,
+        48,
+        33,
+        48,
+        44,
+        50
+      ],
+      "heldout_init_successes": 89,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.89
+    },
+    {
+      "condition": "random",
+      "seed": 1,
+      "successes": 432,
+      "episodes": 500,
+      "success_rate": 0.864,
+      "task_successes": [
+        42,
+        25,
+        48,
+        49,
+        49,
+        46,
+        35,
+        40,
+        48,
+        50
+      ],
+      "heldout_init_successes": 81,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.81
+    },
+    {
+      "condition": "random",
+      "seed": 2,
+      "successes": 441,
+      "episodes": 500,
+      "success_rate": 0.882,
+      "task_successes": [
+        48,
+        39,
+        38,
+        49,
+        50,
+        45,
+        32,
+        48,
+        42,
+        50
+      ],
+      "heldout_init_successes": 90,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.9
+    },
+    {
+      "condition": "guided",
+      "seed": 0,
+      "successes": 440,
+      "episodes": 500,
+      "success_rate": 0.88,
+      "task_successes": [
+        50,
+        34,
+        38,
+        47,
+        49,
+        48,
+        35,
+        45,
+        44,
+        50
+      ],
+      "heldout_init_successes": 83,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.83
+    },
+    {
+      "condition": "guided",
+      "seed": 1,
+      "successes": 447,
+      "episodes": 500,
+      "success_rate": 0.894,
+      "task_successes": [
+        46,
+        33,
+        48,
+        50,
+        50,
+        48,
+        41,
+        40,
+        41,
+        50
+      ],
+      "heldout_init_successes": 89,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.89
+    },
+    {
+      "condition": "guided",
+      "seed": 2,
+      "successes": 467,
+      "episodes": 500,
+      "success_rate": 0.934,
+      "task_successes": [
+        49,
+        47,
+        39,
+        49,
+        50,
+        48,
+        44,
+        43,
+        48,
+        50
+      ],
+      "heldout_init_successes": 94,
+      "heldout_init_episodes": 100,
+      "heldout_init_success_rate": 0.94
+    }
+  ],
+  "comparisons": [
+    {
+      "condition": "random",
+      "reference": "original",
+      "episodes": 1500,
+      "candidate_only": 111,
+      "reference_only": 138,
+      "sr_difference": -0.018,
+      "mcnemar_p": 0.09922346595998027,
+      "difference_interval": [
+        -0.03866666666666667,
+        0.0026666666666666666
+      ],
+      "seed_differences": [
+        -0.04,
+        -0.028,
+        0.014
+      ]
+    },
+    {
+      "condition": "guided",
+      "reference": "original",
+      "episodes": 1500,
+      "candidate_only": 129,
+      "reference_only": 109,
+      "sr_difference": 0.013333333333333334,
+      "mcnemar_p": 0.21802074082860623,
+      "difference_interval": [
+        -0.007333333333333333,
+        0.034
+      ],
+      "seed_differences": [
+        -0.028,
+        0.002,
+        0.066
+      ]
+    },
+    {
+      "condition": "guided",
+      "reference": "random",
+      "episodes": 1500,
+      "candidate_only": 147,
+      "reference_only": 100,
+      "sr_difference": 0.03133333333333333,
+      "mcnemar_p": 0.003341124249353542,
+      "difference_interval": [
+        0.011333333333333334,
+        0.052
+      ],
+      "seed_differences": [
+        0.012,
+        0.03,
+        0.052
+      ]
+    }
+  ]
+}

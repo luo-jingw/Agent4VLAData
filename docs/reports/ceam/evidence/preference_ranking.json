@@ -1,0 +1,290 @@
+[
+  {
+    "model": "fixed_compat_seed0",
+    "role": "branch",
+    "preference_accuracy_pct": 46.91061782836914,
+    "compatibility_accuracy_pct": 85.95040893554688
+  },
+  {
+    "model": "fixed_compat_seed1",
+    "role": "branch",
+    "preference_accuracy_pct": 46.91061782836914,
+    "compatibility_accuracy_pct": 88.47566986083984
+  },
+  {
+    "model": "fixed_compat_seed2",
+    "role": "branch",
+    "preference_accuracy_pct": 46.91061782836914,
+    "compatibility_accuracy_pct": 90.8631820678711
+  },
+  {
+    "model": "fixed_pref_seed0",
+    "role": "branch",
+    "preference_accuracy_pct": 81.01380157470703,
+    "compatibility_accuracy_pct": 85.95040893554688
+  },
+  {
+    "model": "fixed_pref_seed1",
+    "role": "branch",
+    "preference_accuracy_pct": 82.27354431152344,
+    "compatibility_accuracy_pct": 88.47566986083984
+  },
+  {
+    "model": "fixed_pref_seed2",
+    "role": "branch",
+    "preference_accuracy_pct": 83.65327453613281,
+    "compatibility_accuracy_pct": 90.8631820678711
+  },
+  {
+    "model": "adapt_compat_seed0",
+    "role": "branch",
+    "preference_accuracy_pct": 49.970008850097656,
+    "compatibility_accuracy_pct": 81.03764343261719
+  },
+  {
+    "model": "adapt_compat_seed1",
+    "role": "branch",
+    "preference_accuracy_pct": 49.58008575439453,
+    "compatibility_accuracy_pct": 83.19558715820312
+  },
+  {
+    "model": "adapt_compat_seed2",
+    "role": "branch",
+    "preference_accuracy_pct": 47.81044006347656,
+    "compatibility_accuracy_pct": 83.33332824707031
+  },
+  {
+    "model": "adapt_pref_seed0",
+    "role": "branch",
+    "preference_accuracy_pct": 87.73245239257812,
+    "compatibility_accuracy_pct": 85.03214263916016
+  },
+  {
+    "model": "adapt_pref_seed1",
+    "role": "branch",
+    "preference_accuracy_pct": 87.28254699707031,
+    "compatibility_accuracy_pct": 83.93021392822266
+  },
+  {
+    "model": "adapt_pref_seed2",
+    "role": "branch",
+    "preference_accuracy_pct": 87.94241333007812,
+    "compatibility_accuracy_pct": 85.26171112060547
+  },
+  {
+    "model": "fixed_compat_seed0",
+    "role": "calibration",
+    "preference_accuracy_pct": 46.832740783691406,
+    "compatibility_accuracy_pct": 61.45695495605469
+  },
+  {
+    "model": "fixed_compat_seed1",
+    "role": "calibration",
+    "preference_accuracy_pct": 46.832740783691406,
+    "compatibility_accuracy_pct": 67.08609771728516
+  },
+  {
+    "model": "fixed_compat_seed2",
+    "role": "calibration",
+    "preference_accuracy_pct": 46.832740783691406,
+    "compatibility_accuracy_pct": 69.13907623291016
+  },
+  {
+    "model": "fixed_pref_seed0",
+    "role": "calibration",
+    "preference_accuracy_pct": 61.10320281982422,
+    "compatibility_accuracy_pct": 61.45695495605469
+  },
+  {
+    "model": "fixed_pref_seed1",
+    "role": "calibration",
+    "preference_accuracy_pct": 58.790035247802734,
+    "compatibility_accuracy_pct": 67.08609771728516
+  },
+  {
+    "model": "fixed_pref_seed2",
+    "role": "calibration",
+    "preference_accuracy_pct": 58.89679718017578,
+    "compatibility_accuracy_pct": 69.13907623291016
+  },
+  {
+    "model": "adapt_compat_seed0",
+    "role": "calibration",
+    "preference_accuracy_pct": 48.861209869384766,
+    "compatibility_accuracy_pct": 60.000003814697266
+  },
+  {
+    "model": "adapt_compat_seed1",
+    "role": "calibration",
+    "preference_accuracy_pct": 48.1138801574707,
+    "compatibility_accuracy_pct": 62.64900588989258
+  },
+  {
+    "model": "adapt_compat_seed2",
+    "role": "calibration",
+    "preference_accuracy_pct": 47.58007049560547,
+    "compatibility_accuracy_pct": 67.4172134399414
+  },
+  {
+    "model": "adapt_pref_seed0",
+    "role": "calibration",
+    "preference_accuracy_pct": 68.82562255859375,
+    "compatibility_accuracy_pct": 60.993377685546875
+  },
+  {
+    "model": "adapt_pref_seed1",
+    "role": "calibration",
+    "preference_accuracy_pct": 64.27046203613281,
+    "compatibility_accuracy_pct": 64.7682113647461
+  },
+  {
+    "model": "adapt_pref_seed2",
+    "role": "calibration",
+    "preference_accuracy_pct": 68.36298370361328,
+    "compatibility_accuracy_pct": 64.70198822021484
+  },
+  {
+    "model": "fixed_compat_seed0",
+    "role": "development",
+    "preference_accuracy_pct": 46.97608947753906,
+    "compatibility_accuracy_pct": 62.06272888183594
+  },
+  {
+    "model": "fixed_compat_seed1",
+    "role": "development",
+    "preference_accuracy_pct": 46.97608947753906,
+    "compatibility_accuracy_pct": 65.37997436523438
+  },
+  {
+    "model": "fixed_compat_seed2",
+    "role": "development",
+    "preference_accuracy_pct": 46.97608947753906,
+    "compatibility_accuracy_pct": 62.665863037109375
+  },
+  {
+    "model": "fixed_pref_seed0",
+    "role": "development",
+    "preference_accuracy_pct": 63.466949462890625,
+    "compatibility_accuracy_pct": 62.06272888183594
+  },
+  {
+    "model": "fixed_pref_seed1",
+    "role": "development",
+    "preference_accuracy_pct": 62.79887390136719,
+    "compatibility_accuracy_pct": 65.37997436523438
+  },
+  {
+    "model": "fixed_pref_seed2",
+    "role": "development",
+    "preference_accuracy_pct": 62.482418060302734,
+    "compatibility_accuracy_pct": 62.665863037109375
+  },
+  {
+    "model": "adapt_compat_seed0",
+    "role": "development",
+    "preference_accuracy_pct": 49.54289627075195,
+    "compatibility_accuracy_pct": 52.11097717285156
+  },
+  {
+    "model": "adapt_compat_seed1",
+    "role": "development",
+    "preference_accuracy_pct": 48.804500579833984,
+    "compatibility_accuracy_pct": 55.66947937011719
+  },
+  {
+    "model": "adapt_compat_seed2",
+    "role": "development",
+    "preference_accuracy_pct": 52.953590393066406,
+    "compatibility_accuracy_pct": 58.98672866821289
+  },
+  {
+    "model": "adapt_pref_seed0",
+    "role": "development",
+    "preference_accuracy_pct": 70.1476821899414,
+    "compatibility_accuracy_pct": 55.186973571777344
+  },
+  {
+    "model": "adapt_pref_seed1",
+    "role": "development",
+    "preference_accuracy_pct": 67.86216735839844,
+    "compatibility_accuracy_pct": 55.00603485107422
+  },
+  {
+    "model": "adapt_pref_seed2",
+    "role": "development",
+    "preference_accuracy_pct": 70.74542999267578,
+    "compatibility_accuracy_pct": 51.38721466064453
+  },
+  {
+    "model": "fixed_compat_seed0",
+    "role": "fresh",
+    "preference_accuracy_pct": 52.79265594482422,
+    "compatibility_accuracy_pct": 57.12050247192383
+  },
+  {
+    "model": "fixed_compat_seed1",
+    "role": "fresh",
+    "preference_accuracy_pct": 52.79265594482422,
+    "compatibility_accuracy_pct": 56.49452209472656
+  },
+  {
+    "model": "fixed_compat_seed2",
+    "role": "fresh",
+    "preference_accuracy_pct": 52.79265594482422,
+    "compatibility_accuracy_pct": 54.6165885925293
+  },
+  {
+    "model": "fixed_pref_seed0",
+    "role": "fresh",
+    "preference_accuracy_pct": 63.045143127441406,
+    "compatibility_accuracy_pct": 57.12050247192383
+  },
+  {
+    "model": "fixed_pref_seed1",
+    "role": "fresh",
+    "preference_accuracy_pct": 60.59678649902344,
+    "compatibility_accuracy_pct": 56.49452209472656
+  },
+  {
+    "model": "fixed_pref_seed2",
+    "role": "fresh",
+    "preference_accuracy_pct": 60.82632064819336,
+    "compatibility_accuracy_pct": 54.6165885925293
+  },
+  {
+    "model": "adapt_compat_seed0",
+    "role": "fresh",
+    "preference_accuracy_pct": 52.79265594482422,
+    "compatibility_accuracy_pct": 57.90297317504883
+  },
+  {
+    "model": "adapt_compat_seed1",
+    "role": "fresh",
+    "preference_accuracy_pct": 55.24101257324219,
+    "compatibility_accuracy_pct": 59.311424255371094
+  },
+  {
+    "model": "adapt_compat_seed2",
+    "role": "fresh",
+    "preference_accuracy_pct": 54.169857025146484,
+    "compatibility_accuracy_pct": 55.55555725097656
+  },
+  {
+    "model": "adapt_pref_seed0",
+    "role": "fresh",
+    "preference_accuracy_pct": 73.14460754394531,
+    "compatibility_accuracy_pct": 60.87636947631836
+  },
+  {
+    "model": "adapt_pref_seed1",
+    "role": "fresh",
+    "preference_accuracy_pct": 68.01836395263672,
+    "compatibility_accuracy_pct": 55.24256896972656
+  },
+  {
+    "model": "adapt_pref_seed2",
+    "role": "fresh",
+    "preference_accuracy_pct": 68.78347778320312,
+    "compatibility_accuracy_pct": 51.0172119140625
+  }
+]

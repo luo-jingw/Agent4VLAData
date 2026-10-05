@@ -8,8 +8,19 @@ VLA（Vision-Language-Action）动作模态对齐方向的调研、想法与讨�
 - 方向（评估中）：通用 VLA 遥操动作模态数据增强——对齐约束下重构/强化
   action 序列，数据效率与执行效率双目标；当前收敛想法见
   `idea/conditional-action-representation/`；
-- 当前状态：调研进行中（58 篇文献；RQ4 动作模态对齐 + latent action 线），
-  无实现设计，实验未启动。
+- 当前状态：既有调研包含 58 篇文献；本分支补充截至 2026-10-04 的 CEAM
+  思路演变、22 组实验、分析和五组相关调研。完整实现与训练产物位于独立 CEAM 项目。
+
+## CEAM 研究与实验
+
+- [总览与关键结论](docs/reports/ceam/README.md)
+- [10 条 idea 与 22 组实验的完整历史](docs/reports/ceam/research_history.md)
+- [当前想法与动作编辑方向](idea/ceam/README.md)
+- [综合分析](synthesis/ceam/analysis.md) · [开放问题](synthesis/ceam/open_questions.md)
+- [相关调研](docs/survey/ceam/README.md) · [实测 JSON](docs/reports/ceam/evidence/README.md)
+
+局部动作改进和显式偏好学习已有正证据；双表征的稳定独特优势，以及编辑标签相对原示教的稳定学生收益，
+尚未确立。以下原有综述与框架材料保留其研究时段，后续测量以 CEAM 总览的协议和日期为准。
 
 ## 目录分工
 

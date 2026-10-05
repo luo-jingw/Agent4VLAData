@@ -27,6 +27,10 @@ Do not duplicate:
 综述（2026-09 完成，定稿见 `docs/survey/`，报告见 `docs/reports/`，
 证据链在 `synthesis/`）。
 
+CEAM 研究补充截至 2026-10-04：结果与历史在 `docs/reports/ceam/`，相关调研在
+`docs/survey/ceam/`，当前想法在 `idea/ceam/`，分析和开放问题在 `synthesis/ceam/`。
+研究快照源为独立 CEAM 仓库提交 `713f20f`；完整实验代码、模型和数据仍属于独立实现。
+
 ## Environment
 
 - Platform / hardware: Windows 10/11，Python 3.11.7，pymupdf 可用。
@@ -99,6 +103,9 @@ Do not record token values or other secrets here.
 ## Onboarding
 
 新贡献者上手顺序：
+
+CEAM 研究入口是 `docs/reports/ceam/README.md`，其来源清单为 `synthesis/ceam/source_manifest.json`。
+下列原有材料保留其研究时段。
 
 1. 读 `AGENTS.md`（规范）。
 2. 读 `docs/reports/top_level_view.md`（五面思维地图，先建立整体框架）。

@@ -1,0 +1,619 @@
+{
+  "source_project": "CEAM",
+  "source_commit": "713f20f51f182945540e053696b7e317bc9d692e",
+  "destination_repository": "luo-jingw/Agent4VLAData",
+  "destination_base": "d0e41f740f5fa590147b3fb3a68055f8a48b0888",
+  "research_cutoff": "2026-10-04",
+  "timezone": "America/New_York",
+  "transformations": [
+    "Relocate Markdown links according to the explicit document map.",
+    "Replace machine-specific home/root paths, hostnames and private IPs with placeholders.",
+    "Clarify that the action-label review lacks a teacher-edited student evaluation; the earlier non-teacher student grid is complete.",
+    "Normalize trailing document newlines."
+  ],
+  "files": [
+    {
+      "source_path": "docs/action_label_optimization_review.md",
+      "destination_path": "docs/survey/ceam/action_label_optimization_review.md",
+      "source_sha256": "ec0a4e61fd37ff61f93da8251dcb08fb65860bfef6b0b71ea7d58aaaf3fb484f",
+      "published_sha256": "87b25a94144ca1b8d6b9be856b5315dbe6b011aed57b46aafcd70468087521a2",
+      "published_bytes": 11912
+    },
+    {
+      "source_path": "docs/agent4vla_reference_review.md",
+      "destination_path": "docs/survey/ceam/agent4vla_reference_review.md",
+      "source_sha256": "3999bf2632690a814bf46a4329df38e6513c82a2a2fd4d0e0bbc29850c070969",
+      "published_sha256": "3999bf2632690a814bf46a4329df38e6513c82a2a2fd4d0e0bbc29850c070969",
+      "published_bytes": 3061
+    },
+    {
+      "source_path": "docs/branch_success_test.md",
+      "destination_path": "synthesis/ceam/archive/docs/branch_success_test.md",
+      "source_sha256": "91bea4c9fe696a8f5708b75295c69496c3eae334408201ad012c452291e6031d",
+      "published_sha256": "ac7fcce9136107fc4b8f06f6d30bf04adf11726c3a3dddc2fd53247562df9a89",
+      "published_bytes": 24069
+    },
+    {
+      "source_path": "docs/calvin_feasibility.md",
+      "destination_path": "synthesis/ceam/archive/docs/calvin_feasibility.md",
+      "source_sha256": "0c1f7f02832166092a3f2e09924dcdb082cd4d3fe0096ef3cd7eb7cf83f2400d",
+      "published_sha256": "0198cbe64025542ea4f1e6e49f5eaa0e9e2a7de104935fedc5da3b5eea9453ae",
+      "published_bytes": 34131
+    },
+    {
+      "source_path": "docs/closed_loop_mvp.md",
+      "destination_path": "synthesis/ceam/archive/docs/closed_loop_mvp.md",
+      "source_sha256": "eceaa39d7403ec160dbfc9e9e2c043dddba24357f52930aff21b7060efca859e",
+      "published_sha256": "b8c073e8bc4b2c778ff79d84f5c52093cc035b9c06d8bbd2767bea06885e25a1",
+      "published_bytes": 24396
+    },
+    {
+      "source_path": "docs/consistency_checks.md",
+      "destination_path": "synthesis/ceam/archive/docs/consistency_checks.md",
+      "source_sha256": "dc61bfa9e8c2db32b575462db1d795fe8a40c905b323e9712e5cd006e460bd62",
+      "published_sha256": "cdaed5ad6d16e044ffa319098192b511b48f99ef2ba32057a08d5cbcf3509be8",
+      "published_bytes": 39780
+    },
+    {
+      "source_path": "docs/continuation_sensitivity_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/continuation_sensitivity_results.md",
+      "source_sha256": "a93ac1e8a1345bf332c525d0aa51c39e89b0f44c5d0d705861b875ddd2fc3321",
+      "published_sha256": "2a82d4dd6e32856af5cb321b6c412847d7d0a11f18d22c995c7bbcc96c6de666",
+      "published_bytes": 10593
+    },
+    {
+      "source_path": "docs/cross_episode_representation_research.md",
+      "destination_path": "docs/survey/ceam/cross_episode_representation_research.md",
+      "source_sha256": "a56fe5e975ae53c4b06bf1333ce2932bdbfee6c1338630cd01933467c2b052ac",
+      "published_sha256": "18d0336a53136250fc5ba0ff828f52bfe2a6b4b0d16cb4e8c2e653d7015b3b72",
+      "published_bytes": 17226
+    },
+    {
+      "source_path": "docs/data.md",
+      "destination_path": "synthesis/ceam/archive/docs/data.md",
+      "source_sha256": "98f74fe64178c317f5611d5dd1f9bcaedd83d880f42b9b436861574a9f75fa2c",
+      "published_sha256": "7d8953f04c5404179ceabd1ad43ee33fe260a8ac29c7d70ebda9479eb0615fe5",
+      "published_bytes": 9574
+    },
+    {
+      "source_path": "docs/data_scaling.md",
+      "destination_path": "synthesis/ceam/archive/docs/data_scaling.md",
+      "source_sha256": "7455998a145d3f1a6d201c6bd532f875ba7de0bc363be9923fa5eca996ff2964",
+      "published_sha256": "9a312b5933a134c42436a224050f9b816e856b618c41ee7ffc862bb0d757d8e9",
+      "published_bytes": 28475
+    },
+    {
+      "source_path": "docs/demo_refinement_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/demo_refinement_results.md",
+      "source_sha256": "64891ca12bde00bd1fe93e3d9c4d482bb2a8932b2574b910a08cd6386c25f79c",
+      "published_sha256": "7da6d25149540ec1feab6f50002625d2c010809f0409ae5012c6d80c5fdb12d4",
+      "published_bytes": 8896
+    },
+    {
+      "source_path": "docs/demo_renders.md",
+      "destination_path": "synthesis/ceam/archive/docs/demo_renders.md",
+      "source_sha256": "d04236a4fab5123d4bcc87a54fec59e18758bba2644eea86f82f9da3bfaea70f",
+      "published_sha256": "00c10498aac009037d67e5d2e1ca6624266f7565a84396bfaee29c1d35e72fc2",
+      "published_bytes": 13082
+    },
+    {
+      "source_path": "docs/diagnostics.md",
+      "destination_path": "synthesis/ceam/archive/docs/diagnostics.md",
+      "source_sha256": "3f07cadec13fe5d1a043e391ac9f2a2949dae828acf3a54ba2f9f9345cc6e9bd",
+      "published_sha256": "3f07cadec13fe5d1a043e391ac9f2a2949dae828acf3a54ba2f9f9345cc6e9bd",
+      "published_bytes": 4017
+    },
+    {
+      "source_path": "docs/dynamics_counterfactuals.md",
+      "destination_path": "synthesis/ceam/archive/docs/dynamics_counterfactuals.md",
+      "source_sha256": "4025e98209b1088f3dc303b33e38ed7800237f6440e848a263448a9aa1c620d6",
+      "published_sha256": "d63c55c7358c2b503d50340a59fda0540899efa97e1f9d3d54ee4439bb17f3a1",
+      "published_bytes": 6056
+    },
+    {
+      "source_path": "docs/dynamics_data.md",
+      "destination_path": "synthesis/ceam/archive/docs/dynamics_data.md",
+      "source_sha256": "4681684db23b777cdb9846300fbf6cecdee9f300ed32a2cc3b74a0f4058d27ca",
+      "published_sha256": "1f0bf5a26f4578f5438ef162e57748eef37aadb9008d9781a1c12ddee13d609a",
+      "published_bytes": 10608
+    },
+    {
+      "source_path": "docs/encoders.md",
+      "destination_path": "synthesis/ceam/archive/docs/encoders.md",
+      "source_sha256": "0b4b82c59fe434da444cd99cd6091bd24995d840f076961fac77e6ee5f101639",
+      "published_sha256": "0b4b82c59fe434da444cd99cd6091bd24995d840f076961fac77e6ee5f101639",
+      "published_bytes": 2780
+    },
+    {
+      "source_path": "docs/focused_experiment.md",
+      "destination_path": "synthesis/ceam/archive/docs/focused_experiment.md",
+      "source_sha256": "bea7f178a56bef9939ae94c60c2db243d5771fa275d42b321eca8afa002064f4",
+      "published_sha256": "ef9c716f3043a59fc511d708ead20c7b5d4d238d5cee79fae7694196d5c77f70",
+      "published_bytes": 37004
+    },
+    {
+      "source_path": "docs/framework.md",
+      "destination_path": "idea/ceam/framework.md",
+      "source_sha256": "0462253a8a3cd0f76f8a2f0ed2d62138dd71ceb09a16449cb8ea495bf3001e4e",
+      "published_sha256": "0462253a8a3cd0f76f8a2f0ed2d62138dd71ceb09a16449cb8ea495bf3001e4e",
+      "published_bytes": 4767
+    },
+    {
+      "source_path": "docs/interaction_collection.md",
+      "destination_path": "synthesis/ceam/archive/docs/interaction_collection.md",
+      "source_sha256": "898faad83da90ccc960f69730c889b679cfc6fedb17c39a521cd7bab621d89a8",
+      "published_sha256": "b584a7b8107e3829736f1797aba8cf8f3b86f5711f9563ff2cdd070a8edd6b70",
+      "published_bytes": 27096
+    },
+    {
+      "source_path": "docs/interaction_data.md",
+      "destination_path": "synthesis/ceam/archive/docs/interaction_data.md",
+      "source_sha256": "67ba327cb4ac67e1d7bfb5fee3b4917ad2d504275465f4bceb67964b7a50d093",
+      "published_sha256": "463d312e03629af005d199c21236c95d6f4662bbf63031bd8e94b5594ddf0e74",
+      "published_bytes": 48319
+    },
+    {
+      "source_path": "docs/interaction_representation.md",
+      "destination_path": "synthesis/ceam/archive/docs/interaction_representation.md",
+      "source_sha256": "084afe7382411219cf502717e5ae4d4eef60f3bd1aaae044055613476e5e67cf",
+      "published_sha256": "dcca03e041612af60eb36c292bc8f958c14d38483de23d2459d0d43c8e7843be",
+      "published_bytes": 33052
+    },
+    {
+      "source_path": "docs/interaction_training.md",
+      "destination_path": "synthesis/ceam/archive/docs/interaction_training.md",
+      "source_sha256": "e759fa80289af95827e49b6f8466fc0a432aec358b2d6e9a30e07c692ec21dad",
+      "published_sha256": "0790cfaef3dd87373933d128e43188cbeaddc3847ed4c76ce19d68881dd04310",
+      "published_bytes": 39803
+    },
+    {
+      "source_path": "docs/iterative_collection.md",
+      "destination_path": "synthesis/ceam/archive/docs/iterative_collection.md",
+      "source_sha256": "2875f9a336bdb5bf13b43e4c9b5544b37c0967bd4e2c2d85358491fabe17496d",
+      "published_sha256": "d5cd890cf3eedd6d866367b72f0f89068acf721fe364bcd3f4921abb31bc4e07",
+      "published_bytes": 51192
+    },
+    {
+      "source_path": "docs/libero90_baseline.md",
+      "destination_path": "synthesis/ceam/archive/docs/libero90_baseline.md",
+      "source_sha256": "89be412503832f23377a98fa6be8b33dc532dbc4cfb38bea247a9bfb5e50677b",
+      "published_sha256": "c35b49c0a3a96b0a14739c82c571e216e8f15bbf9129c25cf61977d4004fd911",
+      "published_bytes": 4267
+    },
+    {
+      "source_path": "docs/libero90_prep.md",
+      "destination_path": "synthesis/ceam/archive/docs/libero90_prep.md",
+      "source_sha256": "bb4e41f4f59fa3f1212bc22f4c6531df84d7246f419db36174c056cfb7f11446",
+      "published_sha256": "5d86e9345db35deb9c43c6d096c939d4e19b9d4fade137ad60b53decdcfe8b7c",
+      "published_bytes": 31444
+    },
+    {
+      "source_path": "docs/libero90_replay_report.md",
+      "destination_path": "synthesis/ceam/archive/docs/libero90_replay_report.md",
+      "source_sha256": "a061a50a650e3139ddce3badb3f86dd2545990f83aff620f5861a9619289e697",
+      "published_sha256": "c01431ec75d64eab47e809472f416144b3ed683bacdd6ea367371be8dcdc6a71",
+      "published_bytes": 16964
+    },
+    {
+      "source_path": "docs/libero_sim.md",
+      "destination_path": "synthesis/ceam/archive/docs/libero_sim.md",
+      "source_sha256": "10ef92af6b89a616c1807b5820230c9193e9b7b1384ec8b6f606cb5d1d78f831",
+      "published_sha256": "a80cdc140de290197d011637099ce1a9fc88a62ca9405d634b0db4fec6dc57bf",
+      "published_bytes": 19931
+    },
+    {
+      "source_path": "docs/long_horizon_matching_review.md",
+      "destination_path": "docs/survey/ceam/long_horizon_matching_review.md",
+      "source_sha256": "417cd24da1c905bfb271290b0b202492cd520dc040f616d2d3d55dbc71ac261a",
+      "published_sha256": "7387c9febc8902022e38a274cac75f073344cca8536a928928c8023f0699f064",
+      "published_bytes": 11063
+    },
+    {
+      "source_path": "docs/losses.md",
+      "destination_path": "synthesis/ceam/archive/docs/losses.md",
+      "source_sha256": "b1e38457b6a7d5df9fcc507dd7a0c17321f4c45edc2b33b7d0b505b9c312edef",
+      "published_sha256": "b1e38457b6a7d5df9fcc507dd7a0c17321f4c45edc2b33b7d0b505b9c312edef",
+      "published_bytes": 3743
+    },
+    {
+      "source_path": "docs/model.md",
+      "destination_path": "synthesis/ceam/archive/docs/model.md",
+      "source_sha256": "608f4322416e1cf24accc8dd41800e8c78069c56e784aa8684ee0c29d4dbe3bd",
+      "published_sha256": "608f4322416e1cf24accc8dd41800e8c78069c56e784aa8684ee0c29d4dbe3bd",
+      "published_bytes": 2836
+    },
+    {
+      "source_path": "docs/no_psi_baseline.md",
+      "destination_path": "synthesis/ceam/archive/docs/no_psi_baseline.md",
+      "source_sha256": "d57a33fff9ba67f160fb0dec364b26cb497aa2bec85756d880305180640fad1a",
+      "published_sha256": "cd687e38de4f315a2a965499b2485e43afa6708575e56ac605638f7d6000427d",
+      "published_bytes": 28810
+    },
+    {
+      "source_path": "docs/overnight_summary.md",
+      "destination_path": "synthesis/ceam/archive/docs/overnight_summary.md",
+      "source_sha256": "2277dd903909bef1c4a7ffba46522af5236d64b129e2a9a87d9af6188631d3ca",
+      "published_sha256": "cfce5e51a5c62b44a41e1545784b5ade360d472bf1ee3351fbe846a188c02178",
+      "published_bytes": 23296
+    },
+    {
+      "source_path": "docs/physical_world_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/physical_world_results.md",
+      "source_sha256": "b1559dc39f704a7bc6b844403ced98a4b92de9718a7cfaede0d388471680f975",
+      "published_sha256": "79b16f77590c25cc2c7c18add121579d8a6d22412c843fdee43419487b8e6ce7",
+      "published_bytes": 15762
+    },
+    {
+      "source_path": "docs/preference_feedback_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/preference_feedback_results.md",
+      "source_sha256": "78004b281588643b30aff0a46376c721e4d54c2f63398c452e2958c3630ac15b",
+      "published_sha256": "e22e828ace9347e0b309961e43adda79f036d4e3048212a58280f1619b7f3ebe",
+      "published_bytes": 13663
+    },
+    {
+      "source_path": "docs/proposal_branch.md",
+      "destination_path": "synthesis/ceam/archive/docs/proposal_branch.md",
+      "source_sha256": "b50656fab96d988baef55491b67c63c9933a2fc96e3dadec5e216a29c12a52a9",
+      "published_sha256": "fbfa5692b420bbec4f489a8bc4acf91f43ba9c6c2f698826b8900de6262183de",
+      "published_bytes": 73951
+    },
+    {
+      "source_path": "docs/query_match.md",
+      "destination_path": "synthesis/ceam/archive/docs/query_match.md",
+      "source_sha256": "89ab0fdf6705edc173335223ff7ca50ab77186b44b19f139bb97586f93e8d371",
+      "published_sha256": "3e732d5e23f6134bb15da5285ce14c2d0b1fdc08979406e5cd91019f7576dc86",
+      "published_bytes": 121943
+    },
+    {
+      "source_path": "docs/r_short_history.md",
+      "destination_path": "synthesis/ceam/archive/docs/r_short_history.md",
+      "source_sha256": "c8ff12d8cf7293dd4aa40a6c140ef049bc83cd103ab8192d31be37d1fd6d6eab",
+      "published_sha256": "f891074056da70213854c6a00dde5b4d0ef56567c68513d5701898f97313a21c",
+      "published_bytes": 21402
+    },
+    {
+      "source_path": "docs/research_history.md",
+      "destination_path": "docs/reports/ceam/research_history.md",
+      "source_sha256": "51a5d43a6afc313a2da62fab55c4fa1e85c9ca2d081230cc047a78bacee264d3",
+      "published_sha256": "19a03ee1420e00110b33e414d8fbd00be9e8608aea209f71044b61e266b86d3a",
+      "published_bytes": 25774
+    },
+    {
+      "source_path": "docs/residual_editing_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/residual_editing_results.md",
+      "source_sha256": "0c4ad5e5022c0be3c0fc27341ac5795c62ad1fd1a47c8523e88f5cef82779a46",
+      "published_sha256": "22da233f4f273f18a1921dd3fb8162697f79185425ad5bbd2df120a7cf4597a1",
+      "published_bytes": 13242
+    },
+    {
+      "source_path": "docs/retrieval_refinement_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/retrieval_refinement_results.md",
+      "source_sha256": "76e5ac2c8cdca8d66c15f6f777a58691a458ad52444602c4b33f291258e70648",
+      "published_sha256": "abf3213abe19d8b3f59e809c2ea40a202ac715e4c2b9fb01df6a4dd685d259bb",
+      "published_bytes": 11435
+    },
+    {
+      "source_path": "docs/rollout_progress.md",
+      "destination_path": "synthesis/ceam/archive/docs/rollout_progress.md",
+      "source_sha256": "e4d829f0477bcfb9296d395476dd564432197a5fd6a3759042e2a122012e3416",
+      "published_sha256": "aec3c5c9406f685be92a4ac53a78d5cb88711d5906ca969cfbe4347b7941a7d3",
+      "published_bytes": 52737
+    },
+    {
+      "source_path": "docs/stage_one.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one.md",
+      "source_sha256": "4f58faa7bc04b8e8fc6b983e292dd60fd4d746757eab894d5edd79a8dd43c977",
+      "published_sha256": "4f58faa7bc04b8e8fc6b983e292dd60fd4d746757eab894d5edd79a8dd43c977",
+      "published_bytes": 2560
+    },
+    {
+      "source_path": "docs/stage_one_ab_task_contrast.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one_ab_task_contrast.md",
+      "source_sha256": "f65f51f8406fddcfc9608bf78d7b12ba36ac808a2e32e50b9b72ec3dc40deb28",
+      "published_sha256": "642eb11e62af6cdf3509c92331320caf5069646edbe5bdb55c8aca040be631f7",
+      "published_bytes": 3187
+    },
+    {
+      "source_path": "docs/stage_one_design_audit.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one_design_audit.md",
+      "source_sha256": "7c2721d19d1eea34b48f29da8468a59838656350cebe3461455bf2847f042e00",
+      "published_sha256": "7c2721d19d1eea34b48f29da8468a59838656350cebe3461455bf2847f042e00",
+      "published_bytes": 5896
+    },
+    {
+      "source_path": "docs/stage_one_failure_negatives.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one_failure_negatives.md",
+      "source_sha256": "2cb89fc0be6fe49531794cf734b55c7d2a9f4c1b2da1527f744115e346a73e52",
+      "published_sha256": "fcdf7f402bdd3bf2c4b8e4d9c7f454b5c4548654faaf7111b413818f2dc96a35",
+      "published_bytes": 23046
+    },
+    {
+      "source_path": "docs/stage_one_flow.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one_flow.md",
+      "source_sha256": "ac4a7d780d9f464f7b8c8ca56c925e06a6f2d4d1c63a6223cc2228acec29d027",
+      "published_sha256": "ed381607b49b162d74e868e061a802809b5f4a509b4c80e91a7a3a74d7044bd1",
+      "published_bytes": 72131
+    },
+    {
+      "source_path": "docs/stage_one_instruction_contrast.md",
+      "destination_path": "synthesis/ceam/archive/docs/stage_one_instruction_contrast.md",
+      "source_sha256": "56a249ed05f787cbd49226e928821fc53acaf6c0fa87d86770fd240319472284",
+      "published_sha256": "b357a191dae98f91c84e0d7b2ab1b83c3a2cebf9fa8a8e8cb9e066a970ff63e8",
+      "published_bytes": 5447
+    },
+    {
+      "source_path": "docs/summary_2026-09-27_afternoon.md",
+      "destination_path": "synthesis/ceam/archive/docs/summary_2026-09-27_afternoon.md",
+      "source_sha256": "c84e87f0c63bcb8f71ce8792933936b9b0eed1ec12da54e3fcd70b9860fcc6b3",
+      "published_sha256": "50df49f587043136a37c03fe8cfaa484bb20f951609479d1ae602f43092709c4",
+      "published_bytes": 12562
+    },
+    {
+      "source_path": "docs/summary_2026-09-28_overnight.md",
+      "destination_path": "synthesis/ceam/archive/docs/summary_2026-09-28_overnight.md",
+      "source_sha256": "21a6e0375f5747d93ef62843bf1c5f5ef8e3ce38c2722dab4a3e400bb80fc1d1",
+      "published_sha256": "0fd6c1ba57bacd5b6646ea252b10893c1172158e0866ed52f883c6756831cdbb",
+      "published_bytes": 26335
+    },
+    {
+      "source_path": "docs/summary_2026-09-29_overnight.md",
+      "destination_path": "synthesis/ceam/archive/docs/summary_2026-09-29_overnight.md",
+      "source_sha256": "51195de0936a091a9e1c6ca51a4c5d6b4fb532e6ddccf723f475b09acadc8edd",
+      "published_sha256": "0f7cc544ff77b5dad7858cffeb113fdcb08d52ac6e2df8ac8000e4b5f38b4048",
+      "published_bytes": 10750
+    },
+    {
+      "source_path": "docs/task_goal_labels.md",
+      "destination_path": "synthesis/ceam/archive/docs/task_goal_labels.md",
+      "source_sha256": "f0a59b626c25ee3637fb7645e4ef3387bb5a93b5db12c4e72a3e248aad8299b4",
+      "published_sha256": "0290d82c701bef0becef88c09377940a3ebefc4dce41a97af0c247a995cb2e4f",
+      "published_bytes": 27813
+    },
+    {
+      "source_path": "docs/teacher_dataset_calibration_review.md",
+      "destination_path": "docs/survey/ceam/teacher_dataset_calibration_review.md",
+      "source_sha256": "a9e2de23f42d228276c0266e84c9f5e81404f69ed1113560ce3cb51393cb2237",
+      "published_sha256": "a9e2de23f42d228276c0266e84c9f5e81404f69ed1113560ce3cb51393cb2237",
+      "published_bytes": 13141
+    },
+    {
+      "source_path": "docs/teacher_editing_results.md",
+      "destination_path": "synthesis/ceam/archive/docs/teacher_editing_results.md",
+      "source_sha256": "74d139ce0caecb9404c3be6f9c24cc4a9bdba243c79c8749889dfde3109669ed",
+      "published_sha256": "ef8f68f0dc491a14c3c27d95b3efb24a1c9684a7a277ff92dffdc462b95339e0",
+      "published_bytes": 22334
+    },
+    {
+      "source_path": "docs/training.md",
+      "destination_path": "synthesis/ceam/archive/docs/training.md",
+      "source_sha256": "25f99012de1c6679d4701a0a5acf3d6e99a7abfa75f8ba56b849519b074550a5",
+      "published_sha256": "4a21339c6d3008c3886b7c3244b9cc84cfb73bc68e77b192ee24058f3782f870",
+      "published_bytes": 6937
+    },
+    {
+      "source_path": "docs/velocity_query.md",
+      "destination_path": "synthesis/ceam/archive/docs/velocity_query.md",
+      "source_sha256": "c70c9759fb0518b068ec3f4d2e919fc2ccb67c480e2f65accfded765807af942",
+      "published_sha256": "4d34bc23654ef71fda06c5899fe69ec6bf8fcf9a10703047e27154a005d96090",
+      "published_bytes": 91256
+    },
+    {
+      "source_path": "plans/continuation_sensitivity.md",
+      "destination_path": "synthesis/ceam/archive/plans/continuation_sensitivity.md",
+      "source_sha256": "450d1317b1f7c072c85c1acd8df3e5da106fe7efd863252aec90fc253e1488f2",
+      "published_sha256": "d09b0a638fc869a811da837aa8412e298a952f7b7b3d05c36e3d72e899f2a6bc",
+      "published_bytes": 12151
+    },
+    {
+      "source_path": "plans/cross_episode_representation_research.md",
+      "destination_path": "synthesis/ceam/archive/plans/cross_episode_representation_research.md",
+      "source_sha256": "769b00d45cc4e03cc8e8c3c095d521edcd17eb8b9697d433df04bcbce6ea6457",
+      "published_sha256": "769b00d45cc4e03cc8e8c3c095d521edcd17eb8b9697d433df04bcbce6ea6457",
+      "published_bytes": 9407
+    },
+    {
+      "source_path": "plans/demo_refinement.md",
+      "destination_path": "synthesis/ceam/archive/plans/demo_refinement.md",
+      "source_sha256": "4a131f719c91a9ce1dd911a50b41b3657f7d1e591c0aa5e4507f539fb9fde917",
+      "published_sha256": "4a131f719c91a9ce1dd911a50b41b3657f7d1e591c0aa5e4507f539fb9fde917",
+      "published_bytes": 9148
+    },
+    {
+      "source_path": "plans/frozen_teacher_editing_pilot.md",
+      "destination_path": "synthesis/ceam/archive/plans/frozen_teacher_editing_pilot.md",
+      "source_sha256": "0e59dcba2964f57bc62c94acd59da501ad989a31ce1bf13d473be29ca595746d",
+      "published_sha256": "97a9515172b3e134a352484d01624293159cfff91c31bc880f630f470377e5a9",
+      "published_bytes": 15929
+    },
+    {
+      "source_path": "plans/libero90_pending_work.md",
+      "destination_path": "synthesis/ceam/archive/plans/libero90_pending_work.md",
+      "source_sha256": "b128f05a4e6a25fbb727285df3b810c1bd1e7dd74afb8340dd28ae77c128acf8",
+      "published_sha256": "b128f05a4e6a25fbb727285df3b810c1bd1e7dd74afb8340dd28ae77c128acf8",
+      "published_bytes": 2484
+    },
+    {
+      "source_path": "plans/libero90_r6_evaluation.md",
+      "destination_path": "synthesis/ceam/archive/plans/libero90_r6_evaluation.md",
+      "source_sha256": "a8b64c48e69b275876340e1aa277e18cf1f0f5efb2d1ffdfdf2a8267bf43cb56",
+      "published_sha256": "a8b64c48e69b275876340e1aa277e18cf1f0f5efb2d1ffdfdf2a8267bf43cb56",
+      "published_bytes": 5461
+    },
+    {
+      "source_path": "plans/long_horizon_matching_review.md",
+      "destination_path": "synthesis/ceam/archive/plans/long_horizon_matching_review.md",
+      "source_sha256": "2569303787f842d1d9158ca2bcdbbace8369df0099be37bd2571143bc7221827",
+      "published_sha256": "2569303787f842d1d9158ca2bcdbbace8369df0099be37bd2571143bc7221827",
+      "published_bytes": 5596
+    },
+    {
+      "source_path": "plans/physical_world.md",
+      "destination_path": "synthesis/ceam/archive/plans/physical_world.md",
+      "source_sha256": "80789ccb2a013db5e7149ae1960aba6106ef0d08d8b88147454ae7d4e15b4cc8",
+      "published_sha256": "dd6f2aa2f924f44250cbcaa08f387d3a6c56784fef723968b600f01312b505a0",
+      "published_bytes": 13884
+    },
+    {
+      "source_path": "plans/preference_feedback.md",
+      "destination_path": "synthesis/ceam/archive/plans/preference_feedback.md",
+      "source_sha256": "62a9767970c78e172bef062aa817e09937c796502daafce3e1534cd61f54de06",
+      "published_sha256": "a33cc06bdb15dbe1f57c6c9595df21562f3a809fa632ea19a7cd98437d52f4c2",
+      "published_bytes": 14416
+    },
+    {
+      "source_path": "plans/residual_action_editing.md",
+      "destination_path": "synthesis/ceam/archive/plans/residual_action_editing.md",
+      "source_sha256": "06fe290d6185c17f0f3cf89cb975adf068810b24aeb35990ece2af618a3739a6",
+      "published_sha256": "dff46c6dadd6e9af37439ea69a000feb7d362d6a0a89218791549928fa325618",
+      "published_bytes": 17470
+    },
+    {
+      "source_path": "plans/retrieval_refinement.md",
+      "destination_path": "synthesis/ceam/archive/plans/retrieval_refinement.md",
+      "source_sha256": "97aa1ebab5319a940160298ad616d93ab6eb7819ef6cf06eb3301cc7ea5c6360",
+      "published_sha256": "46dac724d10381c5fdda6865fab4abd2613df4adf79312ad85132bc5d3494f0a",
+      "published_bytes": 10097
+    },
+    {
+      "source_path": "plans/teacher_dataset_calibration_review.md",
+      "destination_path": "synthesis/ceam/archive/plans/teacher_dataset_calibration_review.md",
+      "source_sha256": "affa39b038266ff8b1d3a7bdc85bdf3d03411fa9a879e0fb4e4428faaf59ca7f",
+      "published_sha256": "affa39b038266ff8b1d3a7bdc85bdf3d03411fa9a879e0fb4e4428faaf59ca7f",
+      "published_bytes": 6226
+    },
+    {
+      "source_path": "issues.md",
+      "destination_path": "synthesis/ceam/archive/issues.md",
+      "source_sha256": "ee5876845a7ca7daa1b40a283cbd4a3e7e702bd036a186fbb42aa80b34b40686",
+      "published_sha256": "1ee0279a18a1eb59632a4d30dc6769091b06119e3c36617e976d315192716c8c",
+      "published_bytes": 64058
+    },
+    {
+      "source_path": "opportunities.md",
+      "destination_path": "synthesis/ceam/archive/opportunities.md",
+      "source_sha256": "3364063df65f055497e5b3bba5b7cbed69389f95acf2c41de8cc111e3655682b",
+      "published_sha256": "3364063df65f055497e5b3bba5b7cbed69389f95acf2c41de8cc111e3655682b",
+      "published_bytes": 52376
+    },
+    {
+      "source_path": "plan.md",
+      "destination_path": "synthesis/ceam/archive/plan.md",
+      "source_sha256": "695801d9e0896ae399990d44073b903ef2df2c2af9d42011d4375df2d4611768",
+      "published_sha256": "695801d9e0896ae399990d44073b903ef2df2c2af9d42011d4375df2d4611768",
+      "published_bytes": 1680
+    },
+    {
+      "source_path": "outputs/demo_refinement/pilot_v1/reports/policy_comparison.json",
+      "destination_path": "docs/reports/ceam/evidence/student_policy_comparison.json",
+      "source_sha256": "71176a4ca217b7ad2cbcb6e0b4f9182a2b549bddb914babb42e6438aae7026f8",
+      "published_sha256": "71176a4ca217b7ad2cbcb6e0b4f9182a2b549bddb914babb42e6438aae7026f8",
+      "published_bytes": 4869,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/analysis/libero90_baseline/seeds012.json",
+      "destination_path": "docs/reports/ceam/evidence/libero90_baseline.json",
+      "source_sha256": "9f14683cb249ef4d20a8065c223e2d4efd736dad26a1af66bcd4535ed084bc37",
+      "published_sha256": "9f14683cb249ef4d20a8065c223e2d4efd736dad26a1af66bcd4535ed084bc37",
+      "published_bytes": 143178,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/residual_editing/pilot_v1/reports/availability.json",
+      "destination_path": "docs/reports/ceam/evidence/residual_availability.json",
+      "source_sha256": "34cfad42f4fd9277ede54f5edb7a7ce2c260054d799814081baddb95160aae38",
+      "published_sha256": "34cfad42f4fd9277ede54f5edb7a7ce2c260054d799814081baddb95160aae38",
+      "published_bytes": 4190,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/residual_editing/pilot_v1/reports/ranking.json",
+      "destination_path": "docs/reports/ceam/evidence/residual_ranking.json",
+      "source_sha256": "06b9226a25ea84ce997fc7a8e81bd60d87472fd72e027f91cfd91874e70eb351",
+      "published_sha256": "06b9226a25ea84ce997fc7a8e81bd60d87472fd72e027f91cfd91874e70eb351",
+      "published_bytes": 11747,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/residual_editing/pilot_v1/reports/continuation.json",
+      "destination_path": "docs/reports/ceam/evidence/residual_continuation.json",
+      "source_sha256": "7197b8bfaa17fdb9eee7ae1deb1642d904d01613b6a5e9e8b28b7572bdbe4399",
+      "published_sha256": "7197b8bfaa17fdb9eee7ae1deb1642d904d01613b6a5e9e8b28b7572bdbe4399",
+      "published_bytes": 24936,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/teacher_editing/pilot_v1/report/summary.json",
+      "destination_path": "docs/reports/ceam/evidence/teacher_editing_summary.json",
+      "source_sha256": "2203f66379ea9dd6aaa35bdecfaa1e944509681d36ab04f43b612993758b1f60",
+      "published_sha256": "2203f66379ea9dd6aaa35bdecfaa1e944509681d36ab04f43b612993758b1f60",
+      "published_bytes": 2551,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/teacher_editing/pilot_v1/report/by_task_seed.json",
+      "destination_path": "docs/reports/ceam/evidence/teacher_editing_by_task_seed.json",
+      "source_sha256": "b8512afcd4d05da60aef06037e45c096cee7cbaa8d66fc2629f68c3cc991deb8",
+      "published_sha256": "b8512afcd4d05da60aef06037e45c096cee7cbaa8d66fc2629f68c3cc991deb8",
+      "published_bytes": 16320,
+      "source_kind": "measured_summary_from_local_artifact"
+    },
+    {
+      "source_path": "outputs/preference/pilot_v1/reports/all_role_ranking.json",
+      "destination_path": "docs/reports/ceam/evidence/preference_ranking.json",
+      "source_sha256": "f2c038458b5f4ebcdd3e259ecc6982232b71e6f438633e3cd2f51c91d67967d6",
+      "published_sha256": "f2c038458b5f4ebcdd3e259ecc6982232b71e6f438633e3cd2f51c91d67967d6",
+      "published_bytes": 8135,
+      "source_kind": "measured_summary_from_local_artifact"
+    }
+  ],
+  "synthesized_documents": [
+    {
+      "destination_path": "docs/reports/ceam/README.md",
+      "published_sha256": "b7e9b87580f2b3acba352b44515d3bceccfe0f2d8fc1e03e8a3baf9029cd4b20",
+      "published_bytes": 4592,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "docs/reports/ceam/evidence/README.md",
+      "published_sha256": "c1ca27bf2f52272a378d0d3d376de408e7e7ac6ced416c347a2cefc5376c7176",
+      "published_bytes": 1790,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "docs/survey/ceam/README.md",
+      "published_sha256": "fe99335bb619d89c8d22f79706e58606ea07145380bcfc3568838560a2a43cc6",
+      "published_bytes": 2931,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "idea/ceam/README.md",
+      "published_sha256": "ac7d2be366524a769d8cc87095f9c352321f631b9949854c72a3dfa4ca1bef74",
+      "published_bytes": 4982,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "synthesis/ceam/analysis.md",
+      "published_sha256": "8a1c9361c79a190c6da6af96ca5b8b49d3f3808726441abf147257d1e21368cb",
+      "published_bytes": 3771,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "synthesis/ceam/open_questions.md",
+      "published_sha256": "61806ea9ba300cac339309a099bbebb835c317b8d73e3ac4ef75fd4838778bbe",
+      "published_bytes": 3188,
+      "source_kind": "synthesis_of_imported_evidence"
+    },
+    {
+      "destination_path": "synthesis/ceam/archive/README.md",
+      "published_sha256": "f7153d110038234aada50a6f38d2314e68e74b593d61f8382dd8695e90ff0532",
+      "published_bytes": 1780,
+      "source_kind": "synthesis_of_imported_evidence"
+    }
+  ],
+  "navigation_updates": [
+    "README.md",
+    "PROJECT.md",
+    "idea/conditional-action-representation/README.md"
+  ]
+}

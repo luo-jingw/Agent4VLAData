@@ -1,0 +1,146 @@
+{
+  "sources": 20,
+  "original_successes": 20,
+  "original_successful_feasible": 18,
+  "original_mean_steps": 110.45,
+  "cells": [
+    {
+      "family": "direct",
+      "candidates": 159,
+      "success_rate": 0.8176100628930818,
+      "successful_feasible_rate": 0.7169811320754716,
+      "mean_residual_rms": 0.0,
+      "zero_residual_fraction": 1.0,
+      "full_improved_sources": 10,
+      "matched_mean_steps": 108.7,
+      "matched_mean_translation": 0.7806569739853322,
+      "matched_accept_rate": 0.5,
+      "min_pool": 7,
+      "max_pool": 8
+    },
+    {
+      "family": "rank6",
+      "candidates": 318,
+      "success_rate": 0.7767295597484277,
+      "successful_feasible_rate": 0.6761006289308176,
+      "mean_residual_rms": 0.04957483469291865,
+      "zero_residual_fraction": 0.0,
+      "full_improved_sources": 11,
+      "matched_mean_steps": 109.4716796875,
+      "matched_mean_translation": 0.7831469452981743,
+      "matched_accept_rate": 0.3908203125,
+      "min_pool": 14,
+      "max_pool": 16
+    },
+    {
+      "family": "rank12",
+      "candidates": 318,
+      "success_rate": 0.7861635220125787,
+      "successful_feasible_rate": 0.6823899371069182,
+      "mean_residual_rms": 0.04952026786481809,
+      "zero_residual_fraction": 0.0,
+      "full_improved_sources": 10,
+      "matched_mean_steps": 109.5623046875,
+      "matched_mean_translation": 0.7858889683429869,
+      "matched_accept_rate": 0.357421875,
+      "min_pool": 14,
+      "max_pool": 16
+    },
+    {
+      "family": "iid",
+      "candidates": 318,
+      "success_rate": 0.7987421383647799,
+      "successful_feasible_rate": 0.7012578616352201,
+      "mean_residual_rms": 0.049246492467633206,
+      "zero_residual_fraction": 0.0,
+      "full_improved_sources": 2,
+      "matched_mean_steps": 110.3771484375,
+      "matched_mean_translation": 0.7905833622460476,
+      "matched_accept_rate": 0.0892578125,
+      "min_pool": 14,
+      "max_pool": 16
+    },
+    {
+      "family": "source_rank12",
+      "candidates": 320,
+      "success_rate": 0.9,
+      "successful_feasible_rate": 0.796875,
+      "mean_residual_rms": 0.04956048009335064,
+      "zero_residual_fraction": 0.0,
+      "full_improved_sources": 16,
+      "matched_mean_steps": 108.8318359375,
+      "matched_mean_translation": 0.78403503998907,
+      "matched_accept_rate": 0.6443359375,
+      "min_pool": 16,
+      "max_pool": 16
+    },
+    {
+      "family": "geometric_command",
+      "candidates": 20,
+      "success_rate": 0.9,
+      "successful_feasible_rate": 0.8,
+      "mean_residual_rms": 0.08607420912012458,
+      "zero_residual_fraction": 0.0,
+      "full_improved_sources": 2,
+      "matched_mean_steps": 110.45,
+      "matched_mean_translation": 0.7906029789723401,
+      "matched_accept_rate": 0.1,
+      "min_pool": 1,
+      "max_pool": 1
+    }
+  ],
+  "comparisons": [
+    {
+      "family": "direct",
+      "against": "iid",
+      "matched_steps_delta": -1.6771484375,
+      "episode_bootstrap_95_interval": [
+        -3.750107421875,
+        -0.2
+      ]
+    },
+    {
+      "family": "rank6",
+      "against": "iid",
+      "matched_steps_delta": -0.90546875,
+      "episode_bootstrap_95_interval": [
+        -1.652177734375,
+        -0.2755810546875
+      ]
+    },
+    {
+      "family": "rank12",
+      "against": "iid",
+      "matched_steps_delta": -0.81484375,
+      "episode_bootstrap_95_interval": [
+        -1.563544921875,
+        -0.21995605468750087
+      ]
+    },
+    {
+      "family": "source_rank12",
+      "against": "iid",
+      "matched_steps_delta": -1.5453125,
+      "episode_bootstrap_95_interval": [
+        -3.2170654296874996,
+        -0.4146386718750001
+      ]
+    },
+    {
+      "family": "geometric_command",
+      "against": "iid",
+      "matched_steps_delta": 0.0728515625,
+      "episode_bootstrap_95_interval": [
+        0.0,
+        0.2185546875
+      ]
+    }
+  ],
+  "selection_budget": 8,
+  "subset_draws": 256,
+  "notes": [
+    "Original is always retained; invalid originals are not counted as accepted improvements.",
+    "Geometric pool has one candidate; direct pools may have fewer than eight.",
+    "Residual target RMS is .05; bounds alter realized magnitude and are reported."
+  ]
+}
